@@ -72,6 +72,14 @@ namespace Cudafy.Translator
         }
 
         /// <summary>
+        /// Gets or sets a value indicating whether to compile for debug.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if compile for debug; otherwise, <c>false</c>.
+        /// </value>
+        public static bool GenerateDebug { get; set; }
+
+        /// <summary>
         /// Tries to use a previous serialized CudafyModule else cudafies and compiles the type in which the calling method is located. 
         /// CUDA architecture is 1.2; platform is set to the current application's (x86 or x64); and the CUDA version is the 
         /// latest official release found on the current machine. 
@@ -214,7 +222,7 @@ namespace Cudafy.Translator
                     km.CompilerOptionsList.Add(NvccCompilerOptions.Createx64(cudaVersion, arch));
                 if (platform != ePlatform.x64)
                     km.CompilerOptionsList.Add(NvccCompilerOptions.Createx86(cudaVersion, arch));
-
+                km.GenerateDebug = GenerateDebug;
                 km.Compile(eGPUCompiler.CudaNvcc, false);
             }
             if (types.Length > 0)

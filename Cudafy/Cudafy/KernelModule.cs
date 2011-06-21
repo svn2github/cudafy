@@ -62,12 +62,14 @@ namespace Cudafy
         /// Gets the platform.
         /// </summary>
         public ePlatform Platform { get; internal set; }
-
+#if DEBUG
+        public string PTX { get; set; }
+#else
         /// <summary>
         /// Gets the PTX.
         /// </summary>
         public string PTX { get; internal set; }
-
+#endif
         /// <summary>
         /// Returns a <see cref="System.String"/> that represents this instance.
         /// </summary>
@@ -268,6 +270,7 @@ namespace Cudafy
         private const string csPLATFORM = "Platform";
         private const string csARCH = "Arch";
         private const string csNAME = "Name";
+        private const string csDEBUGINFO = "DebugInfo";
 
         /// <summary>
         /// Trues to serialize this instance to file based on Name.
@@ -312,6 +315,7 @@ namespace Cudafy
             XElement root = new XElement(csCUDAFYMODULE);
             root.SetAttributeValue(csVERSION, this.GetType().Assembly.GetName().Version.ToString());
             root.SetAttributeValue(csNAME, Name == null ? "cudafymodule" : Name);
+            root.SetAttributeValue(csDEBUGINFO, GenerateDebug);
             
             XElement cudaSrc = new XElement(csCUDASOURCECODE, cudaSrcB64);
             root.SetAttributeValue(csHASCUDASOURCECODE, XmlConvert.ToString(HasCudaSourceCode));
@@ -507,6 +511,9 @@ namespace Cudafy
                 km.CudaSourceCode = string.Empty;
             }
 
+            bool? hasDebug = root.TryGetAttributeBoolValue(csDEBUGINFO);
+            km.GenerateDebug = hasDebug.HasValue && hasDebug.Value;
+
             // PTX
             bool? hasPtx = root.TryGetAttributeBoolValue(csHASPTX);
             if (hasPtx == true && root.Element(csPTX) != null) // legacy support V0.3 or less
@@ -640,6 +647,14 @@ namespace Cudafy
         }
 
         /// <summary>
+        /// Gets or sets a value indicating whether to compile for debug.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if compile for debug; otherwise, <c>false</c>.
+        /// </value>
+        public bool GenerateDebug { get; set; }
+
+        /// <summary>
         /// Compiles the module based on current Cuda source code and options.
         /// </summary>
         /// <param name="mode">The mode.</param>
@@ -648,7 +663,6 @@ namespace Cudafy
         /// <exception cref="CudafyCompileException">No source code or compilation error.</exception>
         public string Compile(eGPUCompiler mode, bool deleteGeneratedCode = false)
         {
-            //Debugger.Break();
             string ts = string.Empty;
             if ((mode & eGPUCompiler.CudaNvcc) == eGPUCompiler.CudaNvcc)
             {
@@ -670,6 +684,8 @@ namespace Cudafy
 
                 foreach (CompilerOptions co in CompilerOptionsList)
                 {
+                    co.GenerateDebugInfo = GenerateDebug;
+                    
                     co.ClearSources();
                     co.AddSource(cuFileName);
 

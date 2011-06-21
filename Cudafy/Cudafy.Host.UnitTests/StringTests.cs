@@ -28,6 +28,7 @@ using Cudafy.Host;
 using Cudafy.UnitTests;
 using NUnit.Framework;
 using Cudafy.Translator;
+using Cudafy.Compilers;
 namespace Cudafy.Host.UnitTests
 {
     [TestFixture]
@@ -42,9 +43,9 @@ namespace Cudafy.Host.UnitTests
         [TestFixtureSetUp]
         public void SetUp()
         {
-            _cm = CudafyTranslator.Cudafy(eArchitecture.sm_13);
-
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target);
+            CudafyTranslator.GenerateDebug = true;
+            _cm = CudafyTranslator.Cudafy();
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target, 1);
             _gpu.LoadModule(_cm);
         }
 
