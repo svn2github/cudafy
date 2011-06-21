@@ -54,8 +54,11 @@ namespace Cudafy.Host.UnitTests
                 GPGPUTests gput = new GPGPUTests();
                 CudafyUnitTest.PerformAllTests(gput);
 
-                MultiGPUTests mgt = new MultiGPUTests();
-                CudafyUnitTest.PerformAllTests(mgt);
+                if (CudafyHost.GetDeviceCount(CudafyModes.Target) > 1)
+                {
+                    MultiGPUTests mgt = new MultiGPUTests();
+                    CudafyUnitTest.PerformAllTests(mgt);
+                }
 
                 Console.WriteLine("Done");
                 Console.ReadLine();

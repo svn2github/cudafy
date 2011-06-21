@@ -36,7 +36,7 @@ namespace Cudafy
         /// <summary>
         /// Version 1.2.*
         /// </summary>
-        public const string csVERSION = "1.2.*";
+        public const string csVERSION = "1.3.*";
     }
 
     /// <summary>
