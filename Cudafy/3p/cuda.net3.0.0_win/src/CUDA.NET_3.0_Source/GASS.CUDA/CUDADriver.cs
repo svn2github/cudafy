@@ -632,6 +632,8 @@ namespace GASS.CUDA
         [DllImport("nvcuda")]
         public static extern CUResult cuParamSetTexRef(CUfunction hfunc, int texunit, CUtexref hTexRef);
         [DllImport("nvcuda")]
+        public static extern CUResult cuParamSetv(CUfunction hfunc, int offset, ref long value, uint numbytes);
+        [DllImport("nvcuda")]
         public static extern CUResult cuParamSetv(CUfunction hfunc, int offset, IntPtr ptr, uint numbytes);
         [DllImport("nvcuda")]
         public static extern CUResult cuParamSetv(CUfunction hfunc, int offset, [In] Char1[] ptr, uint numbytes);

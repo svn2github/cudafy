@@ -158,6 +158,7 @@ namespace Cudafy
         public const string csCONSTANT_X_ALREADY_ADDED_TO_THIS_MODULE = "Constant with name '{0}' already added to this module.";
         public const string csTYPE_X_ALREADY_ADDED_TO_THIS_MODULE = "Type with name '{0}' already added to this module.";
         public const string csNO_METHODS_FOUND = "No methods found marked to Cudafy.";
+        public const string csNO_MEMBERS_FOUND = "No members found.";
         public const string csREFERENCED_CUDAFY_ASSEMBLIES_DO_NOT_MATCH = "Referenced Cudafy.dll assemblies do not match.";
         public const string csCOULD_NOT_LOAD_ASSEMBLY_X = "Could not load assembly '{0}'.";
         public const string csCOULD_NOT_FIND_FUNCTION_X = "Could not find function '{0}' in module.";

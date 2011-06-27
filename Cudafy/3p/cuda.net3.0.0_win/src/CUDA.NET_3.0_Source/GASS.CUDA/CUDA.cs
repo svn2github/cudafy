@@ -871,6 +871,11 @@ namespace GASS.CUDA
             this.LastError = CUDADriver.cuParamSetf(func, offset, value);
         }
 
+        public void SetParameter(CUfunction func, int offset, long value)
+        {
+            this.LastError = CUDADriver.cuParamSetv(func, offset, ref value, 8);
+        }
+
         public void SetParameter<T>(CUfunction func, int offset, T vector)
         {
             GCHandle handle = GCHandle.Alloc(vector, GCHandleType.Pinned);

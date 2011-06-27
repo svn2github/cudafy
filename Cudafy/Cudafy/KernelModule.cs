@@ -573,9 +573,11 @@ namespace Cudafy
         /// <summary>
         /// Verifies the checksums of all functions, constants and types.
         /// </summary>
-        /// <exception cref="CudafyException">Check sums don't match.</exception>
+        /// <exception cref="CudafyException">Check sums don't match or total number of members is less than one, .</exception>
         public void VerifyChecksums()
         {
+            if (GetTotalMembers() == 0)
+                throw new CudafyException(CudafyException.csNO_MEMBERS_FOUND);
             foreach (var kvp in Functions)
                 kvp.Value.VerifyChecksums();
             foreach (var kvp in Constants)
@@ -588,9 +590,11 @@ namespace Cudafy
         /// <summary>
         /// Verifies the checksums of all functions, constants and types.
         /// </summary>
-        /// <returns>True if checksums match, else false.</returns>
+        /// <returns>True if checksums match and total number of members is greater than one, else false.</returns>
         public bool TryVerifyChecksums()
         {
+            if (GetTotalMembers() == 0)
+                return false;
             foreach (var kvp in Functions)
                 if (kvp.Value.TryVerifyChecksums() == false)
                     return false;
@@ -601,6 +605,11 @@ namespace Cudafy
                 if (kvp.Value.TryVerifyChecksums() == false)
                     return false;
             return true;
+        }
+
+        private int GetTotalMembers()
+        {
+            return Functions.Count + Constants.Count + Types.Count;
         }
 
         /// <summary>

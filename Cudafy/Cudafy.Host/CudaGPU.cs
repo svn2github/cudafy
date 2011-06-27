@@ -456,6 +456,12 @@ namespace Cudafy.Host
                         _cuda.SetParameter(function, offset, (float)o);
                         offset += 4; //4;
                     }
+                    else if (type == typeof(long))
+                    {
+                        offset = AlignUp(offset, 8);
+                        _cuda.SetParameter(function, offset, (long)o);//(uint)((int)o));// (uint)(long)
+                        offset += 8; //;
+                    }
                     else if (type.IsValueType && type != typeof(char))
                     {
                         int size = MSizeOf(o.GetType());
