@@ -19,11 +19,14 @@ namespace CudafyByExample
 
         public static void Execute()
         {
+            // Translates this class to CUDA C and then compliles
             CudafyModule km = CudafyTranslator.Cudafy();
 
+            // Get the first GPU and load the module
             GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target);
             gpu.LoadModule(km);
 
+            // Create some arrays on the host
             int[] a = new int[N];
             int[] b = new int[N];
             int[] c = new int[N];
@@ -42,6 +45,7 @@ namespace CudafyByExample
             int[] dev_a = gpu.CopyToDevice(a);
             int[] dev_b = gpu.CopyToDevice(b);
 
+            // Launch 128 blocks of 128 threads each
             gpu.Launch(128, 128).add(dev_a, dev_b, dev_c);
 
             // copy the array 'c' back from the GPU to the CPU

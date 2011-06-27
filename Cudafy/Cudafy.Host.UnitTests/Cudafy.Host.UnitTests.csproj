@@ -94,6 +94,7 @@
     <Compile Include="BasicFunctionTests.cs" />
     <Compile Include="CopyTests1D.cs" />
     <Compile Include="CURANDTests.cs" />
+    <Compile Include="GMathUnitTests.cs" />
     <Compile Include="GPGPUTests.cs" />
     <Compile Include="MultiGPUTests.cs" />
     <Compile Include="MultithreadedTests.cs" />

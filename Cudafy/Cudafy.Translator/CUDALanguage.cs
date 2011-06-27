@@ -401,6 +401,17 @@ namespace Cudafy.Translator
 
         static string TranslateGMath(MemberReferenceExpression mre, object data)
         {
+            switch (mre.MemberName)
+            {
+                case "Abs":
+                    return "fabsf";
+                case "Max":
+                    return "fmaxf";
+                case "Min":
+                    return "fminf";
+                default:
+                    break;
+            }
             return TranslateMath(mre, data) + "f";
         }
 
@@ -414,16 +425,12 @@ namespace Cudafy.Translator
                     return "trunc";
                 case "Ceiling":
                     return "ceil";
-
+                    //Math.Sign
                 case "DivRem":
                     throw new NotSupportedException(mre.MemberName);
                 case "IEEERemainder":
                     throw new NotSupportedException(mre.MemberName);
-                case "Max":
-                    throw new NotSupportedException(mre.MemberName);
-                case "Min":
-                    throw new NotSupportedException(mre.MemberName);
-                case "Sign":
+                case "Sign"://http://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
                     throw new NotSupportedException(mre.MemberName);
                 case "BigMul":
                     throw new NotSupportedException(mre.MemberName);

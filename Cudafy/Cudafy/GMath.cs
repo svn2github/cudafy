@@ -35,7 +35,15 @@ namespace Cudafy
     public static class GMath
     {
 
-
+        /// <summary>
+        /// Returns the absolute value of a single precision floating point number.
+        /// </summary>
+        /// <param name="value">The value to find absolute value of.</param>
+        /// <returns>Absolute of specified value.</returns>
+        public static float Abs(float value)
+        {
+            return Math.Abs(value);
+        }
 
         /// <summary>
         /// Returns the square root of a specified number.
@@ -244,6 +252,28 @@ namespace Cudafy
         public static float Truncate(float value)
         {
             return (float)Math.Truncate(value);
+        }
+
+        /// <summary>
+        /// Returns the larger of two single float precision numbers.
+        /// </summary>
+        /// <param name="x">The first number to compare.</param>
+        /// <param name="y">The second number to compare.</param>
+        /// <returns>The larger of the two numbers.</returns>
+        public static float Max(float x, float y)
+        {
+            return (float)Math.Max(x, y);
+        }
+
+        /// <summary>
+        /// Returns the smaller of two single float precision numbers.
+        /// </summary>
+        /// <param name="x">The first number to compare.</param>
+        /// <param name="y">The second number to compare.</param>
+        /// <returns>The smaller of the two numbers.</returns>
+        public static float Min(float x, float y)
+        {
+            return (float)Math.Min(x, y);
         }
 
         ///// <summary>

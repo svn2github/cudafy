@@ -249,7 +249,7 @@ namespace Cudafy.Host.UnitTests
             else if (addMode == eAddVectorMode.GlobalVar)
                 _gpu.Launch(N, 1, "addVector", dev_a, dev_b, dev_c);
             else if (addMode == eAddVectorMode.GlobalVarDevice)
-                _gpu.Launch(N, 1, "addVector", dev_a, dev_b, dev_c);
+                _gpu.Launch(N, 1, "addVectorDevice", dev_a, dev_b, dev_c);
             else
                 throw new NotSupportedException(addMode.ToString());
 
@@ -401,13 +401,14 @@ namespace Cudafy.Host.UnitTests
         {
             int tid = thread.blockIdx.x;
             if (tid < N)
-                c[tid] = addDevice(a[tid], b[tid]);
+                c[tid] = addDevice(thread, a[tid], b[tid]);
         }
 
         [Cudafy]
-        public static int addDevice(int a, int b)
+        public static int addDevice(GThread t, int a, int b)
         {
-            return a + b;
+            int coef = t.threadIdx.x / t.threadIdx.x;
+            return a + b * coef;
         }
 
         [Cudafy]
@@ -456,12 +457,13 @@ namespace Cudafy.Host.UnitTests
                 c[thread.blockIdx.x] = cache[0];
         }
 
-
+        [SetUp]
         public void TestSetUp()
         {
            
         }
 
+        [TearDown]
         public void TestTearDown()
         {
             

@@ -39,11 +39,14 @@ namespace Cudafy.Host.UnitTests
 
                 //CURANDTests.Basics();
 
-                StringTests st = new StringTests();
-                CudafyUnitTest.PerformAllTests(st);
+                //StringTests st = new StringTests();
+                //CudafyUnitTest.PerformAllTests(st);
 
                 //BasicFunctionTests bft = new BasicFunctionTests();
                 //CudafyUnitTest.PerformAllTests(bft);
+
+                GMathUnitTests gmu = new GMathUnitTests();
+                CudafyUnitTest.PerformAllTests(gmu);
 
                 //MultithreadedTests mtt = new MultithreadedTests();
                 //CudafyUnitTest.PerformAllTests(mtt);

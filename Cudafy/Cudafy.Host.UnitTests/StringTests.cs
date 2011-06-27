@@ -45,7 +45,7 @@ namespace Cudafy.Host.UnitTests
         {
             CudafyTranslator.GenerateDebug = true;
             _cm = CudafyTranslator.Cudafy();
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target, 1);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
             _gpu.LoadModule(_cm);
         }
 

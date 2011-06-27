@@ -188,15 +188,41 @@ namespace Cudafy.Translator
 		void WriteCommaSeparatedList(IEnumerable<AstNode> list)
 		{
 			bool isFirst = true;
-			foreach (AstNode node in list) {
-				if (isFirst) {
+            bool isIgnored = false;
+			foreach (AstNode node in list) 
+            {
+                isIgnored = IsIgnored(node);
+                if (isIgnored)
+                    continue;
+				if (isFirst) 
+                {
 					isFirst = false;
-				} else {
-					Comma(node);
+				} 
+                else 
+                {
+                    if (!isIgnored)
+					    Comma(node);
 				}
-				node.AcceptVisitor(this, null);
+				    node.AcceptVisitor(this, null);
 			}
 		}
+
+        bool IsIgnored(AstNode node)
+        {
+            var ie = node as IdentifierExpression;
+            if (ie != null)
+            {
+                if (ie.Annotations.Count() > 0)
+                {
+                    var typeRef = ((object[])(node.Annotations))[0] as ICSharpCode.Decompiler.ILAst.ILVariable;//as Mono.Cecil.TypeReference;
+                    if (typeRef != null && typeRef.Type.Name == "GThread")//+		[0]	{thread}	object {ICSharpCode.Decompiler.ILAst.ILVariable}
+                        return true;
+
+                }
+            }
+            return false;
+
+        }
 
         void WriteCUDAParametersCommaSeparatedList(IEnumerable<AstNode> list)
         {
@@ -915,7 +941,7 @@ namespace Cudafy.Translator
             
             bool isSpecialProp = !isGThread && mre.IsSpecialProperty();
             bool isSpecialMethod = !isGThread && mre.IsSpecialMethod();
-
+            Debug.WriteLine(mre.MemberName);
             Debug.Assert(!mre.IsAllocateShared());
             bool callFunc = !isSpecialProp;
             if (isSpecialMethod)
