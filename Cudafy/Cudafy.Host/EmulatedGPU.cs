@@ -504,9 +504,9 @@ namespace Cudafy.Host
         /// <param name="hostArray">The host array.</param>
         /// <param name="devArray">The dev array.</param>
         /// <param name="ci">The ci.</param>
-        protected override void DoCopyToConstantMemory<T>(Array hostArray, Array devArray, KernelConstantInfo ci)
+        protected override void DoCopyToConstantMemory<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci)
         {
-            Array.Copy(hostArray, devArray, hostArray.Length);
+            Array.Copy(hostArray, hostOffset, devArray, devOffset, hostArray.Length);
         }
 
         /// <summary>

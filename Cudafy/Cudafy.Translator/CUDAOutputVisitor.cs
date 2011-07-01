@@ -1519,8 +1519,7 @@ namespace Cudafy.Translator
             }
             else
             {
-
-                                                                                            #region Commented Out
+                 #region Commented Out
             //switch (typeDeclaration.ClassType) {
             //    case ClassType.Enum:
             //WriteKeyword("enum");
@@ -1540,12 +1539,13 @@ namespace Cudafy.Translator
             //        break;
             //}
             #endregion
+                string typeName;
                 WriteKeyword("struct");
-                if(typeDeclarationEx == null)
-                    WriteIdentifier(typeDeclaration.Name);
+                if (typeDeclarationEx == null)
+                    typeName = typeDeclaration.Name;
                 else
-                    WriteIdentifier(typeDeclarationEx.FullName);
-
+                    typeName = typeDeclarationEx.FullName;
+                WriteIdentifier(typeName);
 			    WriteTypeParameters(typeDeclaration.TypeParameters);
 			    if (typeDeclaration.BaseTypes.Any()) {
                     throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED, "Inheritance");
@@ -1574,6 +1574,11 @@ namespace Cudafy.Translator
                     IsTypeTranslation = true;
                     try
                     {
+                        // Make an default constructor
+                        WriteIdentifier(string.Format("__device__ {0}()", typeName));
+                        OpenBrace(braceStyle);
+                        CloseBrace(braceStyle);
+                        NewLine();
                         foreach (var member in typeDeclaration.Members)
                         {
                             member.AcceptVisitor(this, data);
@@ -2189,8 +2194,12 @@ namespace Cudafy.Translator
 			//WriteAttributes(constructorDeclaration.Attributes);
 			//WriteModifiers(constructorDeclaration.ModifierTokens);
             WriteKeyword("__device__");
-			TypeDeclaration type = constructorDeclaration.Parent as TypeDeclaration;
-			WriteIdentifier(type != null ? type.Name : constructorDeclaration.Name);
+            TypeDeclaration type = constructorDeclaration.Parent as TypeDeclaration;
+			TypeDeclarationEx typeEx = constructorDeclaration.Parent as TypeDeclarationEx;
+            if (typeEx != null)
+                WriteIdentifier(typeEx.FullName);
+            else
+                WriteIdentifier(type.Name);
 			Space(policy.SpaceBeforeConstructorDeclarationParentheses);
 			WriteCommaSeparatedListInParenthesis(constructorDeclaration.Parameters, policy.SpaceWithinMethodDeclarationParentheses);
 			if (!constructorDeclaration.Initializer.IsNull) {

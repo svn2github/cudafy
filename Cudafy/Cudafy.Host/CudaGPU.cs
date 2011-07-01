@@ -547,18 +547,49 @@ namespace Cudafy.Host
 
         #region Constant Memory
 #pragma warning disable 1591
-        protected override void DoCopyToConstantMemory<T>(Array hostArray, Array devArray, KernelConstantInfo ci)
+
+        //protected override void DoCopyToDevice<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count)
+        //{
+        //    CUdeviceptr devPtr = ((CUDevicePtrEx)GetDeviceMemory(devArray)).DevPtr;
+        //    Type type = typeof(T);
+        //    unsafe
+        //    {
+        //        GCHandle handle = GCHandle.Alloc(hostArray, GCHandleType.Pinned);
+        //        try
+        //        {
+        //            int size = MSizeOf(typeof(T));
+        //            IntPtr hostPtr = handle.AddrOfPinnedObject();
+        //            IntPtr hostOffsetPtr = new IntPtr(hostPtr.ToInt64() + hostOffset * size);
+        //            CUdeviceptr devOffsetPtr = devPtr + (long)(devOffset * size);
+        //            _cuda.CopyHostToDevice(devOffsetPtr, hostOffsetPtr, (uint)(count * size));
+        //        }
+        //        catch (CUDAException ex)
+        //        {
+        //            HandleCUDAException(ex);
+        //        }
+        //        finally
+        //        {
+        //            handle.Free();
+        //        }
+        //    }
+        //}
+
+        protected override void DoCopyToConstantMemory<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci)
         {
             Type type = typeof(T);
-            CUdeviceptr ptr = (CUdeviceptr)ci.CudaPointer;
+            CUdeviceptr devPtr = (CUdeviceptr)ci.CudaPointer;
             int size = MSizeOf(typeof(T));
+            if (count == 0)
+                count = hostArray.Length;
             unsafe
             {
                 GCHandle handle = GCHandle.Alloc(hostArray, GCHandleType.Pinned);
                 try
                 {
-                    IntPtr intPtr = handle.AddrOfPinnedObject();
-                    _cuda.CopyHostToDevice(ptr, intPtr, (uint)(hostArray.Length * size));
+                    IntPtr hostPtr = handle.AddrOfPinnedObject();
+                    IntPtr hostOffsetPtr = new IntPtr(hostPtr.ToInt64() + hostOffset * size);
+                    CUdeviceptr devOffsetPtr = devPtr + (long)(devOffset * size);
+                    _cuda.CopyHostToDevice(devOffsetPtr, hostOffsetPtr, (uint)(count * size));
                 }
                 catch (CUDAException ex)
                 {

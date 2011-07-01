@@ -59,6 +59,7 @@ namespace Cudafy.Host
 
 #pragma warning disable 1591
         public const string csCONSTANT_MEMORY_NOT_FOUND = "Constant memory not found.";
+        public const string csINDEX_OUT_OF_RANGE = "Index out of range.";
         public const string csHOST_AND_DEVICE_ARRAYS_ARE_OF_DIFFERENT_SIZES = "Host and device arrays are of different sizes.";
         public const string csNO_MODULE_LOADED = "No module loaded.";
         public const string csMODULE_ALREADY_LOADED = "Module already loaded.";

@@ -29,24 +29,7 @@ using Cudafy.Translator;
 
 namespace CudafyExamples.Arrays
 {
-    /// <summary>
-    /// This type is used by GlobalArrays and must be selected for Cudafying.
-    /// </summary>
-    [Cudafy]
-    public struct ComplexFloat
-    {
-        public ComplexFloat(float r, float i)
-        {
-            Real = r;
-            Imag = i;
-        }
-        public float Real;
-        public float Imag;
-        public ComplexFloat Add(ComplexFloat c)
-        {
-            return new ComplexFloat(Real + c.Real, Imag + c.Imag);
-        }
-    }
+
 
     /// <summary>
     /// Is dependent on ComplexFloat type.
@@ -57,12 +40,34 @@ namespace CudafyExamples.Arrays
         public const int YSIZE = 8;
         public const int ZSIZE = 16;
 
+        /// <summary>
+        /// This type is used by GlobalArrays and must be selected for Cudafying.
+        /// </summary>
+        [Cudafy]
+        public struct ComplexFloat
+        {
+            public ComplexFloat(float r, float i)
+            {
+                Real = r;
+                Imag = i;
+            }
+            public float Real;
+            public float Imag;
+            public ComplexFloat Add(ComplexFloat c)
+            {
+                return new ComplexFloat(Real + c.Real, Imag + c.Imag);
+            }
+        }
+
+        [Cudafy]
+        public static ComplexFloat[] Constant1D = new ComplexFloat[8];
+
         public static void Execute()
         {
             CudafyModule km = CudafyModule.TryDeserialize();
             if (km == null || !km.TryVerifyChecksums())
             {
-                km = CudafyTranslator.Cudafy(typeof(ComplexFloat), typeof(GlobalArrays));
+                km = CudafyTranslator.Cudafy();//typeof(ComplexFloat), typeof(GlobalArrays));
                 km.Serialize();
             }
 

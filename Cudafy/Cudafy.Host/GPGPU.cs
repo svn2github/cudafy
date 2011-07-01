@@ -444,8 +444,8 @@ namespace Cudafy.Host
         /// <param name="devArray">The device array.</param>
         public void CopyToConstantMemory<T>(T[] hostArray, T[] devArray)
         {
-            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, devArray);
-            DoCopyToConstantMemory<T>(hostArray, devArray, ci);
+            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, 0, devArray, 0, hostArray.Length);
+            DoCopyToConstantMemory<T>(hostArray, 0, devArray, 0, hostArray.Length, ci);
         }
 
         /// <summary>
@@ -456,8 +456,8 @@ namespace Cudafy.Host
         /// <param name="devArray">The device array.</param>
         public void CopyToConstantMemory<T>(T[,] hostArray, T[,] devArray)
         {
-            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, devArray);
-            DoCopyToConstantMemory<T>(hostArray, devArray, ci);
+            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, 0, devArray, 0, hostArray.Length);
+            DoCopyToConstantMemory<T>(hostArray, 0, devArray, 0, hostArray.Length, ci);
         }
 
         /// <summary>
@@ -468,11 +468,26 @@ namespace Cudafy.Host
         /// <param name="devArray">The device array.</param>
         public void CopyToConstantMemory<T>(T[,,] hostArray, T[,,] devArray)
         {
-            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, devArray);
-            DoCopyToConstantMemory<T>(hostArray, devArray, ci);
+            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, 0, devArray, 0, hostArray.Length);
+            DoCopyToConstantMemory<T>(hostArray, 0, devArray, 0, hostArray.Length, ci);
         }
 
-        private KernelConstantInfo InitializeCopyToConstantMemory(Array hostArray, Array devArray)
+        /// <summary>
+        /// Copies to constant memory.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="devArray">The device array.</param>
+        /// <param name="devOffset">The device offset.</param>
+        /// <param name="count">The number of element to copy.</param>
+        public void CopyToConstantMemory<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count)
+        {
+            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, hostOffset, devArray, devOffset, count);
+            DoCopyToConstantMemory<T>(hostArray, hostOffset, devArray, devOffset, count, ci);
+        }
+
+        private KernelConstantInfo InitializeCopyToConstantMemory(Array hostArray, int hostOffset, Array devArray, int devOffset, int count)
         {
             object o = null;
             KernelConstantInfo ci = null;
@@ -491,8 +506,10 @@ namespace Cudafy.Host
             }
             if (o == null)
                 throw new CudafyHostException(CudafyHostException.csCONSTANT_MEMORY_NOT_FOUND);
-            if (hostArray.Length != devArray.Length)
-                throw new CudafyHostException(CudafyHostException.csHOST_AND_DEVICE_ARRAYS_ARE_OF_DIFFERENT_SIZES);
+            if (count == 0)
+                count = hostArray.Length;
+            if (count > devArray.Length - devOffset)
+                throw new CudafyHostException(CudafyHostException.csINDEX_OUT_OF_RANGE);
             return ci;
         }
 
@@ -728,7 +745,7 @@ namespace Cudafy.Host
         /// <param name="hostArray">The host array.</param>
         /// <param name="devArray">The dev array.</param>
         /// <param name="ci">The ci.</param>
-        protected abstract void DoCopyToConstantMemory<T>(Array hostArray, Array devArray, KernelConstantInfo ci);
+        protected abstract void DoCopyToConstantMemory<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci);
 
         /// <summary>
         /// Does the copy to device.
