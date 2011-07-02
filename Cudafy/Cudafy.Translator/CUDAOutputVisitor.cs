@@ -755,14 +755,19 @@ namespace Cudafy.Translator
 		
 		public object VisitCastExpression(CastExpression castExpression, object data)
 		{
-			StartNode(castExpression);
-			LPar();
-			Space(policy.SpacesWithinCastParentheses);
-			castExpression.Type.AcceptVisitor(this, data);
-			Space(policy.SpacesWithinCastParentheses);
-			RPar();
-			Space(policy.SpaceAfterTypecast);
-			castExpression.Expression.AcceptVisitor(this, data);
+			
+            StartNode(castExpression);
+            if (!castExpression.Type.ToString().Contains("IntPtr"))
+            {
+                LPar();
+                Space(policy.SpacesWithinCastParentheses);
+                castExpression.Type.AcceptVisitor(this, data);
+                Space(policy.SpacesWithinCastParentheses);
+                RPar();
+                Space(policy.SpaceAfterTypecast);
+            }
+            castExpression.Expression.AcceptVisitor(this, data);
+            
 			return EndNode(castExpression);
 		}
 		
@@ -1734,19 +1739,20 @@ namespace Cudafy.Translator
 		
 		public object VisitFixedStatement(FixedStatement fixedStatement, object data)
 		{
-            throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "fixed statements");
-            //StartNode(fixedStatement);
+            //throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "fixed statements");
+            StartNode(fixedStatement);
             //WriteKeyword("fixed");
             //Space(policy.SpaceBeforeUsingParentheses);
             //LPar();
             //Space(policy.SpacesWithinUsingParentheses);
-            //fixedStatement.Type.AcceptVisitor(this, data);
-            //Space();
-            //WriteCommaSeparatedList(fixedStatement.Variables);
+            fixedStatement.Type.AcceptVisitor(this, data);
+            Space();
+            WriteCommaSeparatedList(fixedStatement.Variables);
+            Semicolon();
             //Space(policy.SpacesWithinUsingParentheses);
             //RPar();
-            //WriteEmbeddedStatement(fixedStatement.EmbeddedStatement);
-            //return EndNode(fixedStatement);
+            WriteEmbeddedStatement(fixedStatement.EmbeddedStatement);
+            return EndNode(fixedStatement);
 		}
 		
 		public object VisitForeachStatement(ForeachStatement foreachStatement, object data)

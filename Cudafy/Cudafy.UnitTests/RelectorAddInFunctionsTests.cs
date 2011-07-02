@@ -126,6 +126,12 @@ namespace Cudafy.UnitTests
             Assert.Contains("dot", _cm.Functions.Keys);
         }
 
+        [Test]
+        public void TestFixed()
+        {
+            Assert.Contains("fixedTest", _cm.Functions.Keys);
+        }
+
 
         [Cudafy]
         public static void add(int a, int b, int[] c)
@@ -233,6 +239,27 @@ namespace Cudafy.UnitTests
                 c[thread.blockIdx.x] = cache[0];
 
             //callWithShared(cache);
+        }
+
+        [Cudafy]
+        public static unsafe void fixedTest(byte[] buffer)
+        {
+            fixed (byte* p = buffer)
+            {
+                byte* offset = p + 1;
+                int* ip = (int*)(void*)(offset);
+                *ip = 42;
+            }
+        }
+
+        [Cudafy]
+        public static unsafe void fixedTest2(byte[] buffer)
+        {
+            fixed (byte* p = buffer)
+            {
+                int* ip = (int*)(void*)(p + 1);
+                *ip = 42;
+            }
         }
 
         //[Cudafy]
