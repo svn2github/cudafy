@@ -8,7 +8,7 @@ namespace Cudafy
     /// <summary>
     /// Methods, structures and fields to be converted to Cuda C should be decorated with this attribute.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Struct | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Struct | AttributeTargets.Field | AttributeTargets.Enum)]
     public class CudafyAttribute : Attribute
     {
         /// <summary>

@@ -132,6 +132,11 @@ namespace Cudafy.UnitTests
             Assert.Contains("fixedTest", _cm.Functions.Keys);
         }
 
+        [Test]
+        public void TestEnum()
+        {
+            Assert.Contains("enumTest", _cm.Functions.Keys);
+        }
 
         [Cudafy]
         public static void add(int a, int b, int[] c)
@@ -261,6 +266,16 @@ namespace Cudafy.UnitTests
                 *ip = 42;
             }
         }
+
+        [Cudafy]
+        public static void enumTest(GThread thread, MyEnum test, int[] data)
+        {
+            if (test == MyEnum.A)
+                data[thread.threadIdx.x] *= (int)test;            
+        }
+
+        [Cudafy]
+        public enum MyEnum { A = 1, B = 2, C = 4, D = 8 };
 
         //[Cudafy]
         //public static void TestTryCatchFinally()

@@ -1511,10 +1511,13 @@ namespace Cudafy.Translator
 		public object VisitTypeDeclaration(TypeDeclaration typeDeclaration, object data)
 		{
 			StartNode(typeDeclaration);
+            //typeDeclaration.Attributes.ToList().ForEach(a => (a.Children.ToList().ForEach(c => Console.WriteLine(c.ToString())));
+            //if (typeDeclaration.Attributes.ToList().Count(a => a.ToString().Contains("Flag")) > 0)
+            //    throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED, "Flags");
 			//WriteAttributes(typeDeclaration.Attributes);
 			//WriteModifiers(typeDeclaration.ModifierTokens);
 			BraceStyle braceStyle = policy.StructBraceStyle;
-            if (typeDeclaration.ClassType != ClassType.Struct)
+            if (typeDeclaration.ClassType != ClassType.Struct && typeDeclaration.ClassType != ClassType.Enum)
                 throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED, typeDeclaration.ClassType.ToString());
 
             var typeDeclarationEx = typeDeclaration as TypeDeclarationEx;
@@ -1525,27 +1528,29 @@ namespace Cudafy.Translator
             else
             {
                  #region Commented Out
-            //switch (typeDeclaration.ClassType) {
-            //    case ClassType.Enum:
-            //WriteKeyword("enum");
-            //braceStyle = policy.EnumBraceStyle;
-            //        break;
-            //    case ClassType.Interface:
-            //        WriteKeyword("interface");
-            //        braceStyle = policy.InterfaceBraceStyle;
-            //        break;
-            //    case ClassType.Struct:
-            //        WriteKeyword("struct");
-            //        braceStyle = policy.StructBraceStyle;
-            //        break;
-            //    default:
-            //        WriteKeyword("class");
-            //        braceStyle = policy.ClassBraceStyle;
-            //        break;
-            //}
+                switch (typeDeclaration.ClassType)
+                {
+                    case ClassType.Enum:
+                        WriteKeyword("enum");
+                        braceStyle = policy.EnumBraceStyle;
+                        break;
+                    //case ClassType.Interface:
+                    //    WriteKeyword("interface");
+                    //    braceStyle = policy.InterfaceBraceStyle;
+                    //    break;
+                    case ClassType.Struct:
+                        WriteKeyword("struct");
+                        braceStyle = policy.StructBraceStyle;
+                        break;
+                    //default:
+                    //    WriteKeyword("class");
+                    //    braceStyle = policy.ClassBraceStyle;
+                    //    break;
+                }
             #endregion
                 string typeName;
-                WriteKeyword("struct");
+              
+               
                 if (typeDeclarationEx == null)
                     typeName = typeDeclaration.Name;
                 else
@@ -2250,18 +2255,19 @@ namespace Cudafy.Translator
 		
 		public object VisitEnumMemberDeclaration(EnumMemberDeclaration enumMemberDeclaration, object data)
 		{
-            throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Enumerators");
-            //StartNode(enumMemberDeclaration);
-            //WriteAttributes(enumMemberDeclaration.Attributes);
-            //WriteModifiers(enumMemberDeclaration.ModifierTokens);
-            //WriteIdentifier(enumMemberDeclaration.Name);
-            //if (!enumMemberDeclaration.Initializer.IsNull) {
-            //    Space(policy.SpaceAroundAssignment);
-            //    WriteToken("=", EnumMemberDeclaration.Roles.Assign);
-            //    Space(policy.SpaceAroundAssignment);
-            //    enumMemberDeclaration.Initializer.AcceptVisitor(this, data);
-            //}
-            //return EndNode(enumMemberDeclaration);
+            //throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Enumerators");
+            StartNode(enumMemberDeclaration);
+            WriteAttributes(enumMemberDeclaration.Attributes);
+            WriteModifiers(enumMemberDeclaration.ModifierTokens);
+            WriteIdentifier(enumMemberDeclaration.Name);
+            if (!enumMemberDeclaration.Initializer.IsNull)
+            {
+                Space(policy.SpaceAroundAssignment);
+                WriteToken("=", EnumMemberDeclaration.Roles.Assign);
+                Space(policy.SpaceAroundAssignment);
+                enumMemberDeclaration.Initializer.AcceptVisitor(this, data);
+            }
+            return EndNode(enumMemberDeclaration);
 		}
 		
 		public object VisitEventDeclaration(EventDeclaration eventDeclaration, object data)
