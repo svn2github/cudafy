@@ -537,7 +537,7 @@ namespace Cudafy.Translator
                                 return new PrimitiveType("unsigned long long");//"ulong");
                             case "String":
                                 throw new NotSupportedException("String");
-                                //return new PrimitiveType("string");
+                                //return new PrimitiveType("unsigned char");
                             case "Single":
                                 return new PrimitiveType("float");
                             case "Double":
@@ -759,17 +759,17 @@ namespace Cudafy.Translator
                 astType.AddChild(CreateField(fieldDef), TypeDeclaration.MemberRole);
             }
 
-            // Add events
-            foreach (EventDefinition eventDef in typeDef.Events)
-            {
-                astType.AddChild(CreateEvent(eventDef), TypeDeclaration.MemberRole);
-            }
+            //// Add events
+            //foreach (EventDefinition eventDef in typeDef.Events)
+            //{
+            //    astType.AddChild(CreateEvent(eventDef), TypeDeclaration.MemberRole);
+            //}
 
-            // Add properties
-            foreach (PropertyDefinition propDef in typeDef.Properties)
-            {
-                astType.Members.Add(CreateProperty(propDef));
-            }
+            //// Add properties
+            //foreach (PropertyDefinition propDef in typeDef.Properties)
+            //{
+            //    astType.Members.Add(CreateProperty(propDef));
+            //}
 
             // Add methods
             foreach (MethodDefinition methodDef in typeDef.Methods)
