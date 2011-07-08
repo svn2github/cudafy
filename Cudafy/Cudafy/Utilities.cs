@@ -163,6 +163,11 @@ namespace Cudafy
             return string.Empty;
         }
 
+        public static string ProgramFiles()
+        {
+            return Environment.GetEnvironmentVariable("ProgramFiles");
+        }
+
         /// <summary>
         /// Converts the specified values to an array of floats.
         /// </summary>

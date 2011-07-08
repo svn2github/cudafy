@@ -438,13 +438,13 @@ namespace Cudafy.Host
                 }
                 try
                 {
-                    if (type == typeof(int))
-                    {
-                        offset = AlignUp(offset, 4);
-                        _cuda.SetParameter(function, offset, (uint)((int)o));// (uint)(long)
-                        offset += 4; //;
-                    }
-                    else if (type == typeof(uint))
+                    //if (type == typeof(int))
+                    //{
+                    //    offset = AlignUp(offset, 4);
+                    //    _cuda.SetParameter(function, offset, (uint)((int)o));// (uint)(long)
+                    //    offset += 4; //;
+                    //}
+                    if (type == typeof(uint))
                     {
                         offset = AlignUp(offset, 4);
                         _cuda.SetParameter(function, offset, (uint)o);// (uint)(long)

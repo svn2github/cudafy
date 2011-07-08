@@ -830,6 +830,8 @@ namespace Cudafy.Host
             DoCopyToDevice<T>(hostArray, hostOffset, devArray, devOffset, count);
         }
 
+        //public void SmartCopyToDevice<T>(TextWriterTraceListener[])
+
         /// <summary>
         /// Copies to preallocated array on device.
         /// </summary>
@@ -1471,25 +1473,58 @@ namespace Cudafy.Host
             DoCopyOnHost<T>(nativeHostArraySrc, srcOffset, hostAllocatedMemory, dstOffset, count);
         }
 
-        private static void DoCopyOnHost<T>(Array nativeHostArraySrc, int srcOffset, IntPtr hostAllocatedMemory, int dstOffset, int count)
+        private unsafe static void DoCopyOnHost<T>(Array nativeHostArraySrc, int srcOffset, IntPtr hostAllocatedMemory, int dstOffset, int count)
         {
-            unsafe
+            //Type type = (typeof(T));
+
+            GCHandle handle = GCHandle.Alloc(nativeHostArraySrc, GCHandleType.Pinned);
+            try
             {
-                GCHandle handle = GCHandle.Alloc(nativeHostArraySrc, GCHandleType.Pinned);
-                try
-                {
-                    int size = MSizeOf(typeof(T));
-                    IntPtr srcIntPtr = handle.AddrOfPinnedObject();
-                    IntPtr srcOffsetPtr = new IntPtr(srcIntPtr.ToInt64() + srcOffset * size);
-                    IntPtr dstIntPtrOffset = new IntPtr(hostAllocatedMemory.ToInt64() + dstOffset * size);
-                    CopyMemory(dstIntPtrOffset, srcOffsetPtr, (uint)(count * size));
-                }
-                finally
-                {
-                    handle.Free();
-                }
+                int size = MSizeOf(typeof(T));
+                IntPtr srcIntPtr = handle.AddrOfPinnedObject();
+                IntPtr srcOffsetPtr = new IntPtr(srcIntPtr.ToInt64() + srcOffset * size);
+                IntPtr dstIntPtrOffset = new IntPtr(hostAllocatedMemory.ToInt64() + dstOffset * size);
+                CopyMemory(dstIntPtrOffset, srcOffsetPtr, (uint)(count * size));
             }
+            finally
+            {
+                handle.Free();
+            }
+
         }
+
+        //private unsafe static IntPtr MarshalArray<T>(ref Array items, int srcOffset, IntPtr dstPtr, int dstOffset, int count = 0)
+        //{
+        //    int length = count <= 0 ? (items.Length - srcOffset) : count;
+        //    int iSizeOfOneItemPos = Marshal.SizeOf(typeof(T));
+        //    IntPtr dstIntPtrOffset = new IntPtr(dstPtr.ToInt64() + (dstOffset * length));
+        //    byte* pbyUnmanagedItems = (byte*)(dstIntPtrOffset.ToPointer());
+            
+        //    for (int i = srcOffset; i < (srcOffset + length); i++, pbyUnmanagedItems += (iSizeOfOneItemPos))
+        //    {
+        //        IntPtr pOneItemPos = new IntPtr(pbyUnmanagedItems);
+        //        GCHandle handle = GCHandle.Alloc(items.GetValue(i));//, GCHandleType.Pinned);
+        //        CopyMemory(pOneItemPos, handle.AddrOfPinnedObject(), (uint)(iSizeOfOneItemPos));
+        //        handle.Free();
+        //        //Marshal.StructureToPtr(, pOneItemPos, false);
+        //    }
+
+        //    return dstPtr;
+        //}
+
+        //private unsafe static void UnMarshalArray<T>(IntPtr srcItems, int srcOffset, ref Array items, int dstOffset, int count = 0)
+        //{
+        //    int length = count <= 0 ? (items.Length - srcOffset) : count;
+        //    int iSizeOfOneItemPos = Marshal.SizeOf(typeof(T));
+        //    IntPtr srcIntPtrOffset = new IntPtr(srcItems.ToInt64() + (srcOffset * length));
+        //    byte* pbyUnmanagedItems = (byte*)(srcIntPtrOffset.ToPointer());
+
+        //    for (int i = dstOffset; i < (dstOffset + length); i++, pbyUnmanagedItems += (iSizeOfOneItemPos))
+        //    {
+        //        IntPtr pOneItemPos = new IntPtr(pbyUnmanagedItems);
+        //        items.SetValue((T)(Marshal.PtrToStructure(pOneItemPos, typeof(T))), i);
+        //    }
+        //}
 
         /// <summary>
         /// Copies data on host.
@@ -1533,24 +1568,22 @@ namespace Cudafy.Host
             DoCopyOnHost<T>(hostAllocatedMemory, srcOffset, nativeHostArrayDst, dstOffset, count);
         }
 
-        private static void DoCopyOnHost<T>(IntPtr hostAllocatedMemory, int srcOffset, Array nativeHostArrayDst, int dstOffset, int count)
+        private unsafe static void DoCopyOnHost<T>(IntPtr hostAllocatedMemory, int srcOffset, Array nativeHostArrayDst, int dstOffset, int count)
         {
-            unsafe
+            //Type type = typeof(T);
+            GCHandle handle = GCHandle.Alloc(nativeHostArrayDst, GCHandleType.Pinned);
+            try
             {
-                GCHandle handle = GCHandle.Alloc(nativeHostArrayDst, GCHandleType.Pinned);
-                try
-                {
-                    int size = MSizeOf(typeof(T));
-                    IntPtr srcIntPtrOffset = new IntPtr(hostAllocatedMemory.ToInt64() + srcOffset * size);
-                    IntPtr dstIntPtr = handle.AddrOfPinnedObject();
-                    IntPtr dstOffsetPtr = new IntPtr(dstIntPtr.ToInt64() + srcOffset * size);
-                    CopyMemory(dstOffsetPtr, srcIntPtrOffset, (uint)(count * size));
-                }
-                finally
-                {
-                    handle.Free();
-                }
+                int size = MSizeOf(typeof(T));
+                IntPtr srcIntPtrOffset = new IntPtr(hostAllocatedMemory.ToInt64() + srcOffset * size);
+                IntPtr dstIntPtr = handle.AddrOfPinnedObject();
+                IntPtr dstOffsetPtr = new IntPtr(dstIntPtr.ToInt64() + srcOffset * size);
+                CopyMemory(dstOffsetPtr, srcIntPtrOffset, (uint)(count * size));
             }
+            finally
+            {
+                handle.Free();
+            }     
         }
 
         /// <summary>

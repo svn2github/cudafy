@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Cudafy.Types;
 using Cudafy.Host;
 using Cudafy.UnitTests;
@@ -476,6 +477,122 @@ namespace Cudafy.Host.UnitTests
             Assert.IsTrue(Compare(_ushortBufferIn, _ushortBufferOut, 0, 0, N));
             ClearOutputsAndGPU();
         }
+
+
+        //[StructLayout(LayoutKind.Sequential, Size = 50, Pack = 8, CharSet = CharSet.Unicode)]
+        //[Cudafy]
+        //public struct MyStruct
+        //{
+        //    public int X;
+        //    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        //    public byte[] Data;
+        //    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        //    public byte[] _Message;
+
+        //    public string Message
+        //    {
+        //        get { return Encoding.Unicode.GetString(_Message); }
+        //        set
+        //        {
+        //            if (_Message == null)
+        //                _Message = new byte[32];
+        //            Encoding.Unicode.GetBytes(value, 0, 16, _Message, 0);
+        //        }
+        //    }
+        //}
+
+        //unsafe private IntPtr MarshalArray(ref MyStruct[] items)
+        //{
+        //    int iSizeOfOneItemPos = Marshal.SizeOf(typeof(MyStruct));
+        //    int iTotalSize = iSizeOfOneItemPos * items.Length;
+        //    IntPtr pUnmanagedItems = Marshal.AllocHGlobal(iTotalSize);
+        //    byte* pbyUnmanagedItems = (byte*)(pUnmanagedItems.ToPointer());
+
+        //    for (int i = 0; i < items.Length; i++, pbyUnmanagedItems += (iSizeOfOneItemPos))
+        //    {
+        //        IntPtr pOneItemPos = new IntPtr(pbyUnmanagedItems);
+        //        Marshal.StructureToPtr(items[i], pOneItemPos, false);
+        //    }
+
+        //    return pUnmanagedItems;
+        //}
+
+        //unsafe private IntPtr MarshalArray(ref MyStruct[] items, IntPtr dstPtr)
+        //{
+        //    int iSizeOfOneItemPos = Marshal.SizeOf(typeof(MyStruct));
+        //    int iTotalSize = iSizeOfOneItemPos * items.Length;
+        //    byte* pbyUnmanagedItems = (byte*)(dstPtr.ToPointer());
+
+        //    for (int i = 0; i < items.Length; i++, pbyUnmanagedItems += (iSizeOfOneItemPos))
+        //    {
+        //        IntPtr pOneItemPos = new IntPtr(pbyUnmanagedItems);
+        //        Marshal.StructureToPtr(items[i], pOneItemPos, false);
+        //    }
+
+        //    return dstPtr;
+        //}
+
+        //unsafe private void UnMarshalArray(IntPtr pUnmanagedItems, ref MyStruct[] items)
+        //{
+        //    int iSizeOfOneItemPos = Marshal.SizeOf(typeof(MyStruct));
+        //    byte* pbyUnmanagedItem = (byte*)(pUnmanagedItems.ToPointer());
+
+        //    for (int i = 0; i < items.Length; i++, pbyUnmanagedItem += (iSizeOfOneItemPos))
+        //    {
+        //        IntPtr pOneItemPos = new IntPtr(pbyUnmanagedItem);
+        //        items[i] = (MyStruct)(Marshal.PtrToStructure(pOneItemPos, typeof(MyStruct)));
+        //    }
+        //}
+
+        //public struct PrimitiveStruct
+        //{
+        //    public int Value;
+        //    public byte Flag;
+
+        //}
+
+        //[Test]
+        //public void Test_myStruct()
+        //{
+        //    IntPtr host_ptr = _gpu.HostAllocate<MyStruct>(N);
+        //    IntPtr host_c_ptr = _gpu.HostAllocate<MyStruct>(N);
+        //    MyStruct[] a = new MyStruct[N];
+
+        //    for (int i = 0; i < N; i++)
+        //    {
+        //        a[i].X = i;
+        //        a[i].Message = "0123456789ABCDEF" + i.ToString();
+        //    }
+
+        //    //PrimitiveStruct[] x = new PrimitiveStruct[N];
+        //    //PrimitiveStruct[] y = new PrimitiveStruct[N];
+        //    //for (int i = 0; i < N; i++)
+        //    //    x[i].Value = i;
+        //    //IntPtr x_ptr = _gpu.HostAllocate<PrimitiveStruct>(N);
+        //    //Stopwatch sw = Stopwatch.StartNew();
+        //    //x_ptr.Write(x);
+        //    //x_ptr.Read(y);
+        //    //Console.WriteLine(sw.ElapsedMilliseconds);
+        //    //for (int i = 0; i < N; i++)
+        //    //    Assert.AreEqual(x[i], y[i]);
+
+        //    host_ptr.Write(a);
+        //    MyStruct[] c = new MyStruct[N];
+        //    MyStruct[] dev_c = _gpu.Allocate<MyStruct>(N);
+        //    MyStruct[] dev_a = _gpu.Allocate<MyStruct>(N);
+        //    _gpu.CopyToDeviceAsync(host_ptr, 0, dev_a, 0, N);
+        //    _gpu.CopyOnDevice(dev_a, dev_c);
+        //    _gpu.CopyFromDeviceAsync(dev_c, 0, host_c_ptr, 0, N);
+        //    _gpu.SynchronizeStream();
+        //    host_c_ptr.Read(c);
+        //    _gpu.HostFreeAll();
+        //    _gpu.FreeAll();
+        //    for (int i = 0; i < N; i++)
+        //    {
+        //        Assert.AreEqual(a[i].X, c[i].X);
+        //        Assert.AreEqual(a[i].Message, c[i].Message);
+        //    }
+        //}
 
 
         public void TestSetUp()

@@ -130,14 +130,14 @@ namespace Cudafy.Compilers
         }
 
         /// <summary>
-        /// Creates am x86 instance based on the specified cuda version.
+        /// Creates a compiler instance for creating 32-bit apps.
         /// </summary>
         /// <param name="cudaVersion">The cuda version.</param>
         /// <param name="arch">Architecture.</param>
         /// <returns></returns>
         public static NvccCompilerOptions Createx86(Version cudaVersion, eArchitecture arch)
         {
-            string progFiles = Utility.ProgramFilesx86();
+            string progFiles = Utility.ProgramFiles();
             string toolkitbasedir = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT;
             string cvStr = GetCudaVersion(cudaVersion, toolkitbasedir);
             Debug.WriteLineIf(!string.IsNullOrEmpty(cvStr), "Compiler version: " + cvStr);
@@ -152,6 +152,7 @@ namespace Cudafy.Compilers
                 throw new CudafyCompileException("Test failed for NvccCompilerOptions for x86");
 #endif
             }
+            opt.AddOption("-m32");
             opt.Platform = ePlatform.x86;
             AddArchOptions(opt, arch);
             return opt;
@@ -177,7 +178,7 @@ namespace Cudafy.Compilers
         }
 
         /// <summary>
-        /// Creates an x64 instance based on the specified cuda version.
+        /// Creates a compiler instance for creating 64-bit apps.
         /// </summary>
         /// <param name="cudaVersion">The cuda version or null for auto.</param>
         /// <param name="arch">Architecture.</param>
@@ -185,7 +186,7 @@ namespace Cudafy.Compilers
         /// <exception cref="NotSupportedException">ProgramFilesx64 not found.</exception>
         public static NvccCompilerOptions Createx64(Version cudaVersion, eArchitecture arch)
         {
-            string progFiles = Utility.ProgramFilesx64();
+            string progFiles = Utility.ProgramFiles();
             string toolkitbasedir = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT;
             string cvStr = GetCudaVersion(cudaVersion, toolkitbasedir);
             Debug.WriteLineIf(!string.IsNullOrEmpty(cvStr), "Compiler version: " + cvStr);

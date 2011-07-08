@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Runtime.InteropServices;
 using Cudafy.Host;
 using Cudafy.UnitTests;
 using NUnit.Framework;
@@ -30,8 +31,9 @@ using Cudafy.Translator;
 
 namespace Cudafy.Host.UnitTests
 {
+   
     [TestFixture]
-    public class BasicFunctionTests : CudafyUnitTest, ICudafyUnitTest
+    public unsafe class BasicFunctionTests : CudafyUnitTest, ICudafyUnitTest
     {
         private CudafyModule _cm;
 
@@ -45,7 +47,6 @@ namespace Cudafy.Host.UnitTests
             _cm = CudafyTranslator.Cudafy();
             _gpu = CudafyHost.GetDevice(CudafyModes.Target);
             _gpu.LoadModule(_cm);
-            //Test_dynamic();
             Console.WriteLine(_cm.CompilerOutput);
         }
 
@@ -55,6 +56,57 @@ namespace Cudafy.Host.UnitTests
             _gpu.FreeAll();
         }
 
+
+        [Test]
+        public void Test_mpyVectorByCoeffShort()
+        {
+            int[] a = new int[N];
+            int[] c = new int[N];
+            short coeff = 8;
+            for (int i = 0; i < N; i++)
+                a[i] = i;
+            int[] dev_a = _gpu.CopyToDevice(a);
+            int[] dev_c = _gpu.Allocate<int>(c);
+            _gpu.Launch(N, 1, "mpyVectorByCoeffShort", dev_a, dev_c, coeff);
+            _gpu.CopyFromDevice(dev_c, c);
+            for (int i = 0; i < N; i++)
+                Assert.AreEqual(i * coeff, c[i]);
+            _gpu.Free(dev_a);
+        }
+
+        [Test]
+        public void Test_mpyVectorByCoeffInt32()
+        {
+            int[] a = new int[N];
+            int[] c = new int[N];
+            int coeff = 8;
+            for (int i = 0; i < N; i++)
+                a[i] = i;
+            int[] dev_a = _gpu.CopyToDevice(a);
+            int[] dev_c = _gpu.Allocate<int>(c);
+            _gpu.Launch(N, 1, "mpyVectorByCoeffInt32", dev_a, dev_c, coeff);
+            _gpu.CopyFromDevice(dev_c, c);
+            for (int i = 0; i < N; i++)
+                Assert.AreEqual(i * coeff, c[i]);
+            _gpu.Free(dev_a);
+        }
+
+        [Test]
+        public void Test_mpyVectorByCoeffSByte()
+        {
+            int[] a = new int[N];
+            int[] c = new int[N];
+            sbyte coeff = 8;
+            for (int i = 0; i < N; i++)
+                a[i] = i;
+            int[] dev_a = _gpu.CopyToDevice(a);
+            int[] dev_c = _gpu.Allocate<int>(c);
+            _gpu.Launch(N, 1, "mpyVectorByCoeffSByte", dev_a, dev_c, coeff);
+            _gpu.CopyFromDevice(dev_c, c);
+            for (int i = 0; i < N; i++)
+                Assert.AreEqual(i * coeff, c[i]);
+            _gpu.Free(dev_a);
+        }
 
         [Test]
         public void Test_doubleVectorOffset()
@@ -140,6 +192,7 @@ namespace Cudafy.Host.UnitTests
                 Assert.AreEqual(i * 2, c[i]);
             _gpu.Free(dev_a);
         }
+
 
 
         [Test]
@@ -405,6 +458,30 @@ namespace Cudafy.Host.UnitTests
         }
 
         [Cudafy]
+        public static void mpyVectorByCoeffShort(GThread thread, int[] a, int[] c, short coeff)
+        {
+            int tid = thread.blockIdx.x;
+            if (tid < a.Length)
+                c[tid] = a[tid] * coeff;
+        }
+
+        [Cudafy]
+        public static void mpyVectorByCoeffInt32(GThread thread, int[] a, int[] c, int coeff)
+        {
+            int tid = thread.blockIdx.x;
+            if (tid < a.Length)
+                c[tid] = a[tid] * coeff;
+        }
+
+        [Cudafy]
+        public static void mpyVectorByCoeffSByte(GThread thread, int[] a, int[] c, sbyte coeff)
+        {
+            int tid = thread.blockIdx.x;
+            if (tid < a.Length)
+                c[tid] = a[tid] * coeff;
+        }
+
+        [Cudafy]
         public static int addDevice(GThread t, int a, int b)
         {
             int coef = t.threadIdx.x / t.threadIdx.x;
@@ -456,6 +533,7 @@ namespace Cudafy.Host.UnitTests
             if (cacheIndex == 0)
                 c[thread.blockIdx.x] = cache[0];
         }
+
 
         [SetUp]
         public void TestSetUp()

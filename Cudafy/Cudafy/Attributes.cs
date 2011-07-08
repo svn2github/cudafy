@@ -106,4 +106,12 @@ namespace Cudafy
         /// </value>
         public bool SupportsEmulation { get; private set; }
     }
+
+    /// <summary>
+    /// Informs the CudafyTranslator to ignore the member of a struct.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method)]
+    public class CudafyIgnoreAttribute : Attribute
+    {
+    }
 }
