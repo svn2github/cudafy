@@ -765,17 +765,21 @@ namespace Cudafy.Translator
             //    astType.AddChild(CreateEvent(eventDef), TypeDeclaration.MemberRole);
             //}
 
-            //// Add properties
-            //foreach (PropertyDefinition propDef in typeDef.Properties)
-            //{
-            //    astType.Members.Add(CreateProperty(propDef));
-            //}
+            // Add properties
+            foreach (PropertyDefinition propDef in typeDef.Properties)
+            {
+                if (!propDef.HasCudafyIgnoreAttribute())
+                    throw new CudafyLanguageException("Properties are not supported. Did you forget to use a CudafyIgnore attribute?");
+                //astType.Members.Add(CreateProperty(propDef));
+            }
 
             // Add methods
             foreach (MethodDefinition methodDef in typeDef.Methods)
             {
-                if (MemberIsHidden(methodDef, context.Settings)) continue;
-
+                if (MemberIsHidden(methodDef, context.Settings)) 
+                    continue;
+                if (methodDef.HasCudafyIgnoreAttribute())
+                    continue;
                 if (methodDef.IsConstructor)
                     astType.Members.Add(CreateConstructor(methodDef));
                 else
@@ -786,7 +790,8 @@ namespace Cudafy.Translator
         AttributedNode CreateMethod(MethodDefinition methodDef)
         {
             bool isDummy = false;
-            var cudafyAttr = methodDef.GetCudafyType(out isDummy);
+            bool ignore = false;
+            var cudafyAttr = methodDef.GetCudafyType(out isDummy, out ignore);
             if (cudafyAttr == null)
                 cudafyAttr = eCudafyType.Auto;
             

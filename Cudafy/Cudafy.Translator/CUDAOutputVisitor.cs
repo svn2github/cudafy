@@ -943,7 +943,7 @@ namespace Cudafy.Translator
 		{
 			StartNode(mre);
             bool isGThread = mre.IsThreadIdVar();
-            
+            bool isFixedElementField = mre.MemberName == "FixedElementField";
             bool isSpecialProp = !isGThread && mre.IsSpecialProperty();
             bool isSpecialMethod = !isGThread && mre.IsSpecialMethod();
             Debug.WriteLine(mre.MemberName);
@@ -966,12 +966,13 @@ namespace Cudafy.Translator
                 if (!(mre.Target is ThisReferenceExpression) && !(mre.Target is TypeReferenceExpression))
                 {
                     mre.Target.AcceptVisitor(this, data);
-                    WriteToken(".", MemberReferenceExpression.Roles.Dot);
+                    if (!isFixedElementField)
+                        WriteToken(".", MemberReferenceExpression.Roles.Dot);
                 }
                 IsGThread = curIsGThread;
             }
 
-            if (!isSpecialMethod && !isSpecialProp)
+            if (!isSpecialMethod && !isSpecialProp && !isFixedElementField)
             {
                 WriteIdentifier(mre.MemberName);
                 WriteTypeArguments(mre.TypeArguments);
@@ -1279,7 +1280,7 @@ namespace Cudafy.Translator
 			StartNode(unaryOperatorExpression);
 			UnaryOperatorType opType = unaryOperatorExpression.Operator;
 			string opSymbol = UnaryOperatorExpression.GetOperatorSymbol(opType);
-			if (!(opType == UnaryOperatorType.PostIncrement || opType == UnaryOperatorType.PostDecrement))
+			if (!(opType == UnaryOperatorType.PostIncrement || opType == UnaryOperatorType.PostDecrement) && !unaryOperatorExpression.ToString().Contains("FixedElementField"))
 				WriteToken(opSymbol, UnaryOperatorExpression.OperatorRole);
 			unaryOperatorExpression.Expression.AcceptVisitor(this, data);
 			if (opType == UnaryOperatorType.PostIncrement || opType == UnaryOperatorType.PostDecrement)
@@ -1555,6 +1556,8 @@ namespace Cudafy.Translator
                     typeName = typeDeclaration.Name;
                 else
                     typeName = typeDeclarationEx.FullName;
+                typeName = typeName.Replace('<', '_');
+                typeName = typeName.Replace('>', '_');
                 WriteIdentifier(typeName);
 			    WriteTypeParameters(typeDeclaration.TypeParameters);
 			    if (typeDeclaration.BaseTypes.Any()) {
@@ -1589,9 +1592,38 @@ namespace Cudafy.Translator
                         OpenBrace(braceStyle);
                         CloseBrace(braceStyle);
                         NewLine();
+                        Dictionary<string, int> classSizes = new Dictionary<string, int>();
                         foreach (var member in typeDeclaration.Members)
                         {
-                            member.AcceptVisitor(this, data);
+                            var td = member as TypeDeclarationEx;
+                            if (td != null && td.Name.Contains(">e__FixedBuffer"))
+                            {
+                                int classSize1 = ((Mono.Cecil.TypeDefinition)(((object[])(((ICSharpCode.NRefactory.CSharp.AstNode)(member)).Annotations))[0])).ClassSize;
+                                classSizes.Add(td.Name, classSize1);
+                            }
+                            var fd = member as FieldDeclarationEx;
+                            int classSize = 0;
+                            string returnType = null;
+                            if (fd != null)
+                            {
+                                if (fd.ReturnType != null && fd.ReturnType is MemberType)
+                                {
+                                    var mt = fd.ReturnType as MemberType;
+                                    if (classSizes.ContainsKey(mt.MemberName))
+                                    {
+                                        classSize = classSizes[mt.MemberName];
+                                        returnType = _FixedElementFields[mt.MemberName];
+                                        _FixedElementFields.Remove(mt.MemberName);
+                                    }
+                                }
+                                else
+                                {
+                                    var vi = fd.Variables.Where(v => v is VariableInitializer).FirstOrDefault();
+                                    if (vi != null && vi.Name == "FixedElementField")
+                                        _FixedElementFields.Add((fd.Parent as TypeDeclarationEx).Name, fd.ReturnType.ToString());
+                                }
+                            }
+                            member.AcceptVisitor(this, classSize == 0 ? data : new Tuple<string,int>(returnType, classSize));
                         }
                     }
                     catch(Exception)
@@ -1609,6 +1641,8 @@ namespace Cudafy.Translator
             }
 			return EndNode(typeDeclaration);
 		}
+
+        private Dictionary<string,string> _FixedElementFields = new Dictionary<string,string>();
 
         public bool IsTypeTranslation { get; set; }
 		
@@ -2371,13 +2405,60 @@ namespace Cudafy.Translator
             {
                 //WriteAttributes (fieldDeclaration.Attributes);
                 //WriteModifiers(fieldDeclaration.ModifierTokens);
-                fieldDeclaration.ReturnType.AcceptVisitor(this, data);
-                Space();
-                WriteCommaSeparatedList(fieldDeclaration.Variables);
+
+                if (data != null)
+                {
+                    Tuple<string, int> tuple = (Tuple<string, int>)data;
+                    int classSize = (int)tuple.Item2;
+                    int elementSize = GetSize(tuple.Item1);
+                    classSize /= elementSize;
+                    string returnType = tuple.Item1;
+                    WriteKeyword(returnType);
+                    Space();
+                    WriteCommaSeparatedList(fieldDeclaration.Variables);
+                    WriteIdentifier(string.Format("[{0}]", classSize));
+                }
+                else
+                {
+                    fieldDeclaration.ReturnType.AcceptVisitor(this, false);//data
+                    Space();
+                    WriteCommaSeparatedList(fieldDeclaration.Variables);
+                }
                 Semicolon();
             }			
 			return EndNode (fieldDeclaration);
 		}
+
+        private int GetSize(string cudatype)
+        {
+            switch (cudatype)
+            {
+                case "char":
+                    return 1;
+                case "unsigned char":
+                    return 1;
+                case "unsigned short":
+                    return 2;
+                case "short":
+                    return 2;
+                case "unsigned int":
+                    return 4;
+                case "int":
+                    return 4;
+                case "unsigned long long":
+                    return 8;
+                case "long long":
+                    return 8;
+                case "float":
+                    return 4;
+                case "double":
+                    return 8;
+                case "bool":
+                    return 1;
+                default:
+                    throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED_IN_X, cudatype, "structs");
+            }
+        }
 		
 		public object VisitFixedFieldDeclaration (FixedFieldDeclaration fixedFieldDeclaration, object data)
 		{
@@ -2617,8 +2698,11 @@ namespace Cudafy.Translator
 				WriteToken("::", MemberType.Roles.Dot);
 			//else
 			//	//WriteToken(".", MemberType.Roles.Dot);
-                WriteToken("", MemberType.Roles.Dot);
-			WriteIdentifier(memberType.MemberName);
+            WriteToken("", MemberType.Roles.Dot);
+            string memberName = memberType.MemberName;
+            memberName = memberName.Replace('<', '_');
+            memberName = memberName.Replace('>', '_');
+            WriteIdentifier(memberName);
 			WriteTypeArguments(memberType.TypeArguments);
 			return EndNode(memberType);
 		}
@@ -2655,7 +2739,10 @@ namespace Cudafy.Translator
 		public object VisitPrimitiveType(PrimitiveType primitiveType, object data)
 		{
 			StartNode(primitiveType);
-            string keyword = ConvertPrimitiveType(primitiveType.Keyword);
+            string keyword = primitiveType.Keyword;  
+            if(data == null || (bool)data == true)
+                keyword = ConvertPrimitiveType(primitiveType.Keyword); 
+                                  
             WriteKeyword(keyword);
             if (keyword == "new")
             {
@@ -2679,7 +2766,9 @@ namespace Cudafy.Translator
                 case "uint":
                     return "unsigned int";
                 case "ulong":
-                    return "unsigned long";
+                    return "unsigned long long";
+                case "long":
+                    return "long long";
                 case "decimal":
                     return "double";
                 case "char":

@@ -51,16 +51,16 @@
             this.lbConstants = new System.Windows.Forms.ListBox();
             this.tpSource = new System.Windows.Forms.TabPage();
             this.gbCompile = new System.Windows.Forms.GroupBox();
+            this.cb64bit = new System.Windows.Forms.CheckBox();
+            this.cb32bit = new System.Windows.Forms.CheckBox();
             this.cbArch = new System.Windows.Forms.ComboBox();
             this.btnCompile = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.tbSource = new System.Windows.Forms.TextBox();
             this.tpPTX = new System.Windows.Forms.TabPage();
+            this.lbPTX = new System.Windows.Forms.ListBox();
             this.tbPTX = new System.Windows.Forms.TextBox();
             this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
-            this.lbPTX = new System.Windows.Forms.ListBox();
-            this.cb32bit = new System.Windows.Forms.CheckBox();
-            this.cb64bit = new System.Windows.Forms.CheckBox();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tpFunctions.SuspendLayout();
@@ -309,6 +309,30 @@
             this.gbCompile.TabStop = false;
             this.gbCompile.Text = "Compile";
             // 
+            // cb64bit
+            // 
+            this.cb64bit.AutoSize = true;
+            this.cb64bit.Checked = true;
+            this.cb64bit.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cb64bit.Location = new System.Drawing.Point(71, 27);
+            this.cb64bit.Name = "cb64bit";
+            this.cb64bit.Size = new System.Drawing.Size(52, 17);
+            this.cb64bit.TabIndex = 21;
+            this.cb64bit.Text = "64-bit";
+            this.cb64bit.UseVisualStyleBackColor = true;
+            // 
+            // cb32bit
+            // 
+            this.cb32bit.AutoSize = true;
+            this.cb32bit.Checked = true;
+            this.cb32bit.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cb32bit.Location = new System.Drawing.Point(14, 27);
+            this.cb32bit.Name = "cb32bit";
+            this.cb32bit.Size = new System.Drawing.Size(52, 17);
+            this.cb32bit.TabIndex = 21;
+            this.cb32bit.Text = "32-bit";
+            this.cb32bit.UseVisualStyleBackColor = true;
+            // 
             // cbArch
             // 
             this.cbArch.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -366,6 +390,17 @@
             this.tpPTX.Text = "PTX";
             this.tpPTX.UseVisualStyleBackColor = true;
             // 
+            // lbPTX
+            // 
+            this.lbPTX.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lbPTX.FormattingEnabled = true;
+            this.lbPTX.Location = new System.Drawing.Point(17, 14);
+            this.lbPTX.Name = "lbPTX";
+            this.lbPTX.Size = new System.Drawing.Size(496, 108);
+            this.lbPTX.TabIndex = 8;
+            this.lbPTX.SelectedIndexChanged += new System.EventHandler(this.lbPTX_SelectedIndexChanged);
+            // 
             // tbPTX
             // 
             this.tbPTX.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -384,41 +419,6 @@
             // saveFileDialog
             // 
             this.saveFileDialog.Filter = "Cudafy Module|*.cdfy";
-            // 
-            // lbPTX
-            // 
-            this.lbPTX.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.lbPTX.FormattingEnabled = true;
-            this.lbPTX.Location = new System.Drawing.Point(17, 14);
-            this.lbPTX.Name = "lbPTX";
-            this.lbPTX.Size = new System.Drawing.Size(496, 108);
-            this.lbPTX.TabIndex = 8;
-            this.lbPTX.SelectedIndexChanged += new System.EventHandler(this.lbPTX_SelectedIndexChanged);
-            // 
-            // cb32bit
-            // 
-            this.cb32bit.AutoSize = true;
-            this.cb32bit.Checked = true;
-            this.cb32bit.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cb32bit.Location = new System.Drawing.Point(14, 27);
-            this.cb32bit.Name = "cb32bit";
-            this.cb32bit.Size = new System.Drawing.Size(52, 17);
-            this.cb32bit.TabIndex = 21;
-            this.cb32bit.Text = "32-bit";
-            this.cb32bit.UseVisualStyleBackColor = true;
-            // 
-            // cb64bit
-            // 
-            this.cb64bit.AutoSize = true;
-            this.cb64bit.Checked = true;
-            this.cb64bit.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cb64bit.Location = new System.Drawing.Point(71, 27);
-            this.cb64bit.Name = "cb64bit";
-            this.cb64bit.Size = new System.Drawing.Size(52, 17);
-            this.cb64bit.TabIndex = 21;
-            this.cb64bit.Text = "64-bit";
-            this.cb64bit.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 

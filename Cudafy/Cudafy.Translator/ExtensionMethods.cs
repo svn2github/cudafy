@@ -37,10 +37,20 @@ namespace Cudafy.Translator
         private static string csCUDAFYATTRIBUTE = typeof(CudafyAttribute).Name;
 
         private static string csCUDAFYDUMMYATTRIBUTE = typeof(CudafyDummyAttribute).Name;
+
+        private static string csCUDAFYIGNOREATTRIBUTE = typeof(CudafyIgnoreAttribute).Name;
+
 #pragma warning disable 1591
         public static eCudafyType? GetCudafyType(this ICustomAttributeProvider med, out bool isDummy)
         {
+            bool ignore;
+            return GetCudafyType(med, out isDummy, out ignore);
+        }
+
+        public static eCudafyType? GetCudafyType(this ICustomAttributeProvider med, out bool isDummy, out bool ignore)
+        {
             isDummy = false;
+            ignore = false;
             if (med is TypeDefinition)
                 med = med as TypeDefinition;
             var customAttr = med.CustomAttributes.Where(ca => ca.AttributeType.Name == csCUDAFYATTRIBUTE).FirstOrDefault();
@@ -49,15 +59,19 @@ namespace Cudafy.Translator
                 customAttr = med.CustomAttributes.Where(ca => ca.AttributeType.Name == csCUDAFYDUMMYATTRIBUTE).FirstOrDefault();
                 isDummy = customAttr != null;
             }
-            if (customAttr != null)
+            if (customAttr == null)
+            {
+                customAttr = med.CustomAttributes.Where(ca => ca.AttributeType.Name == csCUDAFYIGNOREATTRIBUTE).FirstOrDefault();
+                ignore = true;
+            }
+            else
             {
                 eCudafyType et = eCudafyType.Auto;
                 if (customAttr.ConstructorArguments.Count() > 0)
                     et = (eCudafyType)customAttr.ConstructorArguments.First().Value;
                 return et;
             }
-            else
-                return null;
+            return null;
         }
 
         //public static CudafyDummyAttribute GetCudafyDummyAttribute(this ICustomAttributeProvider med)
@@ -101,6 +115,11 @@ namespace Cudafy.Translator
         public static bool HasCudafyDummyAttribute(this ICustomAttributeProvider med)
         {
             return med.HasCustomAttributes && med.CustomAttributes.Count(ca => ca.AttributeType.Name == csCUDAFYDUMMYATTRIBUTE) > 0;
+        }
+
+        public static bool HasCudafyIgnoreAttribute(this ICustomAttributeProvider med)
+        {
+            return med.HasCustomAttributes && med.CustomAttributes.Count(ca => ca.AttributeType.Name == csCUDAFYIGNOREATTRIBUTE) > 0;
         }
 
         public static bool IsThreadIdVar(this MemberReferenceExpression mre)

@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 using Cudafy.Host;
 using Cudafy.UnitTests;
 using NUnit.Framework;
@@ -31,10 +32,62 @@ using Cudafy.Translator;
 
 namespace Cudafy.Host.UnitTests
 {
-   
+    [Cudafy]
+    [StructLayout(LayoutKind.Sequential, Size=80, CharSet = CharSet.Unicode)]
+    public unsafe struct PrimitiveStruct
+    {
+        public int Value1;
+        public int Value2;
+        public int Value3;
+        public int Value4;
+        public fixed sbyte _message[32];
+        public fixed char _messageChars[16];
+        [CudafyIgnore]
+        public string Message
+        {
+            get
+            {
+                fixed (char* ptr = _messageChars)
+                {
+                    string ts = new string(ptr);
+                    return ts;
+                }
+            }
+            set
+            {
+                fixed (char* srcptr = value)
+                {
+                    fixed (char* dstptr = _messageChars)
+                    {
+
+                        IntPtr src = new IntPtr(srcptr);
+                        IntPtr dst = new IntPtr(dstptr);
+                        GPGPU.CopyMemory(dst, src, (uint)Math.Min(32, value.Length * 2));
+                    }
+                }
+            }
+        }
+
+        [CudafyIgnore]
+        public void SetMessage(string value, int length)
+        {
+            fixed (char* srcptr = value)
+            {
+                fixed (char* dstptr = _messageChars)
+                {
+                    IntPtr src = new IntPtr(srcptr);
+                    IntPtr dst = new IntPtr(dstptr);
+                    GPGPU.CopyMemory(dst, src, (uint)Math.Min(32, length * 2));
+                }
+            }
+        }
+    }
+
     [TestFixture]
     public unsafe class BasicFunctionTests : CudafyUnitTest, ICudafyUnitTest
     {
+
+        
         private CudafyModule _cm;
 
         private GPGPU _gpu;
@@ -44,16 +97,87 @@ namespace Cudafy.Host.UnitTests
         [TestFixtureSetUp]
         public void SetUp()
         {
-            _cm = CudafyTranslator.Cudafy();
+            _cm = CudafyModule.TryDeserialize();
+            if (_cm == null || !_cm.TryVerifyChecksums())
+            {
+                _cm = CudafyTranslator.Cudafy(typeof(PrimitiveStruct), typeof(BasicFunctionTests));
+                _cm.TrySerialize();
+            }
+
             _gpu = CudafyHost.GetDevice(CudafyModes.Target);
             _gpu.LoadModule(_cm);
             Console.WriteLine(_cm.CompilerOutput);
+           
         }
 
         [TestFixtureTearDown]
         public void TearDown()
         {
             _gpu.FreeAll();
+        }
+
+        [Test]
+        public void Test_processStructure()
+        {
+
+            PrimitiveStruct[] x = new PrimitiveStruct[N];
+            PrimitiveStruct[] y = new PrimitiveStruct[N];
+            int size = Marshal.SizeOf(x[0]);
+            for (int i = 0; i < N; i++)
+            {
+                x[i].Value1 = i;
+                x[i].Message = "hello " + i.ToString();
+            }
+            IntPtr x_ptr = _gpu.HostAllocate<PrimitiveStruct>(N);
+            IntPtr y_ptr = _gpu.HostAllocate<PrimitiveStruct>(N);
+            PrimitiveStruct[] dev_x = _gpu.Allocate<PrimitiveStruct>(N);
+            PrimitiveStruct[] dev_y = _gpu.Allocate<PrimitiveStruct>(N);
+            x_ptr.Write(x);
+            _gpu.CopyToDeviceAsync(x_ptr, 0, dev_x, 0, N);
+            _gpu.Launch(1, N, "ProcessStructure", dev_x, dev_y);
+            //_gpu.CopyOnDevice(dev_x, dev_y);
+            _gpu.CopyFromDeviceAsync(dev_y, 0, y_ptr, 0, N);
+            _gpu.SynchronizeStream();
+
+            y_ptr.Read(y);
+            _gpu.HostFreeAll();
+            _gpu.FreeAll();
+            for (int i = 0; i < N; i++)
+            {
+                Assert.AreEqual(x[i].Value1, y[i].Value1);
+                //Assert.AreEqual(x[i].myvalues, y[i].myvalues);
+                Console.WriteLine(y[i].Message);
+                Assert.AreEqual(x[i].Message, y[i].Message);
+            }
+        }
+
+ //       struct __align__(8) float6 {
+ //float2 u, v, w;
+ //};
+ 
+
+        [Cudafy]
+        public static void ProcessStructure(GThread thread, PrimitiveStruct[] x, PrimitiveStruct[] y)
+        {
+            int idx = thread.threadIdx.x;
+            y[idx].Value1 = x[idx].Value1;
+            y[idx].Value2 = x[idx].Value2;
+            y[idx].Value3 = x[idx].Value3;
+            y[idx].Value4 = x[idx].Value4;
+            fixed (char* xptr = x[idx]._messageChars)
+            {
+                fixed (char* yptr = y[idx]._messageChars)
+                {
+                    char* px = xptr;
+                    char* py = yptr;
+                    for (int i = 0; i < 16; i++)
+                    {
+                        *py = *px;
+                        px++;
+                        py++;
+                    }
+                }
+            }
         }
 
 
@@ -484,8 +608,8 @@ namespace Cudafy.Host.UnitTests
         [Cudafy]
         public static int addDevice(GThread t, int a, int b)
         {
-            int coef = t.threadIdx.x / t.threadIdx.x;
-            return a + b * coef;
+            //int coef = t.threadIdx.x / t.threadIdx.x;
+            return a + b;// *coef;
         }
 
         [Cudafy]

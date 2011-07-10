@@ -42,10 +42,8 @@ namespace Cudafy.Host.UnitTests
                 //StringTests st = new StringTests();
                 //CudafyUnitTest.PerformAllTests(st);
 
-                //BasicFunctionTests bft = new BasicFunctionTests();
-                //bft.SetUp();
-                //bft.Test_mpyVectorByCoeffShort();
-                //CudafyUnitTest.PerformAllTests(bft);
+                BasicFunctionTests bft = new BasicFunctionTests();
+                CudafyUnitTest.PerformAllTests(bft);
 
                 //GMathUnitTests gmu = new GMathUnitTests();
                 //CudafyUnitTest.PerformAllTests(gmu);
@@ -53,8 +51,8 @@ namespace Cudafy.Host.UnitTests
                 //MultithreadedTests mtt = new MultithreadedTests();
                 //CudafyUnitTest.PerformAllTests(mtt);
 
-                CopyTests1D ct1d = new CopyTests1D();
-                CudafyUnitTest.PerformAllTests(ct1d);
+                //CopyTests1D ct1d = new CopyTests1D();
+                //CudafyUnitTest.PerformAllTests(ct1d);
 
                 //GPGPUTests gput = new GPGPUTests();
                 //CudafyUnitTest.PerformAllTests(gput);

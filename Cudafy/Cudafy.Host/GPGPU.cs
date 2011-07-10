@@ -1019,13 +1019,13 @@ namespace Cudafy.Host
         public abstract void HostFreeAll();
 
         /// <summary>
-        /// Copies memory.
+        /// Copies memory on host using native CopyMemory function from kernel32.dll.
         /// </summary>
         /// <param name="Destination">The destination.</param>
         /// <param name="Source">The source.</param>
         /// <param name="Length">The length.</param>
         [DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory")]
-        protected static extern void CopyMemory(IntPtr Destination, IntPtr Source, uint Length);
+        public static extern void CopyMemory(IntPtr Destination, IntPtr Source, uint Length);
 
         /// <summary>
         /// Gets the value at specified index.

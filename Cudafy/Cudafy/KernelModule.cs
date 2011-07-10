@@ -469,7 +469,7 @@ namespace Cudafy
             Type type = stackTrace.GetFrame(1).GetMethod().ReflectedType;
             return Deserialize(type.Name);
         }
-
+#warning TODO http://www.codeproject.com/KB/dotnet/AppDomain_quick_start.aspx
         /// <summary>
         /// Deserializes the specified file.
         /// </summary>
