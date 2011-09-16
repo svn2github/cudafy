@@ -1577,7 +1577,7 @@ namespace Cudafy.Host
                 int size = MSizeOf(typeof(T));
                 IntPtr srcIntPtrOffset = new IntPtr(hostAllocatedMemory.ToInt64() + srcOffset * size);
                 IntPtr dstIntPtr = handle.AddrOfPinnedObject();
-                IntPtr dstOffsetPtr = new IntPtr(dstIntPtr.ToInt64() + srcOffset * size);
+                IntPtr dstOffsetPtr = new IntPtr(dstIntPtr.ToInt64() + dstOffset * size);
                 CopyMemory(dstOffsetPtr, srcIntPtrOffset, (uint)(count * size));
             }
             finally
