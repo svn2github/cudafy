@@ -59,7 +59,7 @@ namespace Cudafy.Host
             {
                 throw new CudafyHostException(CudafyHostException.csDEVICE_ID_OUT_OF_RANGE);
             }
-            _hostHandles = new List<IntPtr>();
+            _hostHandles = new Dictionary<IntPtr, CUcontext>();
         }
 
         private ICUDARuntime _runtimeDriver;
@@ -798,7 +798,7 @@ namespace Cudafy.Host
 #pragma warning restore 1591
 
 
-        private List<IntPtr> _hostHandles;
+        private Dictionary<IntPtr, CUcontext> _hostHandles;
 
         /// <summary>
         /// Destroys the stream.
@@ -861,7 +861,7 @@ namespace Cudafy.Host
             {
                 HandleCUDAException(ex);
             }
-            _hostHandles.Add(ptr);
+            _hostHandles.Add(ptr, _cuda.CurrentContext);
             return ptr;
         }
 
@@ -872,11 +872,13 @@ namespace Cudafy.Host
         /// <exception cref="CudafyHostException">Pointer not found.</exception>
         public override void HostFree(IntPtr ptr)
         {
-            if (!_hostHandles.Contains(ptr))
+            if (!_hostHandles.Keys.Contains(ptr))
                 throw new CudafyHostException(CudafyHostException.csPOINTER_NOT_FOUND);
             try
             {
+                _cuda.PushCurrentContext(_hostHandles[ptr]);
                 _cuda.FreeHost(ptr);
+                _cuda.PopCurrentContext();
             }
             catch (CUDAException ex)
             {
@@ -892,18 +894,23 @@ namespace Cudafy.Host
         {
             if (_hostHandles != null)
             {
-                foreach (var v in _hostHandles)
+                lock (_lock)
                 {
-                    try
+                    foreach (var v in _hostHandles)
                     {
-                        _cuda.FreeHost(v);
+                        try
+                        {
+                            _cuda.PushCurrentContext((CUcontext)v.Value);
+                            _cuda.FreeHost(v.Key);
+                            _cuda.PopCurrentContext();
+                        }
+                        catch (CUDAException ex)
+                        {
+                            HandleCUDAException(ex);
+                        }
                     }
-                    catch (CUDAException ex)
-                    {
-                        HandleCUDAException(ex);                   
-                    }
+                    _hostHandles.Clear();
                 }
-                _hostHandles.Clear();
             }
         }
 
@@ -1194,16 +1201,28 @@ namespace Cudafy.Host
             CUDevicePtrEx ptrEx = (CUDevicePtrEx)GetDeviceMemory(devArray);
             try
             {
-                if(!ptrEx.CreatedFromCast && DeviceMemoryValueExists(ptrEx))
-                    _cuda.Free(ptrEx.DevPtr);
+                if (!ptrEx.CreatedFromCast && DeviceMemoryValueExists(ptrEx))
+                {  
+                    if (ptrEx.Context != null)
+                    {
+                        _cuda.PushCurrentContext((CUcontext)ptrEx.Context);
+                        _cuda.Free(ptrEx.DevPtr);
+                        _cuda.PopCurrentContext();
+                    }
+                    else
+                    {
+                        _cuda.AttachContext(_cuda.CurrentContext);
+                        _cuda.Free(ptrEx.DevPtr);
+                    }
+                    ptrEx.Disposed = true;
+                }
                 RemoveFromDeviceMemoryEx(ptrEx);
                 ptrEx.RemoveChildren();
             }
             catch (CUDAException ex)
             {
                 HandleCUDAException(ex);
-            }
-            
+            }            
         }
 
         /// <summary>
@@ -1221,11 +1240,9 @@ namespace Cudafy.Host
                         {
                             if (ptrEx.Context != null)
                             {
-                                CUcontext ctx = _cuda.PopCurrentContext();
                                 _cuda.PushCurrentContext((CUcontext)ptrEx.Context);
                                 _cuda.Free(ptrEx.DevPtr);
-                                _cuda.PopCurrentContext();
-                                _cuda.PushCurrentContext(ctx);                                
+                                _cuda.PopCurrentContext();                                
                             }
                             else
                             {

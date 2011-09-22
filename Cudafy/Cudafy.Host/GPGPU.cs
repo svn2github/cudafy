@@ -554,6 +554,39 @@ namespace Cudafy.Host
         protected List<CudafyModule> _modules = new List<CudafyModule>();
 
         /// <summary>
+        /// Gets the modules.
+        /// </summary>
+        public IEnumerable<CudafyModule> Modules
+        {
+            get { return _modules; }
+        }
+
+        /// <summary>
+        /// Gets the names of all members in all loaded modules.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<string> GetMemberNames()
+        {
+            foreach(var mod in Modules)
+                foreach (var member in mod.GetMemberNames())
+                {
+                    yield return member;
+                }
+        }
+
+        /// <summary>
+        /// Determines whether a module is loaded with the specified name.
+        /// </summary>
+        /// <param name="moduleName">Name of the module.</param>
+        /// <returns>
+        ///   <c>true</c> if module loaded; otherwise, <c>false</c>.
+        /// </returns>
+        public bool IsModuleLoaded(string moduleName)
+        {
+            return Modules.Any(mod => mod.Name == moduleName);
+        }
+
+        /// <summary>
         /// Internal use.
         /// </summary>
         protected CudafyModule _module;

@@ -137,6 +137,19 @@ namespace Cudafy
         public Dictionary<string, KernelTypeInfo> Types { get; internal set; }
 
         /// <summary>
+        /// Gets the member names.
+        /// </summary>
+        public IEnumerable<string> GetMemberNames()
+        {
+            foreach (var v in Functions)
+                yield return v.Key;
+            foreach (var v in Constants)
+                yield return v.Key;
+            foreach (var v in Types)
+                yield return v.Key;
+        }
+
+        /// <summary>
         /// NOT IMPLEMENTED YET. Gets or sets a value indicating whether this instance can print to console.
         /// </summary>
         /// <value>
