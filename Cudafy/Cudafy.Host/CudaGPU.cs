@@ -177,6 +177,17 @@ namespace Cudafy.Host
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether this instance has multithreading enabled.
+        /// </summary>
+        /// <value>
+        /// 	<c>true</c> if this instance is multithreading enabled; otherwise, <c>false</c>.
+        /// </value>
+        public override bool IsMultithreadingEnabled
+        {
+            get { return _ccs != null; }
+        }
+
         private CUcontext _cc;
 
         /// <summary>

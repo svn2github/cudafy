@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Diagnostics;
 using Cudafy.Types;
 using Cudafy.Host;
 using Cudafy.UnitTests;
@@ -132,6 +133,7 @@ namespace Cudafy.Host.UnitTests
         {
             _gpu.Lock();
             _gpuuintBufferIn1 = _gpu.CopyToDevice(_uintBufferIn1);
+            //Debug.WriteLine(string.Format("Thread {0}: {1} ticks", Thread.CurrentThread.ManagedThreadId, Environment.TickCount));
             _gpu.CopyFromDevice(_gpuuintBufferIn1, _uintBufferOut1);
             Assert.IsTrue(Compare(_uintBufferIn1, _uintBufferOut1));
             _gpu.Free(_gpuuintBufferIn1);
@@ -142,6 +144,7 @@ namespace Cudafy.Host.UnitTests
         {
             _gpu.Lock();
             _gpuuintBufferIn2 = _gpu.CopyToDevice(_uintBufferIn2);
+            //Debug.WriteLine(string.Format("Thread {0}: {1} ticks", Thread.CurrentThread.ManagedThreadId, Environment.TickCount));
             _gpu.CopyFromDevice(_gpuuintBufferIn2, _uintBufferOut2);
             Assert.IsTrue(Compare(_uintBufferIn2, _uintBufferOut2));
             _gpu.Free(_gpuuintBufferIn2);

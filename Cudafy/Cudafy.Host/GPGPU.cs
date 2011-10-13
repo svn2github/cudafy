@@ -150,6 +150,8 @@ namespace Cudafy.Host
         /// </summary>
         public virtual void Lock()
         {
+            if (!IsMultithreadingEnabled)
+                throw new CudafyHostException(CudafyHostException.csMULTITHREADING_IS_NOT_ENABLED);
         }
 
         /// <summary>
@@ -157,6 +159,8 @@ namespace Cudafy.Host
         /// </summary>
         public virtual void Unlock()
         {
+            if (!IsMultithreadingEnabled)
+                throw new CudafyHostException(CudafyHostException.csDEVICE_IS_NOT_LOCKED);
         }
 
         /// <summary>
@@ -164,6 +168,7 @@ namespace Cudafy.Host
         /// </summary>
         public virtual void EnableMultithreading()
         {
+            _isMultithreadedEnabled = true;
         }
 
         /// <summary>
@@ -171,7 +176,21 @@ namespace Cudafy.Host
         /// </summary>
         public virtual void DisableMultithreading()
         {
+            _isMultithreadedEnabled = false;
         }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance has multithreading enabled.
+        /// </summary>
+        /// <value>
+        /// 	<c>true</c> if this instance is multithreading enabled; otherwise, <c>false</c>.
+        /// </value>
+        public virtual bool IsMultithreadingEnabled
+        {
+            get { return _isMultithreadedEnabled; }
+        }
+
+        private bool _isMultithreadedEnabled = false;
 
         #region Dynamic
 
