@@ -385,7 +385,7 @@ namespace Cudafy.Translator
 			if (IsKeyword(identifier, containerStack.Peek())) {
 				if (lastWritten == LastWritten.KeywordOrIdentifier)
 					Space(); // this space is not strictly required, so we call Space()
-				formatter.WriteToken("@");
+				//formatter.WriteToken("@");
 			} else if (lastWritten == LastWritten.KeywordOrIdentifier) {
 				formatter.Space(); // this space is strictly required, so we directly call the formatter
 			}
