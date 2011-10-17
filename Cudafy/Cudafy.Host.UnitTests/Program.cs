@@ -37,31 +37,31 @@ namespace Cudafy.Host.UnitTests
             {
                 CudafyModes.Target = eGPUType.Cuda;
 
-                CURANDTests.Basics();
+                //CURANDTests.Basics();
 
-                StringTests st = new StringTests();
-                CudafyUnitTest.PerformAllTests(st);
+                //StringTests st = new StringTests();
+                //CudafyUnitTest.PerformAllTests(st);
 
-                BasicFunctionTests bft = new BasicFunctionTests();
-                CudafyUnitTest.PerformAllTests(bft);
+                //BasicFunctionTests bft = new BasicFunctionTests();
+                //CudafyUnitTest.PerformAllTests(bft);
 
-                GMathUnitTests gmu = new GMathUnitTests();
-                CudafyUnitTest.PerformAllTests(gmu);
+                //GMathUnitTests gmu = new GMathUnitTests();
+                //CudafyUnitTest.PerformAllTests(gmu);
 
-                MultithreadedTests mtt = new MultithreadedTests();
-                CudafyUnitTest.PerformAllTests(mtt);
+                //MultithreadedTests mtt = new MultithreadedTests();
+                //CudafyUnitTest.PerformAllTests(mtt);
 
                 CopyTests1D ct1d = new CopyTests1D();
-                CudafyUnitTest.PerformAllTests(ct1d);
+                CudafyUnitTest.PerformAllTests(ct1d);//, "Test_smartCopyToFromDeviceSpeed");
 
-                GPGPUTests gput = new GPGPUTests();
-                CudafyUnitTest.PerformAllTests(gput);
+                //GPGPUTests gput = new GPGPUTests();
+                //CudafyUnitTest.PerformAllTests(gput);
 
-                if (CudafyHost.GetDeviceCount(CudafyModes.Target) > 1)
-                {
-                    MultiGPUTests mgt = new MultiGPUTests();
-                    CudafyUnitTest.PerformAllTests(mgt);
-                }
+                //if (CudafyHost.GetDeviceCount(CudafyModes.Target) > 1)
+                //{
+                //    MultiGPUTests mgt = new MultiGPUTests();
+                //    CudafyUnitTest.PerformAllTests(mgt);
+                //}
 
                 Console.WriteLine("Done");
                 Console.ReadLine();

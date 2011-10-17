@@ -78,6 +78,8 @@ namespace Cudafy.Host
         public const string csDEVICE_ID_OUT_OF_RANGE = "Device ID out of range.";
         public const string csDEVICE_IS_NOT_LOCKED = "Device is not locked.";
         public const string csMULTITHREADING_IS_NOT_ENABLED = "Multithreading is not enabled.";
+        public const string csSMART_COPY_ALREADY_ENABLED = "Smart copy is already enabled.";
+        public const string csSMART_COPY_IS_NOT_ENABLED = "Smart copy is not enabled.";
         public const string csCUDA_EXCEPTION_X = "CUDA.NET exception: {0}.";
         public const string csCUDA_EXCEPTION_X_X = "CUDA.NET exception: {0} ({1}).";
         public const string csDUPLICATE_X_NAME = "Module already loaded containing a duplicate {0} name.";

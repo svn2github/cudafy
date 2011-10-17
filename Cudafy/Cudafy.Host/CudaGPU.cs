@@ -713,6 +713,160 @@ namespace Cudafy.Host
             DoCopyFromDevice<T>(devArray, 0, hostArray, 0, ptrEx.TotalSize);
         }
 
+
+
+        protected override void DoSmartCopyFromDevice<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int startingStreamId)
+        {
+            if (!SmartCopyEnabled)
+                throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
+            int elemSize = MSizeOf(typeof(T));
+            int totalBytes = count * elemSize;
+            int chunkIndex = 0;
+            int[] chunkSizes = new int[_smartOutputStages.Length];
+            int[] totalHostOffsets = new int[_smartOutputStages.Length];
+            int totalHostOffset = hostOffset;
+            int totalDevOffset = devOffset;
+            while (totalBytes > 0)
+            {
+                var stage = _smartOutputStages[chunkIndex];
+                // Split into chunks
+                int chunkSizeBytes = Math.Min(totalBytes, stage.Length);
+                int chunkSizeElems = chunkSizeBytes / elemSize;
+
+                // Copy the data from unmanaged buffer to GPU asynchronously 
+                DoCopyFromDeviceAsync<T>(devArray, totalDevOffset, stage.Pointer, 0, chunkSizeElems, startingStreamId + chunkIndex);
+                chunkSizes[chunkIndex] = chunkSizeElems;
+                totalHostOffsets[chunkIndex] = totalHostOffset;
+                totalBytes -= chunkSizeBytes;
+                totalHostOffset += chunkSizeElems;
+                totalDevOffset += chunkSizeElems;
+                chunkIndex++;
+                if (chunkIndex == _smartOutputStages.Length)
+                {
+                    for (int ci = 0; ci < chunkIndex; ci++)
+                    {
+                        SynchronizeStream(startingStreamId + ci);
+                        stage = _smartOutputStages[ci];
+                        // Copy the managed array to unmanaged buffer.
+                        DoCopyOnHost<T>(stage.Pointer, 0, hostArray, totalHostOffsets[ci], chunkSizeElems);
+                    }
+                    chunkIndex = 0;
+                }
+            }
+            for (int ci = 0; ci < chunkIndex; ci++)
+            {
+                SynchronizeStream(startingStreamId + ci);
+                var stage = _smartOutputStages[ci];
+                // Copy the managed array to unmanaged buffer.
+                DoCopyOnHost<T>(stage.Pointer, 0, hostArray, totalHostOffsets[ci], chunkSizes[ci]);
+            }
+        }
+
+        protected override void DoSmartCopyToDeviceEx<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int startingStreamId)
+        {
+            if(!SmartCopyEnabled)
+                throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
+            int elemSize = MSizeOf(typeof(T));
+            int totalBytes = count * elemSize;
+            int chunkIndex = 0;
+            int prevChunkIndex = -1;
+            int totalDevOffset = devOffset;
+            int totalHostOffset = hostOffset;
+            bool firstTimeAround = true;
+            while (totalBytes > 0)
+            {
+                var stage = _smartInputStages[chunkIndex];
+                // Split into chunks
+                int chunkSizeBytes = Math.Min(totalBytes, stage.Length);
+                int chunkSizeElems = chunkSizeBytes / elemSize;
+
+                if (!firstTimeAround)
+                    SynchronizeStream(startingStreamId + chunkIndex);
+
+                // Copy the managed array to unmanaged buffer.
+                DoCopyOnHost<T>(hostArray, totalHostOffset, stage.Pointer, 0, chunkSizeElems);
+                // Copy the data from unmanaged buffer to GPU asynchronously 
+                DoCopyToDeviceAsync<T>(stage.Pointer, 0, devArray, totalDevOffset, chunkSizeElems, startingStreamId + chunkIndex);
+
+                totalBytes -= chunkSizeBytes;
+                totalHostOffset += chunkSizeElems;
+                totalDevOffset += chunkSizeElems;
+                prevChunkIndex = chunkIndex;
+                chunkIndex++;
+                if (chunkIndex == _smartInputStages.Length)
+                {
+                    chunkIndex = 0;
+                    firstTimeAround = false;
+                }
+                
+            }
+            if(!firstTimeAround && prevChunkIndex > -1)
+                SynchronizeStream(startingStreamId + prevChunkIndex);
+            else if (firstTimeAround)
+            {
+                for (int ci = 0; ci < chunkIndex; ci++)
+                    SynchronizeStream(ci + 1);
+            }
+        }
+
+        protected override void DoSmartCopyToDevice<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int startingStreamId)
+        {
+            if (!SmartCopyEnabled)
+                throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
+            int elemSize = MSizeOf(typeof(T));
+            int totalBytes = count * elemSize;
+            int chunkIndex = 0;
+            int prevChunkIndex = -1;
+            int totalDevOffset = devOffset;
+            int totalHostOffset = hostOffset;
+            bool firstTimeAround = true;
+            var tuples = new Tuple<IntPtr, int, Array, int, int, int>[_smartInputStages.Length];
+            while (totalBytes > 0)
+            {
+                var stage = _smartInputStages[chunkIndex];
+                // Split into chunks
+                int chunkSizeBytes = Math.Min(totalBytes, stage.Length);
+                int chunkSizeElems = chunkSizeBytes / elemSize;
+
+                if (!firstTimeAround)
+                    SynchronizeStream(startingStreamId + chunkIndex);
+
+                // Copy the managed array to unmanaged buffer.
+                DoCopyOnHost<T>(hostArray, totalHostOffset, stage.Pointer, 0, chunkSizeElems);
+                // Copy the data from unmanaged buffer to GPU asynchronously 
+                tuples[chunkIndex] = new Tuple<IntPtr, int, Array, int, int, int>(stage.Pointer, 0, devArray, totalDevOffset, chunkSizeElems, startingStreamId + chunkIndex);
+                //DoCopyToDeviceAsync<T>(stage.Pointer, 0, devArray, totalDevOffset, chunkSizeElems, startingStreamId + chunkIndex);
+
+                totalBytes -= chunkSizeBytes;
+                totalHostOffset += chunkSizeElems;
+                totalDevOffset += chunkSizeElems;
+                prevChunkIndex = chunkIndex;
+                chunkIndex++;
+                if (chunkIndex == _smartInputStages.Length)
+                {                  
+                    firstTimeAround = false;
+                    for (int ci = 0; ci < chunkIndex; ci++)
+                    {
+                        var t = tuples[ci];
+                        DoCopyToDeviceAsync<T>(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6);
+                    }
+                    chunkIndex = 0;
+                }
+            }
+            for (int ci = 0; ci < chunkIndex; ci++)
+            {
+                var t = tuples[ci];
+                DoCopyToDeviceAsync<T>(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6);
+            }
+            //if (!firstTimeAround && prevChunkIndex > -1)
+            //    SynchronizeStream(startingStreamId + prevChunkIndex);
+            //else if (firstTimeAround)
+            //{
+            //    for (int ci = 0; ci < chunkIndex; ci++)
+            //        SynchronizeStream(ci + 1);
+            //}
+        }
+
         protected override void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId)
         {
             CUDevicePtrEx ptrEx = (CUDevicePtrEx)GetDeviceMemory(devArray);
@@ -899,7 +1053,7 @@ namespace Cudafy.Host
         }
 
         /// <summary>
-        /// Frees all memory allocated by HostAllocate.
+        /// Frees all memory allocated by HostAllocate. Disables smart copy.
         /// </summary>
         public override void HostFreeAll()
         {
@@ -921,6 +1075,8 @@ namespace Cudafy.Host
                         }
                     }
                     _hostHandles.Clear();
+                    if (SmartCopyEnabled)
+                        DisableSmartCopy();
                 }
             }
         }

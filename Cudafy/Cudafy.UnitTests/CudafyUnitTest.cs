@@ -73,7 +73,7 @@ namespace Cudafy.UnitTests
             return true;
         }
         
-        public static void PerformAllTests(ICudafyUnitTest test)
+        public static void PerformAllTests(ICudafyUnitTest test, string specificTestName = "")
         {
             MethodInfo[] miArray = test.GetType().GetMethods();
             int ctr = 0;
@@ -86,7 +86,8 @@ namespace Cudafy.UnitTests
                 setup.Invoke(test, null);
             foreach (MethodInfo mi in miList.OrderBy(mi => mi.Name))
             {
-
+                if (specificTestName != "" && specificTestName != mi.Name)
+                    continue;
                 try
                 {
                     bool isTest = false;

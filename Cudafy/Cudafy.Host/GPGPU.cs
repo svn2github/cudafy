@@ -1525,7 +1525,7 @@ namespace Cudafy.Host
             DoCopyOnHost<T>(nativeHostArraySrc, srcOffset, hostAllocatedMemory, dstOffset, count);
         }
 
-        private unsafe static void DoCopyOnHost<T>(Array nativeHostArraySrc, int srcOffset, IntPtr hostAllocatedMemory, int dstOffset, int count)
+        protected unsafe static void DoCopyOnHost<T>(Array nativeHostArraySrc, int srcOffset, IntPtr hostAllocatedMemory, int dstOffset, int count)
         {
             //Type type = (typeof(T));
 
@@ -1620,7 +1620,7 @@ namespace Cudafy.Host
             DoCopyOnHost<T>(hostAllocatedMemory, srcOffset, nativeHostArrayDst, dstOffset, count);
         }
 
-        private unsafe static void DoCopyOnHost<T>(IntPtr hostAllocatedMemory, int srcOffset, Array nativeHostArrayDst, int dstOffset, int count)
+        protected unsafe static void DoCopyOnHost<T>(IntPtr hostAllocatedMemory, int srcOffset, Array nativeHostArrayDst, int dstOffset, int count)
         {
             //Type type = typeof(T);
             GCHandle handle = GCHandle.Alloc(nativeHostArrayDst, GCHandleType.Pinned);
@@ -1895,7 +1895,105 @@ namespace Cudafy.Host
         protected abstract void DoCopyOnDevice<T>(Array srcDevArray, int srcOffset, Array dstDevArray, int dstOffet, int count);
         //public abstract void CopyOnDevice<T>(T[] srcDevArray, int srcOffset, T[] dstDevArray, int dstOffet, int count);
 
-        
+
+        internal SmartStage[] _smartInputStages = new SmartStage[0];
+
+        internal SmartStage[] _smartOutputStages = new SmartStage[0];
+
+        internal enum eSmartStageType { Input, Output };
+
+        internal struct SmartStage
+        {
+            public IntPtr Pointer { get; set; }
+            public int Length { get; set; }
+            public eSmartStageType Type { get; set; }
+        }
+
+
+
+
+        public virtual bool SmartCopyEnabled { get; protected set; }
+
+        public virtual void EnableSmartCopy(int maxBufferSize = 1024*1024, int noBuffers = 8)
+        {
+            if (SmartCopyEnabled)
+                throw new CudafyHostException(CudafyHostException.csSMART_COPY_ALREADY_ENABLED);
+            var inputStages = new List<SmartStage>();
+            for (int i = 0; i < noBuffers; i++ )
+                inputStages.Add(new SmartStage() { Length = maxBufferSize, Type = eSmartStageType.Input, Pointer = HostAllocate<byte>(maxBufferSize) });
+            var outputStages = new List<SmartStage>();
+            for (int i = 0; i < noBuffers; i++)
+                outputStages.Add(new SmartStage() { Length = maxBufferSize, Type = eSmartStageType.Output, Pointer = HostAllocate<byte>(maxBufferSize) });
+            //inputStages.ForEach(sis => HostAllocate
+            _smartInputStages = inputStages.ToArray();
+            _smartOutputStages = outputStages.ToArray();
+            SmartCopyEnabled = true;
+        }
+
+        public virtual void DisableSmartCopy()
+        {
+            if (!SmartCopyEnabled)
+                throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
+            foreach (var ss in _smartInputStages)
+                HostFree(ss.Pointer);
+            foreach (var ss in _smartOutputStages)
+                HostFree(ss.Pointer);
+            _smartInputStages = new SmartStage[0];
+            _smartOutputStages = new SmartStage[0];
+            SmartCopyEnabled = false;
+        }
+
+        /// <summary>
+        /// Does an asynchronous smart copy using pinned memory to device. Smart copy must be enabled by calling
+        /// EnableSmartCopy.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="devArray">The device array.</param>
+        /// <param name="devOffset">The device offset.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="startingStreamId">The starting stream id.</param>
+        public void CopyToDevice<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count, int startingStreamId)
+        {
+            DoSmartCopyToDevice<T>(hostArray, hostOffset, devArray, devOffset, count, startingStreamId);
+        }
+
+        /// <summary>
+        /// Does an asynchronous smart copy using pinned memory from device. Smart copy must be enabled by calling
+        /// EnableSmartCopy.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="devArray">The device array.</param>
+        /// <param name="devOffset">The device offset.</param>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="startingStreamId">The starting stream id.</param>
+        public void CopyFromDevice<T>(T[] devArray, int devOffset, T[] hostArray, int hostOffset, int count, int startingStreamId)
+        {
+            DoSmartCopyFromDevice<T>(devArray, devOffset, hostArray, hostOffset, count, startingStreamId);
+        }
+
+        protected virtual void DoSmartCopyFromDevice<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int startingStreamId)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void DoSmartCopyToDevice<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int startingStreamId)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void DoSmartCopyToDeviceEx<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int startingStreamId)
+        {
+            throw new NotImplementedException();
+        }
+
+        //protected virtual void DoSmartSynchronize(int startedStreamId)
+        //{
+
+        //}
 
         /// <summary>
         /// Allocates on device.

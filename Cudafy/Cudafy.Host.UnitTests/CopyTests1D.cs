@@ -39,7 +39,7 @@ namespace Cudafy.Host.UnitTests
 
         private GPGPU _gpu;
 
-        private const int N = 1024 * 1024;
+        private const int N = 1024 * 1024 * 8;
 
         private byte[] _byteBufferIn;
 
@@ -168,6 +168,71 @@ namespace Cudafy.Host.UnitTests
             }
             _gpu.FreeAll();
             GC.Collect();
+        }
+
+        [Test]
+        public void Test_smartCopyToFromDeviceSpeed()
+        {
+            int loops = 25;
+            _gpuuintBufferIn = _gpu.Allocate<uint>(N);
+            
+            Stopwatch sw = Stopwatch.StartNew();
+            for (int i = 0; i < loops; i++)
+            {
+                _gpu.CopyToDevice(_uintBufferIn, 0, _gpuuintBufferIn, 0, N);
+                _gpu.CopyFromDevice(_gpuuintBufferIn, 0, _uintBufferOut, 0, N);
+            }
+            long stdTime = sw.ElapsedMilliseconds;
+
+            _gpu.EnableSmartCopy(1024 * 1024, 8);
+            sw.Restart();
+            for (int i = 0; i < loops; i++)
+            {
+                _gpu.CopyToDevice(_uintBufferIn, 0, _gpuuintBufferIn, 0, N, 1);
+                _gpu.CopyFromDevice(_gpuuintBufferIn, 0, _uintBufferOut, 0, N, 1);
+            }
+            long smartTime = sw.ElapsedMilliseconds;
+            _gpu.DisableSmartCopy();
+
+            //Assert.IsTrue(Compare(_uintBufferIn, _uintBufferOut));
+            Console.WriteLine("Smart copy time: {0}, Standard copy time: {1}", smartTime, stdTime);
+            ClearOutputsAndGPU();
+        }
+
+        [Test]
+        public void Test_smartCopyToFromDevice()
+        {
+            _gpuuintBufferIn = _gpu.Allocate<uint>(N);
+            _gpu.EnableSmartCopy();
+            _gpu.CopyToDevice(_uintBufferIn, 0, _gpuuintBufferIn, 0, N, 101);
+            _gpu.CopyFromDevice(_gpuuintBufferIn, 0, _uintBufferOut, 0, N, 101);
+            _gpu.DisableSmartCopy();
+            Assert.IsTrue(Compare(_uintBufferIn, _uintBufferOut));
+            ClearOutputsAndGPU();
+        }
+
+        [Test]
+        public void Test_smartCopyToDevice()
+        {
+            _gpuuintBufferIn = _gpu.Allocate<uint>(N);
+            _gpu.EnableSmartCopy();
+            _gpu.CopyToDevice(_uintBufferIn, 0, _gpuuintBufferIn, 0, N, 101);
+            _gpu.CopyFromDevice(_gpuuintBufferIn, 0, _uintBufferOut, 0, N);
+            _gpu.DisableSmartCopy();
+            Assert.IsTrue(Compare(_uintBufferIn, _uintBufferOut));
+            ClearOutputsAndGPU();
+        }
+
+        [Test]
+        public void Test_smartCopyFromDevice()
+        {
+            _gpuuintBufferIn = _gpu.Allocate<uint>(N);
+            _gpu.EnableSmartCopy();
+            _gpu.CopyToDevice(_uintBufferIn, 0, _gpuuintBufferIn, 0, N);
+            _gpu.CopyFromDevice(_gpuuintBufferIn, 0, _uintBufferOut, 0, N, 101);
+            _gpu.DisableSmartCopy();
+            Assert.IsTrue(Compare(_uintBufferIn, _uintBufferOut));
+            ClearOutputsAndGPU();
         }
 
         [Test]
