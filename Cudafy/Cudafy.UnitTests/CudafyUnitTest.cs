@@ -57,7 +57,11 @@ namespace Cudafy.UnitTests
             for (int i = 0; i < (n == 0 ? act.Length : n); i++)
             {
                 if (!exp[expOffset + i].Equals(act[actOffset + i]))
+                {
+                    Console.WriteLine("At {0}, {1} != {2}", expOffset + i, exp[expOffset + i], act[actOffset + i]);
                     return false;
+                }
+                    
             }
             return true;
         }

@@ -28,6 +28,7 @@ using System.Runtime.InteropServices;
 using Cudafy.Types;
 using Cudafy.Host;
 using Cudafy.UnitTests;
+using Cudafy.Translator;
 using NUnit.Framework;
 
 namespace Cudafy.Host.UnitTests
@@ -39,7 +40,7 @@ namespace Cudafy.Host.UnitTests
 
         private GPGPU _gpu;
 
-        private const int N = 1024 * 1024 * 8;
+        private const int N = 1024 * 1024 * 4;
 
         private byte[] _byteBufferIn;
 
@@ -138,8 +139,8 @@ namespace Cudafy.Host.UnitTests
             Random rand = new Random(DateTime.Now.Millisecond);
             for (int i = 0; i < N; i++)
             {
-                double r = rand.NextDouble();
-                double j = rand.NextDouble();
+                double r = rand.NextDouble() / 4;
+                double j = rand.NextDouble() / 4;
                 _byteBufferIn[i] = (byte)(r * Byte.MaxValue);
                 _sbyteBufferIn[i] = (sbyte)((r * Byte.MaxValue) - SByte.MaxValue);
                 _ushortBufferIn[i] = (ushort)(r * ushort.MaxValue);
@@ -167,73 +168,78 @@ namespace Cudafy.Host.UnitTests
                 _cplxFBufferOut[i].y = 0;
             }
             _gpu.FreeAll();
+            _gpu.HostFreeAll();
             GC.Collect();
         }
 
-        [Test]
-        public void Test_smartCopyToFromDeviceSpeed()
+
+
+
+        [Cudafy]
+        public static void DoubleAllValues(GThread t, uint[] input, uint[] output)
         {
-            int loops = 25;
-            _gpuuintBufferIn = _gpu.Allocate<uint>(N);
-            
-            Stopwatch sw = Stopwatch.StartNew();
-            for (int i = 0; i < loops; i++)
-            {
-                _gpu.CopyToDevice(_uintBufferIn, 0, _gpuuintBufferIn, 0, N);
-                _gpu.CopyFromDevice(_gpuuintBufferIn, 0, _uintBufferOut, 0, N);
-            }
-            long stdTime = sw.ElapsedMilliseconds;
-
-            _gpu.EnableSmartCopy(1024 * 1024, 8);
-            sw.Restart();
-            for (int i = 0; i < loops; i++)
-            {
-                _gpu.CopyToDevice(_uintBufferIn, 0, _gpuuintBufferIn, 0, N, 1);
-                _gpu.CopyFromDevice(_gpuuintBufferIn, 0, _uintBufferOut, 0, N, 1);
-            }
-            long smartTime = sw.ElapsedMilliseconds;
-            _gpu.DisableSmartCopy();
-
-            //Assert.IsTrue(Compare(_uintBufferIn, _uintBufferOut));
-            Console.WriteLine("Smart copy time: {0}, Standard copy time: {1}", smartTime, stdTime);
-            ClearOutputsAndGPU();
-        }
-
-        [Test]
-        public void Test_smartCopyToFromDevice()
-        {
-            _gpuuintBufferIn = _gpu.Allocate<uint>(N);
-            _gpu.EnableSmartCopy();
-            _gpu.CopyToDevice(_uintBufferIn, 0, _gpuuintBufferIn, 0, N, 101);
-            _gpu.CopyFromDevice(_gpuuintBufferIn, 0, _uintBufferOut, 0, N, 101);
-            _gpu.DisableSmartCopy();
-            Assert.IsTrue(Compare(_uintBufferIn, _uintBufferOut));
-            ClearOutputsAndGPU();
+            int tid = t.threadIdx.x + t.blockDim.x * t.blockIdx.x;
+            if(tid < input.Length)
+                output[tid] = input[tid] * 2;
         }
 
         [Test]
         public void Test_smartCopyToDevice()
         {
+           var mod = CudafyModule.TryDeserialize();
+           if (mod == null || !mod.TryVerifyChecksums())
+           {
+               mod = CudafyTranslator.Cudafy();
+               mod.Serialize();
+           }
+           _gpu.LoadModule(mod);
             _gpuuintBufferIn = _gpu.Allocate<uint>(N);
+            _gpuuintBufferOut = _gpu.Allocate<uint>(N);
+            int batchSize = 8;
+            int loops = 6;
+            Stopwatch sw = Stopwatch.StartNew();
+            for (int x = 0; x < loops; x++)
+            {
+                for (int i = 0; i < batchSize; i++)
+                {
+                    _gpu.CopyToDevice(_uintBufferIn, 0, _gpuuintBufferIn, 0, N);
+                    _gpu.Launch(N / 512, 512, "DoubleAllValues", _gpuuintBufferIn, _gpuuintBufferOut);
+                    _gpu.CopyFromDevice(_gpuuintBufferOut, 0, _uintBufferOut, 0, N);
+                }
+            }
+            long time = sw.ElapsedMilliseconds;
+            Console.WriteLine(time);
+            IntPtr[] stagingPostIn = new IntPtr[batchSize];
+            IntPtr[] stagingPostOut = new IntPtr[batchSize];
+            for (int i = 0; i < batchSize; i++)
+            {
+                stagingPostIn[i] = _gpu.HostAllocate<uint>(N);
+                stagingPostOut[i] = _gpu.HostAllocate<uint>(N);
+            }
             _gpu.EnableSmartCopy();
-            _gpu.CopyToDevice(_uintBufferIn, 0, _gpuuintBufferIn, 0, N, 101);
-            _gpu.CopyFromDevice(_gpuuintBufferIn, 0, _uintBufferOut, 0, N);
+            sw.Restart();
+            for (int x = 0; x < loops; x++)
+            {
+                for (int i = 0; i < batchSize; i++)
+                    _gpu.CopyToDeviceAsync(_uintBufferIn, 0, _gpuuintBufferIn, 0, N, i + 1, stagingPostIn[i]);
+                for (int i = 0; i < batchSize; i++)
+                    _gpu.LaunchAsync(N / 256, 256, i + 1, "DoubleAllValues", _gpuuintBufferIn, _gpuuintBufferOut);
+                for (int i = 0; i < batchSize; i++)
+                    _gpu.CopyFromDeviceAsync(_gpuuintBufferOut, 0, _uintBufferOut, 0, N, i + 1, stagingPostOut[i]);
+                for (int i = 0; i < batchSize; i++)
+                    _gpu.SynchronizeStream(i + 1);
+            }
+
+            time = sw.ElapsedMilliseconds;
+            Console.WriteLine(time);
             _gpu.DisableSmartCopy();
+            for (int i = 0; i < N; i++)
+                _uintBufferIn[i] *= 2;
             Assert.IsTrue(Compare(_uintBufferIn, _uintBufferOut));
+                       
             ClearOutputsAndGPU();
         }
 
-        [Test]
-        public void Test_smartCopyFromDevice()
-        {
-            _gpuuintBufferIn = _gpu.Allocate<uint>(N);
-            _gpu.EnableSmartCopy();
-            _gpu.CopyToDevice(_uintBufferIn, 0, _gpuuintBufferIn, 0, N);
-            _gpu.CopyFromDevice(_gpuuintBufferIn, 0, _uintBufferOut, 0, N, 101);
-            _gpu.DisableSmartCopy();
-            Assert.IsTrue(Compare(_uintBufferIn, _uintBufferOut));
-            ClearOutputsAndGPU();
-        }
 
         [Test]
         public void Test_getValue_int2D()
@@ -553,7 +559,7 @@ namespace Cudafy.Host.UnitTests
             public byte[] Data;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
             public byte[] _Message;
-
+            [CudafyIgnore]
             public string Message
             {
                 get { return Encoding.Unicode.GetString(_Message); }

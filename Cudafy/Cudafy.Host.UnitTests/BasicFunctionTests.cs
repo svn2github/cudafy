@@ -146,7 +146,7 @@ namespace Cudafy.Host.UnitTests
             {
                 Assert.AreEqual(x[i].Value1, y[i].Value1);
                 //Assert.AreEqual(x[i].myvalues, y[i].myvalues);
-                Console.WriteLine(y[i].Message);
+                //Console.WriteLine(y[i].Message);
                 Assert.AreEqual(x[i].Message, y[i].Message);
             }
         }

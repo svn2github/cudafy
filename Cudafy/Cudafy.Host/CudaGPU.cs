@@ -27,6 +27,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Threading;
 using GASS.CUDA;
 using GASS.CUDA.Tools;
 using GASS.CUDA.Types;
@@ -113,6 +114,7 @@ namespace Cudafy.Host
                 throw new CudafyHostException(CudafyHostException.csMULTITHREADING_IS_NOT_ENABLED);
             try
             {
+                //Debug.WriteLine("Locking");
                 _ccs.Lock();
             }
             catch (CUDAException ex)
@@ -128,14 +130,26 @@ namespace Cudafy.Host
         public override void Unlock()
         {
             if (_ccs == null)
-                throw new CudafyHostException(CudafyHostException.csDEVICE_IS_NOT_LOCKED);
+                throw new CudafyHostException(CudafyHostException.csMULTITHREADING_IS_NOT_ENABLED);
             try
             {
+                //Debug.WriteLine("Unlocking");
                 _ccs.Unlock();
             }
             catch (CUDAException ex)
             {
                 HandleCUDAException(ex);
+            }
+        }
+
+        public override bool IsLocked
+        {
+            get
+            {
+                return _ccs != null && _ccs.IsLocked;
+            }
+            protected set
+            {
             }
         }
 
@@ -432,12 +446,23 @@ namespace Cudafy.Host
             //    CUfunction printInit = _cuda.GetModuleFunction("cudaPrintfInit");
             //    _cuda.Launch(printInit);
             //}
+            if (IsSmartCopyEnabled)
+            {
+                lock (_smartCopyLock)
+                {
+
+                    while (_streamsPending.Where(sp => sp.StreamId == streamId).Count() > 0)
+                        Monitor.Wait(_smartCopyLock);
+                    Monitor.Pulse(_smartCopyLock);
+                }
+                Lock();
+            }
+
 #warning TODO Set Shared memory size
             
             int ptrSize = CUdeviceptr.Size;
-
+                
             CUfunction function = _cuda.GetModuleFunction((CUmodule)_module.Tag, gpuMethodInfo.Method.Name);
-            //CUfunction function = _cuda.GetModuleFunction(gpuMethodInfo.Method.Name);
             _cuda.SetFunctionBlockShape(function, blockSize.x, blockSize.y, blockSize.z);
             int offset = 0;
             foreach (object o in arguments)
@@ -552,6 +577,8 @@ namespace Cudafy.Host
             {
                 HandleCUDAException(ex);
             }
+            if (IsSmartCopyEnabled)
+                Unlock();
         }
 
         #endregion
@@ -713,159 +740,207 @@ namespace Cudafy.Host
             DoCopyFromDevice<T>(devArray, 0, hostArray, 0, ptrEx.TotalSize);
         }
 
-
-
-        protected override void DoSmartCopyFromDevice<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int startingStreamId)
+        protected override void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost)
         {
-            if (!SmartCopyEnabled)
-                throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
-            int elemSize = MSizeOf(typeof(T));
-            int totalBytes = count * elemSize;
-            int chunkIndex = 0;
-            int[] chunkSizes = new int[_smartOutputStages.Length];
-            int[] totalHostOffsets = new int[_smartOutputStages.Length];
-            int totalHostOffset = hostOffset;
-            int totalDevOffset = devOffset;
-            while (totalBytes > 0)
-            {
-                var stage = _smartOutputStages[chunkIndex];
-                // Split into chunks
-                int chunkSizeBytes = Math.Min(totalBytes, stage.Length);
-                int chunkSizeElems = chunkSizeBytes / elemSize;
+            Lock();
+            CUstream stream = (CUstream)GetStream(streamId);
+            Unlock();
+            var streamDesc = new StreamDesc() { Stream = stream, StreamId = streamId };
 
-                // Copy the data from unmanaged buffer to GPU asynchronously 
-                DoCopyFromDeviceAsync<T>(devArray, totalDevOffset, stage.Pointer, 0, chunkSizeElems, startingStreamId + chunkIndex);
-                chunkSizes[chunkIndex] = chunkSizeElems;
-                totalHostOffsets[chunkIndex] = totalHostOffset;
-                totalBytes -= chunkSizeBytes;
-                totalHostOffset += chunkSizeElems;
-                totalDevOffset += chunkSizeElems;
-                chunkIndex++;
-                if (chunkIndex == _smartOutputStages.Length)
+            lock (_smartCopyLock)
+            {
+                while (_streamsPending.Where(sp => sp.StreamId == streamId).Count() > 0)
+                    Monitor.Wait(_smartCopyLock);
+                _streamsPending.Add(streamDesc);
+                Monitor.Pulse(_smartCopyLock);
+            }
+
+            DoCopyOnHostM2NDelegate<T> copyM2N = new DoCopyOnHostM2NDelegate<T>(DoCopyOnHost<T>);
+            var cdp = new CopyDeviceParams<T>() { count = count, devArray = devArray, devOffset = devOffset,
+                                                  stagingPost = stagingPost,
+                                                  streamId = streamDesc,
+                                                  copyToDevice = true,
+                                                  hostArray = hostArray,
+                                                  hostOffset = hostOffset
+            };
+            AsyncCallback callback = OnCopyOnHostCompleted<T>;
+            IAsyncResult res = copyM2N.BeginInvoke(hostArray, hostOffset, stagingPost, 0, count, callback,
+                new DelegateStateM2N<T>() { Params = cdp, Dlgt = copyM2N });
+        }
+
+        protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId, IntPtr stagingPost)
+        {
+            Lock();
+            CUstream stream = (CUstream)GetStream(streamId);
+            Unlock();
+            var streamDesc = new StreamDesc() { Stream = stream, StreamId = streamId };
+
+            lock (_smartCopyLock)
+            {               
+                while (_streamsPending.Where(sp => sp.StreamId == streamId).Count() > 0)
+                    Monitor.Wait(_smartCopyLock);
+                _streamsPending.Add(streamDesc);
+                Monitor.Pulse(_smartCopyLock);
+            }
+            DoCopyFromDeviceAsyncDelegate<T> copyFrom = new DoCopyFromDeviceAsyncDelegate<T>(DoCopyFromDeviceAsyncEx<T>);
+            AsyncCallback callback = OnCopyFromDeviceAsyncCompleted<T>;
+
+            var cdp = new CopyDeviceParams<T>()
+            {
+                count = count,
+                devArray = devArray,
+                devOffset = devOffset,
+                stagingPost = stagingPost,
+                streamId = streamDesc,
+                copyToDevice = false,
+                hostArray = hostArray,
+                hostOffset = hostOffset
+            };
+            IAsyncResult res = copyFrom.BeginInvoke(devArray, devOffset, stagingPost, 0, count, streamId, callback,
+                new DelegateStateCFDA<T>() { Params = cdp, Dlgt = copyFrom });
+        }
+
+        /// <summary>
+        /// Synchronizes the stream.
+        /// </summary>
+        /// <param name="streamId">The stream id.</param>
+        public override void SynchronizeStream(int streamId = 0)
+        {
+            if (IsSmartCopyEnabled)
+            {
+                Lock();
+                CUstream stream = (CUstream)GetStream(streamId);
+                Unlock();
+                var streamDesc = new StreamDesc() { Stream = stream, StreamId = streamId };
+                lock (_smartCopyLock)
                 {
-                    for (int ci = 0; ci < chunkIndex; ci++)
-                    {
-                        SynchronizeStream(startingStreamId + ci);
-                        stage = _smartOutputStages[ci];
-                        // Copy the managed array to unmanaged buffer.
-                        DoCopyOnHost<T>(stage.Pointer, 0, hostArray, totalHostOffsets[ci], chunkSizeElems);
-                    }
-                    chunkIndex = 0;
+
+                    while (_streamsPending.Where(sp => sp.StreamId == streamId).Count() > 0)
+                        Monitor.Wait(_smartCopyLock);
+                    Monitor.Pulse(_smartCopyLock);
                 }
             }
-            for (int ci = 0; ci < chunkIndex; ci++)
+
+            CUstream cuStr = new CUstream();
+            cuStr.Pointer = IntPtr.Zero;
+            if (streamId > 0)
+                cuStr = (CUstream)_streams[streamId];
+            else
+                cuStr.Pointer = IntPtr.Zero;
+            try
             {
-                SynchronizeStream(startingStreamId + ci);
-                var stage = _smartOutputStages[ci];
-                // Copy the managed array to unmanaged buffer.
-                DoCopyOnHost<T>(stage.Pointer, 0, hostArray, totalHostOffsets[ci], chunkSizes[ci]);
-            }
-        }
-
-        protected override void DoSmartCopyToDeviceEx<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int startingStreamId)
-        {
-            if(!SmartCopyEnabled)
-                throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
-            int elemSize = MSizeOf(typeof(T));
-            int totalBytes = count * elemSize;
-            int chunkIndex = 0;
-            int prevChunkIndex = -1;
-            int totalDevOffset = devOffset;
-            int totalHostOffset = hostOffset;
-            bool firstTimeAround = true;
-            while (totalBytes > 0)
-            {
-                var stage = _smartInputStages[chunkIndex];
-                // Split into chunks
-                int chunkSizeBytes = Math.Min(totalBytes, stage.Length);
-                int chunkSizeElems = chunkSizeBytes / elemSize;
-
-                if (!firstTimeAround)
-                    SynchronizeStream(startingStreamId + chunkIndex);
-
-                // Copy the managed array to unmanaged buffer.
-                DoCopyOnHost<T>(hostArray, totalHostOffset, stage.Pointer, 0, chunkSizeElems);
-                // Copy the data from unmanaged buffer to GPU asynchronously 
-                DoCopyToDeviceAsync<T>(stage.Pointer, 0, devArray, totalDevOffset, chunkSizeElems, startingStreamId + chunkIndex);
-
-                totalBytes -= chunkSizeBytes;
-                totalHostOffset += chunkSizeElems;
-                totalDevOffset += chunkSizeElems;
-                prevChunkIndex = chunkIndex;
-                chunkIndex++;
-                if (chunkIndex == _smartInputStages.Length)
+                if (IsSmartCopyEnabled)
                 {
-                    chunkIndex = 0;
-                    firstTimeAround = false;
+                    Lock();
+                    _cuda.SynchronizeStream(cuStr);
+                    Unlock();
                 }
-                
+                else
+                    _cuda.SynchronizeStream(cuStr);
             }
-            if(!firstTimeAround && prevChunkIndex > -1)
-                SynchronizeStream(startingStreamId + prevChunkIndex);
-            else if (firstTimeAround)
+            catch (CUDAException ex)
             {
-                for (int ci = 0; ci < chunkIndex; ci++)
-                    SynchronizeStream(ci + 1);
+                HandleCUDAException(ex);
             }
         }
 
-        protected override void DoSmartCopyToDevice<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int startingStreamId)
+
+        protected struct StreamDesc
         {
-            if (!SmartCopyEnabled)
-                throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
-            int elemSize = MSizeOf(typeof(T));
-            int totalBytes = count * elemSize;
-            int chunkIndex = 0;
-            int prevChunkIndex = -1;
-            int totalDevOffset = devOffset;
-            int totalHostOffset = hostOffset;
-            bool firstTimeAround = true;
-            var tuples = new Tuple<IntPtr, int, Array, int, int, int>[_smartInputStages.Length];
-            while (totalBytes > 0)
-            {
-                var stage = _smartInputStages[chunkIndex];
-                // Split into chunks
-                int chunkSizeBytes = Math.Min(totalBytes, stage.Length);
-                int chunkSizeElems = chunkSizeBytes / elemSize;
-
-                if (!firstTimeAround)
-                    SynchronizeStream(startingStreamId + chunkIndex);
-
-                // Copy the managed array to unmanaged buffer.
-                DoCopyOnHost<T>(hostArray, totalHostOffset, stage.Pointer, 0, chunkSizeElems);
-                // Copy the data from unmanaged buffer to GPU asynchronously 
-                tuples[chunkIndex] = new Tuple<IntPtr, int, Array, int, int, int>(stage.Pointer, 0, devArray, totalDevOffset, chunkSizeElems, startingStreamId + chunkIndex);
-                //DoCopyToDeviceAsync<T>(stage.Pointer, 0, devArray, totalDevOffset, chunkSizeElems, startingStreamId + chunkIndex);
-
-                totalBytes -= chunkSizeBytes;
-                totalHostOffset += chunkSizeElems;
-                totalDevOffset += chunkSizeElems;
-                prevChunkIndex = chunkIndex;
-                chunkIndex++;
-                if (chunkIndex == _smartInputStages.Length)
-                {                  
-                    firstTimeAround = false;
-                    for (int ci = 0; ci < chunkIndex; ci++)
-                    {
-                        var t = tuples[ci];
-                        DoCopyToDeviceAsync<T>(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6);
-                    }
-                    chunkIndex = 0;
-                }
-            }
-            for (int ci = 0; ci < chunkIndex; ci++)
-            {
-                var t = tuples[ci];
-                DoCopyToDeviceAsync<T>(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6);
-            }
-            //if (!firstTimeAround && prevChunkIndex > -1)
-            //    SynchronizeStream(startingStreamId + prevChunkIndex);
-            //else if (firstTimeAround)
-            //{
-            //    for (int ci = 0; ci < chunkIndex; ci++)
-            //        SynchronizeStream(ci + 1);
-            //}
+            public int StreamId;
+            public CUstream Stream;
         }
+
+        private object _smartCopyLock = new object();
+
+        private List<StreamDesc> _streamsPending = new List<StreamDesc>();
+
+        private void DoCopyFromDeviceAsyncEx<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId)
+        {
+            if(IsSmartCopyEnabled)
+                Lock();
+            DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, streamId);
+            if (IsSmartCopyEnabled)
+                Unlock();
+        }
+
+        private void OnCopyOnHostCompleted<T>(IAsyncResult result)
+        {
+            DelegateStateM2N<T> dlgtStaten = (DelegateStateM2N<T>)result.AsyncState;
+            CopyDeviceParams<T> cdp = dlgtStaten.Params;
+            DoCopyOnHostM2NDelegate<T> dlgt = dlgtStaten.Dlgt;
+            dlgt.EndInvoke(result);
+            if (IsSmartCopyEnabled)
+                Lock();
+            DoCopyToDeviceAsync<T>(cdp.stagingPost, 0, cdp.devArray, cdp.devOffset, cdp.count, cdp.streamId.StreamId);
+            if (IsSmartCopyEnabled)
+                Unlock();
+            lock (_smartCopyLock)
+            {
+                bool removed = _streamsPending.Remove(cdp.streamId);
+                Debug.Assert(removed);
+                Monitor.Pulse(_smartCopyLock);
+            }
+            
+        }
+
+        private void OnCopyFromDeviceAsyncCompleted<T>(IAsyncResult result)
+        {
+            DelegateStateCFDA<T> dlgtState = (DelegateStateCFDA<T>)result.AsyncState;
+            CopyDeviceParams<T> cdp = dlgtState.Params;
+            DoCopyFromDeviceAsyncDelegate<T> dlgt = dlgtState.Dlgt;
+            dlgt.EndInvoke(result);
+
+            if (IsSmartCopyEnabled)
+                Lock();
+            _cuda.SynchronizeStream(cdp.streamId.Stream);
+            if (IsSmartCopyEnabled)
+                Unlock();
+            lock(_smartCopyLock)
+            {
+                DoCopyOnHost<T>(cdp.stagingPost, 0, cdp.hostArray, cdp.hostOffset, cdp.count);
+                bool removed = _streamsPending.Remove(cdp.streamId);
+                Debug.Assert(removed);
+                Monitor.Pulse(_smartCopyLock);
+            }
+        }
+
+
+        private struct DelegateStateM2N<T>
+        {
+            public CopyDeviceParams<T> Params;
+            public DoCopyOnHostM2NDelegate<T> Dlgt;
+        }
+
+        private struct DelegateStateN2M<T>
+        {
+            public CopyDeviceParams<T> Params;
+            public DoCopyOnHostN2MDelegate<T> Dlgt;
+        }
+
+        private struct DelegateStateCFDA<T>
+        {
+            public CopyDeviceParams<T> Params;
+            public DoCopyFromDeviceAsyncDelegate<T> Dlgt;
+        }
+
+        private struct CopyDeviceParams<T>
+        {
+            public Array hostArray;
+            public int hostOffset;
+            public Array devArray;
+            public int devOffset;
+            public int count;
+            public StreamDesc streamId;
+            public bool copyToDevice;
+            public IntPtr stagingPost;
+        }
+
+        private delegate void DoCopyFromDeviceAsyncDelegate<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId);
+
+        private delegate void DoCopyOnHostM2NDelegate<T>(Array srcArray, int srcOffset, IntPtr dstArray, int dstOffset, int count);
+
+        private delegate void DoCopyOnHostN2MDelegate<T>(IntPtr srcArray, int srcOffset, Array dstArray, int dstOffset, int count);
 
         protected override void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId)
         {
@@ -1075,7 +1150,7 @@ namespace Cudafy.Host
                         }
                     }
                     _hostHandles.Clear();
-                    if (SmartCopyEnabled)
+                    if (IsSmartCopyEnabled)
                         DisableSmartCopy();
                 }
             }
@@ -1503,30 +1578,7 @@ namespace Cudafy.Host
             return cnt;
         }
 
-        /// <summary>
-        /// Synchronizes the stream.
-        /// </summary>
-        /// <param name="streamId">The stream id.</param>
-        public override void SynchronizeStream(int streamId = 0)
-        {
-            if (streamId > 0 && !_streams.ContainsKey(streamId))
-                throw new CudafyHostException(CudafyHostException.csSTREAM_X_NOT_SET, streamId);
 
-            CUstream cuStr = new CUstream();
-            cuStr.Pointer = IntPtr.Zero;
-            if(streamId > 0)    
-                cuStr = (CUstream)_streams[streamId];
-            else
-                cuStr.Pointer = IntPtr.Zero;
-            try
-            {
-                _cuda.SynchronizeStream(cuStr);
-            }
-            catch (CUDAException ex)
-            {
-                HandleCUDAException(ex);
-            }
-        }
 
 
         /// <summary>

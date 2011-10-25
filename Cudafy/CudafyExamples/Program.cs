@@ -28,6 +28,7 @@ using Cudafy;
 using CudafyExamples.Arrays;
 using CudafyExamples.Dummy;
 using CudafyExamples.Complex;
+using CudafyExamples.Misc;
 namespace CudafyExamples
 {
     class Program
@@ -50,7 +51,8 @@ namespace CudafyExamples
                 ComplexNumbersF.Execute();
                 Console.WriteLine("\r\nDummyFunctions");
                 DummyFunctions.Execute();
-                
+                Console.WriteLine("\r\nPinnedAsyncIO");
+                PinnedAsyncIO.Execute();
                 Console.WriteLine("Done!");
             }
             catch (Exception ex)

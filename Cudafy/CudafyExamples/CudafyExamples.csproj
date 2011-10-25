@@ -83,6 +83,7 @@
     <Compile Include="Complex\ComplexNumbers.cs" />
     <Compile Include="Complex\ComplexNumbersD.cs" />
     <Compile Include="Dummy\DummyFunctions.cs" />
+    <Compile Include="Misc\PinnedAsyncIO.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

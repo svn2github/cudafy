@@ -152,6 +152,7 @@ namespace Cudafy.Host
         {
             if (!IsMultithreadingEnabled)
                 throw new CudafyHostException(CudafyHostException.csMULTITHREADING_IS_NOT_ENABLED);
+            IsLocked = true;
         }
 
         /// <summary>
@@ -160,8 +161,11 @@ namespace Cudafy.Host
         public virtual void Unlock()
         {
             if (!IsMultithreadingEnabled)
-                throw new CudafyHostException(CudafyHostException.csDEVICE_IS_NOT_LOCKED);
+                throw new CudafyHostException(CudafyHostException.csMULTITHREADING_IS_NOT_ENABLED);
+            IsLocked = false;
         }
+
+        public virtual bool IsLocked { get; protected set; }
 
         /// <summary>
         /// Allows multiple threads to access this GPU.
@@ -845,6 +849,9 @@ namespace Cudafy.Host
         /// <param name="streamId">The stream id.</param>
         protected abstract void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId);
 
+        protected abstract void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost);
+
+
         /// <summary>
         /// Does the copy from device async.
         /// </summary>
@@ -857,6 +864,17 @@ namespace Cudafy.Host
         /// <param name="streamId">The stream id.</param>
         protected abstract void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId);
 
+        protected abstract void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId, IntPtr stagingPost);
+
+        protected struct StagingPost
+        {
+            public IntPtr Pointer { get; set; }
+            public int StreamId { get; set; }
+            public bool Locked { get; set; }
+        }
+
+        protected List<StagingPost> _stagingPosts = new List<StagingPost>();
+        
         /// <summary>
         /// Copies to preallocated array on device.
         /// </summary>
@@ -897,6 +915,23 @@ namespace Cudafy.Host
         {
             DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, -1);
         }
+
+        public void CopyToDeviceAsync<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId, IntPtr stagingPost)
+        {
+            if (!IsSmartCopyEnabled)
+                throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
+            DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId, stagingPost);
+        }
+
+        public void CopyFromDeviceAsync<T>(T[] devArray, int devOffset, T[] hostArray, int hostOffset, int count, int streamId, IntPtr stagingPost)
+        {
+            if (!IsSmartCopyEnabled)
+                throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
+            DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, streamId, stagingPost);
+        }
+
+
+        //protected List<
 
         /// <summary>
         /// Copies asynchronously to preallocated array on device.
@@ -942,6 +977,8 @@ namespace Cudafy.Host
         {
             DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId);
         }
+
+        //public void CopyToDeviceAsync()
 
         /// <summary>
         /// Copies from device.
@@ -1912,88 +1949,28 @@ namespace Cudafy.Host
 
 
 
-        public virtual bool SmartCopyEnabled { get; protected set; }
+        public virtual bool IsSmartCopyEnabled { get; protected set; }
 
-        public virtual void EnableSmartCopy(int maxBufferSize = 1024*1024, int noBuffers = 8)
+        private bool _wasMultithreadingEnabled = false;
+
+        public virtual void EnableSmartCopy()
         {
-            if (SmartCopyEnabled)
+            if (IsSmartCopyEnabled)
                 throw new CudafyHostException(CudafyHostException.csSMART_COPY_ALREADY_ENABLED);
-            var inputStages = new List<SmartStage>();
-            for (int i = 0; i < noBuffers; i++ )
-                inputStages.Add(new SmartStage() { Length = maxBufferSize, Type = eSmartStageType.Input, Pointer = HostAllocate<byte>(maxBufferSize) });
-            var outputStages = new List<SmartStage>();
-            for (int i = 0; i < noBuffers; i++)
-                outputStages.Add(new SmartStage() { Length = maxBufferSize, Type = eSmartStageType.Output, Pointer = HostAllocate<byte>(maxBufferSize) });
-            //inputStages.ForEach(sis => HostAllocate
-            _smartInputStages = inputStages.ToArray();
-            _smartOutputStages = outputStages.ToArray();
-            SmartCopyEnabled = true;
+            _wasMultithreadingEnabled = IsMultithreadingEnabled;
+            if (!IsMultithreadingEnabled)
+                EnableMultithreading();
+            IsSmartCopyEnabled = true;
         }
 
         public virtual void DisableSmartCopy()
         {
-            if (!SmartCopyEnabled)
+            if (!IsSmartCopyEnabled)
                 throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
-            foreach (var ss in _smartInputStages)
-                HostFree(ss.Pointer);
-            foreach (var ss in _smartOutputStages)
-                HostFree(ss.Pointer);
-            _smartInputStages = new SmartStage[0];
-            _smartOutputStages = new SmartStage[0];
-            SmartCopyEnabled = false;
+            if (!_wasMultithreadingEnabled)
+                DisableMultithreading();
+            IsSmartCopyEnabled = false;
         }
-
-        /// <summary>
-        /// Does an asynchronous smart copy using pinned memory to device. Smart copy must be enabled by calling
-        /// EnableSmartCopy.
-        /// </summary>
-        /// <typeparam name="T">Blittable type.</typeparam>
-        /// <param name="hostArray">The host array.</param>
-        /// <param name="hostOffset">The host offset.</param>
-        /// <param name="devArray">The device array.</param>
-        /// <param name="devOffset">The device offset.</param>
-        /// <param name="count">The count.</param>
-        /// <param name="startingStreamId">The starting stream id.</param>
-        public void CopyToDevice<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count, int startingStreamId)
-        {
-            DoSmartCopyToDevice<T>(hostArray, hostOffset, devArray, devOffset, count, startingStreamId);
-        }
-
-        /// <summary>
-        /// Does an asynchronous smart copy using pinned memory from device. Smart copy must be enabled by calling
-        /// EnableSmartCopy.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="devArray">The device array.</param>
-        /// <param name="devOffset">The device offset.</param>
-        /// <param name="hostArray">The host array.</param>
-        /// <param name="hostOffset">The host offset.</param>
-        /// <param name="count">The count.</param>
-        /// <param name="startingStreamId">The starting stream id.</param>
-        public void CopyFromDevice<T>(T[] devArray, int devOffset, T[] hostArray, int hostOffset, int count, int startingStreamId)
-        {
-            DoSmartCopyFromDevice<T>(devArray, devOffset, hostArray, hostOffset, count, startingStreamId);
-        }
-
-        protected virtual void DoSmartCopyFromDevice<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int startingStreamId)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected virtual void DoSmartCopyToDevice<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int startingStreamId)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected virtual void DoSmartCopyToDeviceEx<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int startingStreamId)
-        {
-            throw new NotImplementedException();
-        }
-
-        //protected virtual void DoSmartSynchronize(int startedStreamId)
-        //{
-
-        //}
 
         /// <summary>
         /// Allocates on device.

@@ -571,6 +571,19 @@ namespace Cudafy.Host
             }
         }
 
+        protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId, IntPtr stagingPost)
+        {
+            DoCopyFromDeviceAsync<T>(devArray, devOffset, stagingPost, 0, count, streamId);
+            DoCopyOnHost<T>(stagingPost, 0, hostArray, hostOffset, count);
+        }
+
+        protected override void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost)
+        {
+            DoCopyOnHost<T>(hostArray, hostOffset, stagingPost, 0, count);
+            DoCopyToDeviceAsync<T>(stagingPost, 0, devArray, devOffset, count, streamId);
+        }
+        
+
         /// <summary>
         /// Does the copy from device async.
         /// </summary>
