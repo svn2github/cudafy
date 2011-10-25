@@ -39,18 +39,18 @@ namespace CudafyExamples
             {
                 CudafyModes.Target = Cudafy.eGPUType.Cuda;
 
-                Console.WriteLine("\r\nArrayBasicIndexing");
-                ArrayBasicIndexing.Execute();
-                Console.WriteLine("\r\nArrayMultidimensions");
-                ArrayMultidimensions.Execute();
-                Console.WriteLine("\r\nGlobalArrays");
-                GlobalArrays.Execute();
-                Console.WriteLine("\r\nComplexNumbersD");
-                ComplexNumbersD.Execute();
-                Console.WriteLine("\r\nComplexNumbersF");
-                ComplexNumbersF.Execute();
-                Console.WriteLine("\r\nDummyFunctions");
-                DummyFunctions.Execute();
+                //Console.WriteLine("\r\nArrayBasicIndexing");
+                //ArrayBasicIndexing.Execute();
+                //Console.WriteLine("\r\nArrayMultidimensions");
+                //ArrayMultidimensions.Execute();
+                //Console.WriteLine("\r\nGlobalArrays");
+                //GlobalArrays.Execute();
+                //Console.WriteLine("\r\nComplexNumbersD");
+                //ComplexNumbersD.Execute();
+                //Console.WriteLine("\r\nComplexNumbersF");
+                //ComplexNumbersF.Execute();
+                //Console.WriteLine("\r\nDummyFunctions");
+                //DummyFunctions.Execute();
                 Console.WriteLine("\r\nPinnedAsyncIO");
                 PinnedAsyncIO.Execute();
                 Console.WriteLine("Done!");

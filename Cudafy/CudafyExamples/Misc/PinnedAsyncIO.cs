@@ -97,8 +97,8 @@ namespace CudafyExamples.Misc
 
             float c = 0;
 
-            int loops = 10;
-            int batches = 8;
+            int loops = 100;
+            int batches = 12;
 
             // allocate memory on the cpu side
             float[] a = new float[N];
@@ -160,7 +160,7 @@ namespace CudafyExamples.Misc
             gpu.Set(dev_a);
             gpu.Set(dev_b);
             gpu.Set(dev_partial_c);
-            
+
             gpu.EnableSmartCopy();
             sw.Restart();
             for (int l = 0; l < loops; l++)
@@ -208,7 +208,7 @@ namespace CudafyExamples.Misc
             }
 
             long asyncTime = sw.ElapsedMilliseconds;
-            Console.WriteLine("Asynchronous Time: {0}", asyncTime);            
+            Console.WriteLine("Asynchronous Time: {0}", asyncTime);
             Console.WriteLine("Does GPU value {0} = {1}?\n", c, 2 * sum_squares((float)(N - 1)));
             gpu.DisableSmartCopy();
 
@@ -237,7 +237,30 @@ namespace CudafyExamples.Misc
             long cpuLinqTime = sw.ElapsedMilliseconds;
             Console.WriteLine("CPU Linq Time: {0}", cpuLinqTime);
             Console.WriteLine("Does CPU value {0} = {1}?\n", c, 2 * sum_squares((float)(N - 1)));
+
+            // let's try and do this on the CPU with multiple threads
+            DotProductDelegate dlgt = new DotProductDelegate(DotProduct);
+            IAsyncResult[] res = new IAsyncResult[batches];
+            for (int bat = 0; bat < batches; bat++)
+                res[bat] = null;
+            sw.Restart();
+            c = 0;
+            for (int l = 0; l < loops; l++)
+                for (int bat = 0; bat < batches; bat++)
+                {
+                    if (res[bat] != null)
+                        c = dlgt.EndInvoke(res[bat]);
+                    res[bat] = dlgt.BeginInvoke(a, b, null, null);
+                }
+            for (int bat = 0; bat < batches; bat++)
+                if (res[bat] != null)
+                    c = dlgt.EndInvoke(res[bat]);
+            long cpuMultiTime = sw.ElapsedMilliseconds;
+            Console.WriteLine("CPU Multi Time: {0}", cpuMultiTime);
+            Console.WriteLine("Does CPU value {0} = {1}?\n", c, 2 * sum_squares((float)(N - 1)));
         }
+
+        private delegate float DotProductDelegate(float[] vec1, float[] vec2);
 
         private static float DotProduct(float[] vec1, float[] vec2)
         {
