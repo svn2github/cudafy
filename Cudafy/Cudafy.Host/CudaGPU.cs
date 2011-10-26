@@ -142,6 +142,12 @@ namespace Cudafy.Host
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether this instance is locked.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if this instance is locked; otherwise, <c>false</c>.
+        /// </value>
         public override bool IsLocked
         {
             get
@@ -845,7 +851,7 @@ namespace Cudafy.Host
         }
 
 
-        protected struct StreamDesc
+        private struct StreamDesc
         {
             public int StreamId;
             public CUstream Stream;
@@ -905,17 +911,10 @@ namespace Cudafy.Host
             }
         }
 
-
         private struct DelegateStateM2N<T>
         {
             public CopyDeviceParams<T> Params;
             public DoCopyOnHostM2NDelegate<T> Dlgt;
-        }
-
-        private struct DelegateStateN2M<T>
-        {
-            public CopyDeviceParams<T> Params;
-            public DoCopyOnHostN2MDelegate<T> Dlgt;
         }
 
         private struct DelegateStateCFDA<T>

@@ -165,6 +165,12 @@ namespace Cudafy.Host
             IsLocked = false;
         }
 
+        /// <summary>
+        /// Gets a value indicating whether this instance is locked.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if this instance is locked; otherwise, <c>false</c>.
+        /// </value>
         public virtual bool IsLocked { get; protected set; }
 
         /// <summary>
@@ -794,12 +800,16 @@ namespace Cudafy.Host
         /// <param name="arguments">The arguments.</param>
         protected abstract void DoLaunch(dim3 gridSize, dim3 blockSize, int streamId, KernelMethodInfo gpuMI, params object[] arguments);
 
+
         /// <summary>
         /// Does the copy to constant memory.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
         /// <param name="devArray">The dev array.</param>
+        /// <param name="devOffset">The dev offset.</param>
+        /// <param name="count">The count.</param>
         /// <param name="ci">The ci.</param>
         protected abstract void DoCopyToConstantMemory<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci);
 
@@ -833,10 +843,6 @@ namespace Cudafy.Host
         /// <param name="count">The count.</param>
         protected abstract void DoCopyFromDevice<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count);
 
-        //protected abstract void DoCopyToDeviceAsync<T>(IntPtr hostArray, Array devArray, int streamId);
-
-        //protected abstract void DoCopyFromDeviceAsync<T>(Array devArray, IntPtr hostArray, int streamId);
-
         /// <summary>
         /// Does the copy to device async.
         /// </summary>
@@ -849,13 +855,24 @@ namespace Cudafy.Host
         /// <param name="streamId">The stream id.</param>
         protected abstract void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId);
 
+        /// <summary>
+        /// Does the copy to device async.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="devArray">The dev array.</param>
+        /// <param name="devOffset">The dev offset.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="streamId">The stream id.</param>
+        /// <param name="stagingPost">The staging post.</param>
         protected abstract void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost);
 
 
         /// <summary>
-        /// Does the copy from device async.
+        /// Performs an asynchronous data transfer.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="devArray">The dev array.</param>
         /// <param name="devOffset">The dev offset.</param>
         /// <param name="hostArray">The host array.</param>
@@ -864,16 +881,18 @@ namespace Cudafy.Host
         /// <param name="streamId">The stream id.</param>
         protected abstract void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId);
 
+        /// <summary>
+        /// Performs an asynchronous data transfer.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="devArray">The dev array.</param>
+        /// <param name="devOffset">The dev offset.</param>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="streamId">The stream id.</param>
+        /// <param name="stagingPost">The staging post.</param>
         protected abstract void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId, IntPtr stagingPost);
-
-        protected struct StagingPost
-        {
-            public IntPtr Pointer { get; set; }
-            public int StreamId { get; set; }
-            public bool Locked { get; set; }
-        }
-
-        protected List<StagingPost> _stagingPosts = new List<StagingPost>();
         
         /// <summary>
         /// Copies to preallocated array on device.
@@ -916,6 +935,17 @@ namespace Cudafy.Host
             DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, -1);
         }
 
+        /// <summary>
+        /// Copies to device asynchronously making use of the previously allocated staging post.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="devArray">The device array.</param>
+        /// <param name="devOffset">The device offset.</param>
+        /// <param name="count">Number of elements.</param>
+        /// <param name="streamId">The stream id.</param>
+        /// <param name="stagingPost">The staging post of equal or greater size to count. Use HostAllocate to create.</param>
         public void CopyToDeviceAsync<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId, IntPtr stagingPost)
         {
             if (!IsSmartCopyEnabled)
@@ -923,15 +953,23 @@ namespace Cudafy.Host
             DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId, stagingPost);
         }
 
+        /// <summary>
+        /// Copies from device asynchronously making use of the previously allocated staging post.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="devArray">The device array.</param>
+        /// <param name="devOffset">The device offset.</param>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="count">Number of elements.</param>
+        /// <param name="streamId">The stream id.</param>
+        /// <param name="stagingPost">The staging post of equal or greater size to count. Use HostAllocate to create.</param>
         public void CopyFromDeviceAsync<T>(T[] devArray, int devOffset, T[] hostArray, int hostOffset, int count, int streamId, IntPtr stagingPost)
         {
             if (!IsSmartCopyEnabled)
                 throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
             DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, streamId, stagingPost);
         }
-
-
-        //protected List<
 
         /// <summary>
         /// Copies asynchronously to preallocated array on device.
@@ -1562,6 +1600,15 @@ namespace Cudafy.Host
             DoCopyOnHost<T>(nativeHostArraySrc, srcOffset, hostAllocatedMemory, dstOffset, count);
         }
 
+        /// <summary>
+        /// Does the copy on host.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="nativeHostArraySrc">The native host array SRC.</param>
+        /// <param name="srcOffset">The SRC offset.</param>
+        /// <param name="hostAllocatedMemory">The host allocated memory.</param>
+        /// <param name="dstOffset">The DST offset.</param>
+        /// <param name="count">The count.</param>
         protected unsafe static void DoCopyOnHost<T>(Array nativeHostArraySrc, int srcOffset, IntPtr hostAllocatedMemory, int dstOffset, int count)
         {
             //Type type = (typeof(T));
@@ -1657,6 +1704,15 @@ namespace Cudafy.Host
             DoCopyOnHost<T>(hostAllocatedMemory, srcOffset, nativeHostArrayDst, dstOffset, count);
         }
 
+        /// <summary>
+        /// Does the copy on host.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="hostAllocatedMemory">The host allocated memory.</param>
+        /// <param name="srcOffset">The SRC offset.</param>
+        /// <param name="nativeHostArrayDst">The native host array DST.</param>
+        /// <param name="dstOffset">The DST offset.</param>
+        /// <param name="count">The count.</param>
         protected unsafe static void DoCopyOnHost<T>(IntPtr hostAllocatedMemory, int srcOffset, Array nativeHostArrayDst, int dstOffset, int count)
         {
             //Type type = typeof(T);
@@ -1949,10 +2005,20 @@ namespace Cudafy.Host
 
 
 
+        /// <summary>
+        /// Gets a value indicating whether this instance is smart copy enabled.
+        /// </summary>
+        /// <value>
+        /// 	<c>true</c> if this instance is smart copy enabled; otherwise, <c>false</c>.
+        /// </value>
         public virtual bool IsSmartCopyEnabled { get; protected set; }
 
         private bool _wasMultithreadingEnabled = false;
 
+        /// <summary>
+        /// Enables smart copy. The overloads of CopyToDeviceAsync and CopyFromDeviceAsync using pinned memory staging posts
+        /// is now possible. If multithreading is not enabled this will be done automatically.
+        /// </summary>
         public virtual void EnableSmartCopy()
         {
             if (IsSmartCopyEnabled)
@@ -1963,6 +2029,9 @@ namespace Cudafy.Host
             IsSmartCopyEnabled = true;
         }
 
+        /// <summary>
+        /// Disables smart copy and multithreading if this was set automatically during smart copy enable.
+        /// </summary>
         public virtual void DisableSmartCopy()
         {
             if (!IsSmartCopyEnabled)

@@ -191,6 +191,18 @@ namespace Cudafy.Maths.FFT
         /// <returns>Plan.</returns>
         public abstract FFTPlan1D Plan1D(eFFTType fftType, eDataType dataType, int nx, int batch = 1);
 
+        /// <summary>
+        /// Plan1s the D.
+        /// </summary>
+        /// <param name="fftType">Type of the FFT.</param>
+        /// <param name="dataType">Type of the data.</param>
+        /// <param name="nx">The nx.</param>
+        /// <param name="batchSize">Size of the batch.</param>
+        /// <param name="istride">The istride.</param>
+        /// <param name="idist">The idist.</param>
+        /// <param name="ostride">The ostride.</param>
+        /// <param name="odist">The odist.</param>
+        /// <returns></returns>
         public abstract FFTPlan1D Plan1D(eFFTType fftType, eDataType dataType, int nx, int batchSize, int istride, int idist, int ostride, int odist);
 
         /// <summary>

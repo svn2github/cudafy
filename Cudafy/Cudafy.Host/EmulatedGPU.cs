@@ -497,12 +497,16 @@ namespace Cudafy.Host
             return devMemPtr;
         }
 
+
         /// <summary>
         /// Does the copy to constant memory.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
         /// <param name="devArray">The dev array.</param>
+        /// <param name="devOffset">The dev offset.</param>
+        /// <param name="count">The count.</param>
         /// <param name="ci">The ci.</param>
         protected override void DoCopyToConstantMemory<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci)
         {
