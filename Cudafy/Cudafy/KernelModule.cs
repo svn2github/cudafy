@@ -702,7 +702,7 @@ namespace Cudafy
                 string tempFileName = "CUDAFYSOURCETEMP.tmp";
                 string cuFileName = WorkingDirectory + Path.DirectorySeparatorChar + tempFileName.Replace(".tmp", ".cu");
                 string ptxFileName = WorkingDirectory + Path.DirectorySeparatorChar + tempFileName.Replace(".tmp", ".ptx");
-                File.WriteAllText(cuFileName, CudaSourceCode);
+                File.WriteAllText(cuFileName, CudaSourceCode, Encoding.Default);
 
                 foreach (CompilerOptions co in CompilerOptionsList)
                 {
