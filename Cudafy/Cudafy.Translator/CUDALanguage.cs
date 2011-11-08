@@ -174,6 +174,9 @@ namespace Cudafy.Translator
                 });
         }
 
+        /// <summary>
+        /// Initializes the <see cref="CUDALanguage"/> class.
+        /// </summary>
         static CUDALanguage()
         {
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "SyncThreads", new Func<MemberReferenceExpression, object, string>(TranslateSyncThreads)));
@@ -223,6 +226,9 @@ namespace Cudafy.Translator
             SpecialProperties.Add(new SpecialMember("ArrayType", "IsSynchronized", new Func<MemberReferenceExpression, object, string>(TranslateToFalse)));
             SpecialProperties.Add(new SpecialMember("ArrayType", "Rank", new Func<MemberReferenceExpression, object, string>(TranslateArrayRank)));
 
+            //
+            SpecialProperties.Add(new SpecialMember("System.String", "Length", new Func<MemberReferenceExpression, object, string>(TranslateStringLength)));
+            
             SpecialProperties.Add(new SpecialMember("Math", "E", new Func<MemberReferenceExpression, object, string>(TranslateMathE)));
             SpecialProperties.Add(new SpecialMember("Math", "PI", new Func<MemberReferenceExpression, object, string>(TranslateMathPI)));
             SpecialProperties.Add(new SpecialMember("GMath", "E", new Func<MemberReferenceExpression, object, string>(TranslateGMathE)));
@@ -331,6 +337,12 @@ namespace Cudafy.Translator
         public readonly static List<SpecialMember> SpecialProperties = new List<SpecialMember>();
         public readonly static Dictionary<string, SpecialTypeProps> SpecialTypes = new Dictionary<string, SpecialTypeProps>();
         public readonly static List<OptionalHeader> OptionalHeaders;
+
+        static string TranslateStringLength(MemberReferenceExpression mre, object data)
+        {
+            string length = mre.Target.ToString() + "Len";
+            return length;
+        }
 
         static string TranslateArrayLength(MemberReferenceExpression mre, object data)
         {

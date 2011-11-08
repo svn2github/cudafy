@@ -153,9 +153,16 @@ namespace Cudafy.Translator
                     else
                     {
                         var fd = ann as FieldDefinition;
-                        if(fd != null)
+                        if (fd != null)
+                        {
                             if (CUDALanguage.IsSpecialProperty(mre.MemberName, fd.FieldType.GetType().Name))
                                 return true;
+                        }
+                        else if (mre.NodeType == NodeType.Expression)
+                        {
+                            if (mre.MemberName == "Length")
+                                return true;
+                        }
                     }
                 }
             }
@@ -211,7 +218,10 @@ namespace Cudafy.Translator
                     if (pd != null)
                     {
                         SpecialMember sm = CUDALanguage.GetSpecialProperty(mre.MemberName, pd.Type.FullName);
-                        return sm.GetTranslation(mre);
+                        if (sm != null)
+                            return sm.GetTranslation(mre);
+                        else
+                            return mre.MemberName;
                     }
                     else
                     {
@@ -220,6 +230,11 @@ namespace Cudafy.Translator
                         {
                             SpecialMember sm = CUDALanguage.GetSpecialProperty(mre.MemberName, fd.FieldType.GetType().Name);
                             return sm.GetTranslation(mre);
+                        }
+                        else if(mre.NodeType == NodeType.Expression)
+                        {
+                            if (mre.MemberName == "Length")
+                                return (mre.Target.ToString().Length - 2).ToString();
                         }
                     }
                 }

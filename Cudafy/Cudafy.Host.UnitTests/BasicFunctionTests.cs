@@ -132,14 +132,17 @@ namespace Cudafy.Host.UnitTests
             IntPtr y_ptr = _gpu.HostAllocate<PrimitiveStruct>(N);
             PrimitiveStruct[] dev_x = _gpu.Allocate<PrimitiveStruct>(N);
             PrimitiveStruct[] dev_y = _gpu.Allocate<PrimitiveStruct>(N);
-            x_ptr.Write(x);
-            _gpu.CopyToDeviceAsync(x_ptr, 0, dev_x, 0, N);
+            //x_ptr.Write(x);
+
+            //_gpu.CopyToDeviceAsync(x_ptr, 0, dev_x, 0, N);
+            _gpu.CopyToDevice(x, 0, dev_x, 0, N);
             _gpu.Launch(1, N, "ProcessStructure", dev_x, dev_y);
-            //_gpu.CopyOnDevice(dev_x, dev_y);
-            _gpu.CopyFromDeviceAsync(dev_y, 0, y_ptr, 0, N);
+            //_gpu.CopyFromDeviceAsync(dev_y, 0, y_ptr, 0, N);
+            _gpu.CopyFromDevice(dev_y, 0, y, 0, N);
+
             _gpu.SynchronizeStream();
 
-            y_ptr.Read(y);
+            //y_ptr.Read(y);
             _gpu.HostFreeAll();
             _gpu.FreeAll();
             for (int i = 0; i < N; i++)

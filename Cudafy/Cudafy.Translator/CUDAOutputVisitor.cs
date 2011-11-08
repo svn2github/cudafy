@@ -867,6 +867,14 @@ namespace Cudafy.Translator
                             for (int r = 0; r < array.Rank; r++)
                                 formatter.WriteKeyword(string.Format(", {0}Len{1}", identifierExpression.Identifier, r));
                         }
+                        else
+                        {
+                            var typeRef = xVar.Type as Mono.Cecil.TypeReference;
+                            if (typeRef.FullName == "System.String")
+                            {
+                                formatter.WriteKeyword(string.Format(", {0}Len", identifierExpression.Identifier));
+                            }
+                        }
                     }
                 }
             }
@@ -1077,11 +1085,13 @@ namespace Cudafy.Translator
 		public object VisitPrimitiveExpression(PrimitiveExpression primitiveExpression, object data)
 		{
 			StartNode(primitiveExpression);
-			WritePrimitiveValue(primitiveExpression.Value);
+            bool isIndexer = primitiveExpression.Parent is IndexerExpression;
+            bool isInvocationExp = primitiveExpression.Parent is InvocationExpression;
+			WritePrimitiveValue(primitiveExpression.Value, isIndexer, isInvocationExp);
 			return EndNode(primitiveExpression);
 		}
-		
-		void WritePrimitiveValue(object val)
+
+        void WritePrimitiveValue(object val, bool isIndexer = false, bool isInvocationExp = false)
 		{
 			if (val == null) {
 				// usually NullReferenceExpression should be used for this, but we'll handle it anyways
@@ -1098,8 +1108,11 @@ namespace Cudafy.Translator
 				return;
 			}
 			
-			if (val is string) {
-				formatter.WriteToken("\"" + ConvertString(val.ToString()) + "\"");
+			if (val is string) {//(unsigned short*)
+                //formatter.WriteToken(string.Format("(__wchar_t{0})L\"", isIndexer ? "" : "*") + ConvertString(val.ToString()) + "\"");
+                formatter.WriteToken(string.Format("(unsigned short{0})L\"", isIndexer ? "" : "*") + ConvertString(val.ToString()) + "\"");
+                if (isInvocationExp)
+                    formatter.WriteToken(string.Format(", {0}", val.ToString().Length));
 				lastWritten = LastWritten.Other;
 			} else if (val is char) {
                 byte[] ba = Encoding.Unicode.GetBytes(new char[] { (char)val });
@@ -1199,11 +1212,14 @@ namespace Cudafy.Translator
 				case '\v':
 					return "\\v";
 				default:
-					if (char.IsControl(ch) || char.IsSurrogate(ch)) {
+					//if (char.IsControl(ch) || char.IsSurrogate(ch)) {
 						return "\\u" + ((int)ch).ToString("x4");
-					} else {
-						return ch.ToString();
-					}
+					//} else {
+                    //    byte[] ba = Encoding.Unicode.GetBytes(new char[] { (char)ch });
+                    //    ushort shrt = BitConverter.ToUInt16(ba, 0);
+                    //    return "\\u"+shrt.ToString("X");
+						//return ch.ToString();
+					//}
 			}
 		}
 		
@@ -1603,7 +1619,8 @@ namespace Cudafy.Translator
                             }
                             var fd = member as FieldDeclarationEx;
                             int classSize = 0;
-                            string returnType = null;
+                            string returnType = "unknown";
+                            bool ignoreElemSize = false;
                             if (fd != null)
                             {
                                 if (fd.ReturnType != null && fd.ReturnType is MemberType)
@@ -1621,9 +1638,41 @@ namespace Cudafy.Translator
                                     var vi = fd.Variables.Where(v => v is VariableInitializer).FirstOrDefault();
                                     if (vi != null && vi.Name == "FixedElementField")
                                         _FixedElementFields.Add((fd.Parent as TypeDeclarationEx).Name, fd.ReturnType.ToString());
+                                    else if(vi != null)
+                                    {
+                                        var attr = fd as AstNode;// fd.Attributes.Take(1);
+                                        if (attr != null && attr.Annotations.Count() > 0)
+                                        {
+                                            var anno = attr.Annotations.Take(1);
+                                            var fieldDef = anno.FirstOrDefault() as Mono.Cecil.FieldDefinition;
+                                            if (fieldDef != null && fieldDef.HasMarshalInfo)
+                                            {
+                                                var mi = fieldDef.MarshalInfo as Mono.Cecil.FixedSysStringMarshalInfo;
+                                                if (mi != null)
+                                                {
+                                                    returnType = fd.ReturnType.ToString();
+                                                    classSize = mi.Size;
+                                                    ignoreElemSize = true;
+                                                }
+                                                else
+                                                {
+                                                    var fami = fieldDef.MarshalInfo as Mono.Cecil.FixedArrayMarshalInfo;
+                                                    if (fami != null)
+                                                    {
+                                                        returnType = fd.ReturnType.ToString();
+                                                        classSize = fami.Size;
+                                                        ignoreElemSize = true;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        //var mi = ((Mono.Cecil.FieldDefinition)(((object[])(((ICSharpCode.NRefactory.CSharp.AstNode)(((ICSharpCode.NRefactory.CSharp.FieldDeclaration)(fd)).Variables.node)).Annotations))[0])).MarshalInfo;
+                                        //var fssmi = mi as Mono.Cecil.FixedSysStringMarshalInfo;
+                                        //int size = fssmi == null ? 0 : fssmi.Size;
+                                    }
                                 }
                             }
-                            member.AcceptVisitor(this, classSize == 0 ? data : new Tuple<string,int>(returnType, classSize));
+                            member.AcceptVisitor(this, classSize == 0 ? data : new Tuple<string,int,bool>(returnType, classSize, ignoreElemSize));
                         }
                     }
                     catch(Exception)
@@ -2112,6 +2161,31 @@ namespace Cudafy.Translator
                 Space();
                 WriteCommaSeparatedList(variableDeclarationStatement.Variables);
                 Semicolon();
+        // here we set textLen
+                var pt = variableDeclarationStatement.FirstChild as PrimitiveType;
+                if (pt != null && pt.Keyword == "string")
+                {
+                    var vi = variableDeclarationStatement.LastChild as VariableInitializer;
+                    if (vi != null)
+                    {
+                        string str = null;
+                        var pe = vi.Initializer as PrimitiveExpression;
+                        if (pe != null)
+                        {
+                            str = pe.Value as string;
+                            WriteIdentifier(string.Format("int {0}Len = {1};\r\n", vi.Name, str.Length));
+                        }
+                        else
+                        {
+                            var ie = vi.Initializer as IdentifierExpression;
+                            if (ie != null)
+                            {
+                                str = ie.Identifier;
+                                WriteIdentifier(string.Format("int {0}Len = {1}Len;\r\n", vi.Name, str));
+                            }
+                        }
+                    }
+                }
             }
 			
 			return EndNode(variableDeclarationStatement);
@@ -2408,11 +2482,16 @@ namespace Cudafy.Translator
 
                 if (data != null)
                 {
-                    Tuple<string, int> tuple = (Tuple<string, int>)data;
+                    var tuple = (Tuple<string, int, bool>)data;
                     int classSize = (int)tuple.Item2;
-                    int elementSize = GetSize(tuple.Item1);
-                    classSize /= elementSize;
+                    
+                    if (!tuple.Item3)
+                    {
+                        int elementSize = GetSize(tuple.Item1);
+                        classSize /= elementSize;
+                    }
                     string returnType = tuple.Item1;
+                    returnType = returnType.TrimEnd('[', ']');
                     WriteKeyword(returnType);
                     Space();
                     WriteCommaSeparatedList(fieldDeclaration.Variables);
@@ -2585,7 +2664,13 @@ namespace Cudafy.Translator
             //WriteMethodBody(operatorDeclaration.Body);
             //return EndNode(operatorDeclaration);
 		}
-		
+
+        /// <summary>
+        /// Visits the parameter declaration.
+        /// </summary>
+        /// <param name="parameterDeclaration">The parameter declaration.</param>
+        /// <param name="data">The data.</param>
+        /// <returns></returns>
 		public object VisitParameterDeclaration(ParameterDeclaration parameterDeclaration, object data)
 		{
 			StartNode(parameterDeclaration);
@@ -2623,8 +2708,16 @@ namespace Cudafy.Translator
                 if (composedType.ToString().Contains("["))
                 {
                     int rank = 1 + composedType.ToString().Count(c => c == ',');
-                    for(int i = 0; i < rank; i++)
+                    for (int i = 0; i < rank; i++)
                         formatter.WriteKeyword(string.Format(", int {0}Len{1}", parameterDeclaration.Name, ctr++));
+                }
+            }
+            else
+            {
+                var primType = parameterDeclaration.Type as PrimitiveType;
+                if (primType.OriginalType == "String")
+                {
+                    formatter.WriteKeyword(string.Format(", int {0}Len", parameterDeclaration.Name));
                 }
             }
 
@@ -2775,6 +2868,8 @@ namespace Cudafy.Translator
                     return "unsigned short";
                 case "bool":
                     return "bool";
+                case "string":
+                    return "unsigned short*";//"__wchar_t*";
                 default:
                     return keyword;
             }

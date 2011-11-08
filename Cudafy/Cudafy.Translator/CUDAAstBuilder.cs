@@ -536,8 +536,8 @@ namespace Cudafy.Translator
                             case "UInt64":
                                 return new PrimitiveType("unsigned long long");//"ulong");
                             case "String":
-                                throw new NotSupportedException("String");
-                                //return new PrimitiveType("unsigned char");
+                                //throw new NotSupportedException("String");
+                                return new PrimitiveType("unsigned short*") { OriginalType = "String" };
                             case "Single":
                                 return new PrimitiveType("float");
                             case "Double":

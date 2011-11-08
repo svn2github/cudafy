@@ -33,9 +33,10 @@ namespace ICSharpCode.NRefactory.CSharp
 	{
 		public string Keyword { get; set; }
 		public AstLocation Location { get; set; }
-		
+        public String OriginalType { get; set; }
 		public PrimitiveType()
 		{
+            OriginalType = string.Empty;
 		}
 		
 		public PrimitiveType(string keyword)
