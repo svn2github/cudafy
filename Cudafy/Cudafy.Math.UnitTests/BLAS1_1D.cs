@@ -205,7 +205,7 @@ namespace Cudafy.Maths.UnitTests
         {
             CreateRandomData(_hostInput1);
             _gpu.CopyToDevice(_hostInput1, _devPtr1);
-            float sum = _blas.ASUM(_devPtr1, ciN, 0, 2);
+            float sum = _blas.ASUM(_devPtr1, ciN/2, 0, 2);
             _gpu.CopyFromDevice(_devPtr1, _hostOutput1);
             float hostsum = 0;
             bool b = true;
