@@ -349,9 +349,13 @@ namespace Cudafy.Translator
                         formatter.WriteKeyword(s);
                         pos++;
                     }
+                     
                     formatter.WriteKeyword(" + ");
+                      
                 }
+                formatter.WriteToken("("); 
                 node.AcceptVisitor(this, null);
+                formatter.WriteToken(")");
                 i++;
             }
         }

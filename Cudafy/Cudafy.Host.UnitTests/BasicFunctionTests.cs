@@ -402,6 +402,31 @@ namespace Cudafy.Host.UnitTests
             Test_addVector(eAddVectorMode.GlobalVarDevice);
         }
 
+        [Test]
+        public void Test_2DAddressing()
+        {
+            int w = 256;
+            int h = 128;
+            int[,] input = new int[w, h];
+            int[] output = new int[w * h];
+       
+            int i = 0;
+            for (int x = 0; x < w; x++)
+                for (int y = 0; y < h; y++)
+                    input[x, y] = i++;
+
+            int[,] input_dev = _gpu.CopyToDevice(input);
+            int[] output_dev = _gpu.Allocate<int>(w * h);
+            int coeff = 42;
+            _gpu.Launch(1, 1).twoDAddressingWrong(input_dev, coeff, output_dev);
+            _gpu.CopyFromDevice(output_dev, output);
+            
+            i = 0;
+            for (int x = 0; x < w; x++)
+                for (int y = 0; y < h; y++)
+                    Assert.AreEqual(input[x, y] * 42, output[i++]);
+        }
+
         private enum eAddVectorMode { GlobalVar, Smart, GlobalVarDevice };
 
         private void Test_addVector(eAddVectorMode addMode)
@@ -661,6 +686,31 @@ namespace Cudafy.Host.UnitTests
                 c[thread.blockIdx.x] = cache[0];
         }
 
+        [Cudafy]
+        public static void twoDAddressing(GThread thread, int[,] input, int coeff, int[] output)
+        {
+            int x = 0;
+            for (int dx = 0; dx < input.GetLength(0); dx++)
+            {
+                for (int dy = 0; dy < input.GetLength(1); dy++)
+                {
+                    output[x++] = input[dx, dy] * coeff;
+                }
+            }
+        }
+
+        [Cudafy]
+        public static void twoDAddressingWrong(GThread thread, int[,] input, int coeff, int[] output)
+        {
+            int x = 0;
+            for (int dx = -1; dx < input.GetLength(0) - 1; dx++)
+            {
+                for (int dy = -1; dy < input.GetLength(1) - 1; dy++)
+                {
+                    output[x++] = input[dx + 1, dy + 1] * coeff;
+                }
+            }
+        }
 
         [SetUp]
         public void TestSetUp()
