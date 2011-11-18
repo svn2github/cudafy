@@ -591,6 +591,8 @@ namespace Cudafy
         {
             if (GetTotalMembers() == 0)
                 throw new CudafyException(CudafyException.csNO_MEMBERS_FOUND);
+            if (!HasSuitablePTX)
+                throw new CudafyException(CudafyException.csNO_SUITABLE_X_PRESENT_IN_CUDAFY_MODULE, "PTX");
             foreach (var kvp in Functions)
                 kvp.Value.VerifyChecksums();
             foreach (var kvp in Constants)
@@ -606,7 +608,7 @@ namespace Cudafy
         /// <returns>True if checksums match and total number of members is greater than one, else false.</returns>
         public bool TryVerifyChecksums()
         {
-            if (GetTotalMembers() == 0)
+            if (GetTotalMembers() == 0 || !HasSuitablePTX)
                 return false;
             foreach (var kvp in Functions)
                 if (kvp.Value.TryVerifyChecksums() == false)

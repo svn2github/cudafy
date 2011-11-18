@@ -168,6 +168,7 @@ namespace Cudafy
         public const string csCHECKSUM_FOR_ASSEMBLY_X_DOES_NOT_MATCH_DESERIALIZED_VALUE = "Checksum for assembly '{0}' does not match deserialized value.";
         public const string csX_NOT_SUPPORTED = "{0} is not supported.";
         public const string csX_NOT_SET = "{0} is not set.";
+        public const string csNO_SUITABLE_X_PRESENT_IN_CUDAFY_MODULE = "No suitable {0} present in Cudafy module.";
         //public const string csPARAMETER_PASSED_BY_REFERENCE_X_NOT_CURRENTLY_SUPPORTED = "Parameter passed by reference ({0}) is currently not supported.";
         //"Parameter passed by reference (out)"
         public const string csX_NOT_CURRENTLY_SUPPORTED = "{0} is not currently supported.";
