@@ -520,7 +520,7 @@ namespace Cudafy.Translator
                         switch (name)
                         {
                             case "SByte":
-                                return new PrimitiveType("char");//"sbyte");
+                                return new PrimitiveType("char") { OriginalType = "SByte" }; ;//"sbyte");
                             case "Int16":
                                 return new PrimitiveType("short");
                             case "Int32":

@@ -43,7 +43,7 @@ namespace Cudafy.Host.UnitTests
                 //CudafyUnitTest.PerformAllTests(st);
 
                 BasicFunctionTests bft = new BasicFunctionTests();
-                CudafyUnitTest.PerformAllTests(bft);
+                CudafyUnitTest.PerformAllTests(bft);//, "Test_useForeachSByte");
 
                 //GMathUnitTests gmu = new GMathUnitTests();
                 //CudafyUnitTest.PerformAllTests(gmu);

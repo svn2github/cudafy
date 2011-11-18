@@ -101,7 +101,7 @@ namespace Cudafy.Host.UnitTests
             if (_cm == null || !_cm.TryVerifyChecksums())
             {
                 _cm = CudafyTranslator.Cudafy(typeof(PrimitiveStruct), typeof(BasicFunctionTests));
-                _cm.TrySerialize();
+                //_cm.TrySerialize();
             }
 
             _gpu = CudafyHost.GetDevice(CudafyModes.Target);
@@ -157,7 +157,7 @@ namespace Cudafy.Host.UnitTests
  //       struct __align__(8) float6 {
  //float2 u, v, w;
  //};
- 
+
 
         [Cudafy]
         public static void ProcessStructure(GThread thread, PrimitiveStruct[] x, PrimitiveStruct[] y)
@@ -385,6 +385,26 @@ namespace Cudafy.Host.UnitTests
         }
 
         [Test]
+        public void Test_useForeachSByte()
+        {
+            sbyte[] a = new sbyte[N];
+            int[] c = new int[1];
+            for (int i = 0; i < N; i++)
+                a[i] = (sbyte)i;
+            sbyte[] dev_a = _gpu.CopyToDevice(a);
+            int[] dev_c = _gpu.Allocate(c);
+            _gpu.Launch(1, 1, "useForeachSByte", dev_a, dev_c, (sbyte)42);
+            _gpu.CopyFromDevice(dev_c, c);
+
+            int[] int_a = new int[N];
+            for (int i = 0; i < N; i++)
+                int_a[i] = (int)a[i];
+            int sum = int_a.Sum();
+            _gpu.FreeAll();
+            Assert.AreEqual(sum, c[0]);
+        }
+
+        [Test]
         public void Test_addVectoradd()
         {
             Test_addVector(eAddVectorMode.GlobalVar);
@@ -513,7 +533,7 @@ namespace Cudafy.Host.UnitTests
             for (int i = 0; i < blocksPerGrid; i++)
             {
                 c += partial_c[i];
-            }           
+            }
 
             // free memory on the gpu side
             _gpu.FreeAll();
@@ -562,7 +582,7 @@ namespace Cudafy.Host.UnitTests
         }
 
         [Cudafy]
-        public static void mpyVector(GThread thread,  int coeff, int[] a)
+        public static void mpyVector(GThread thread, int coeff, int[] a)
         {
             int tid = thread.blockIdx.x;
             if (tid < N)
@@ -643,11 +663,12 @@ namespace Cudafy.Host.UnitTests
         [Cudafy]
         public static void useForeach(int[] a, int[] c)
         {
-            int total  = 0;
+            int total = 0;
             foreach (int i in a)
                 total += i;
             c[0] = total;
         }
+
 
 
         [Cudafy]
@@ -710,6 +731,16 @@ namespace Cudafy.Host.UnitTests
                     output[x++] = input[dx + 1, dy + 1] * coeff;
                 }
             }
+        }
+
+
+        [Cudafy]
+        public static void useForeachSByte(sbyte[] a, int[] c, sbyte s)
+        {
+            int total = 0;
+            foreach (sbyte i in a)
+                total += i;
+            c[0] = total;
         }
 
         [SetUp]

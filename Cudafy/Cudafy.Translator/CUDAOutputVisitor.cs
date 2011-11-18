@@ -2161,6 +2161,7 @@ namespace Cudafy.Translator
             bool shared = CheckForAllocateShared(variableDeclarationStatement);
             if (!shared)
             {
+                data = (object)true;
                 variableDeclarationStatement.Type.AcceptVisitor(this, data);
                 Space();
                 WriteCommaSeparatedList(variableDeclarationStatement.Variables);
@@ -2719,7 +2720,7 @@ namespace Cudafy.Translator
             else
             {
                 var primType = parameterDeclaration.Type as PrimitiveType;
-                if (primType.OriginalType == "String")
+                if (primType != null && primType.OriginalType == "String")
                 {
                     formatter.WriteKeyword(string.Format(", int {0}Len", parameterDeclaration.Name));
                 }
@@ -2836,9 +2837,12 @@ namespace Cudafy.Translator
 		public object VisitPrimitiveType(PrimitiveType primitiveType, object data)
 		{
 			StartNode(primitiveType);
-            string keyword = primitiveType.Keyword;  
+            string keyword = primitiveType.Keyword;
+           // if (primitiveType.OriginalType != null)
+           //     Debug.WriteLine("original type=" + primitiveType.OriginalType);
             if(data == null || (bool)data == true)
-                keyword = ConvertPrimitiveType(primitiveType.Keyword); 
+                if(primitiveType.OriginalType != "SByte")
+                    keyword = ConvertPrimitiveType(primitiveType.Keyword); 
                                   
             WriteKeyword(keyword);
             if (keyword == "new")
