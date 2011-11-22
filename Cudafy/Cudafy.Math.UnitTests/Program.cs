@@ -52,6 +52,9 @@ namespace Cudafy.Host.UnitTests
                 FFTDoubleTests dt = new FFTDoubleTests();
                 CudafyUnitTest.PerformAllTests(dt);
 
+                SPARSE1 sparse = new SPARSE1();
+                CudafyUnitTest.PerformAllTests(sparse);
+
             } 
             catch (Exception ex)
             {

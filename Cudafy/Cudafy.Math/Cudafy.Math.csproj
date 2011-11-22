@@ -112,6 +112,20 @@
     <Compile Include="RAND\CURandTypedefs.cs" />
     <Compile Include="RAND\GPGPURAND.cs" />
     <Compile Include="RAND\HostRAND.cs" />
+    <Compile Include="SPARSE\CudaSPARSE.cs" />
+    <Compile Include="SPARSE\CUSPARSEDriver.cs" />
+    <Compile Include="SPARSE\CUSPARSEStatus.cs" />
+    <Compile Include="SPARSE\GPGPUSPARSE.cs" />
+    <Compile Include="SPARSE\ICUSPARSEDriver.cs" />
+    <Compile Include="SPARSE\Types\cusparseDiagType.cs" />
+    <Compile Include="SPARSE\Types\cusparseDirection.cs" />
+    <Compile Include="SPARSE\Types\cusparseFillMode.cs" />
+    <Compile Include="SPARSE\Types\cusparseHandle.cs" />
+    <Compile Include="SPARSE\Types\cusparseIndexBase.cs" />
+    <Compile Include="SPARSE\Types\cusparseMatDescr.cs" />
+    <Compile Include="SPARSE\Types\cusparseMatrixType.cs" />
+    <Compile Include="SPARSE\Types\cusparseOperation.cs" />
+    <Compile Include="SPARSE\Types\cusparseSolveAnalysisInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\3p\cuda.net3.0.0_win\src\CUDA.NET_3.0_Source\CUDA.NET.csproj">
