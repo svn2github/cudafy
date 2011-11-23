@@ -1,7 +1,4 @@
-﻿/*
- * Added by Kichang Kim
- * kkc0923@hotmail.com
- * */
+﻿/* Added by Kichang Kim (kkc0923@hotmail.com) */
 namespace Cudafy.Maths.SPARSE
 {
     using GASS.CUDA;
@@ -36,9 +33,34 @@ namespace Cudafy.Maths.SPARSE
         #region Sparse Level 1 Functions
         
         #region AXPY
+        CUSPARSEStatus CusparseSaxpyi(cusparseHandle handle, int nnz, float alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase);
         CUSPARSEStatus CusparseDaxpyi(cusparseHandle handle, int nnz, double alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase);
         #endregion
 
+        #region DOT
+        CUSPARSEStatus CusparseSdoti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, ref float resultHost, cusparseIndexBase idxBase);
+        CUSPARSEStatus CusparseDdoti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, ref double resultHost, cusparseIndexBase idxBase);
+        #endregion
+
+        #region GTHR
+        CUSPARSEStatus CusparseSgthr(cusparseHandle handle, int nnz, IntPtr y, IntPtr xVal, IntPtr xInd, cusparseIndexBase idxBase);
+        CUSPARSEStatus CusparseDgthr(cusparseHandle handle, int nnz, IntPtr y, IntPtr xVal, IntPtr xInd, cusparseIndexBase idxBase);
+        #endregion
+
+        #region GTHRZ
+        CUSPARSEStatus CusparseSgthrz(cusparseHandle handle, int nnz, IntPtr y, IntPtr xVal, IntPtr xInd, cusparseIndexBase idxBase);
+        CUSPARSEStatus CusparseDgthrz(cusparseHandle handle, int nnz, IntPtr y, IntPtr xVal, IntPtr xInd, cusparseIndexBase idxBase);
+        #endregion
+
+        #region ROT
+        CUSPARSEStatus CusparseSroti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, float c, float s, cusparseIndexBase idxBase);
+        CUSPARSEStatus CusparseDroti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, double c, double s, cusparseIndexBase idxBase);
+        #endregion
+
+        #region SCTR
+        CUSPARSEStatus CusparseSsctr(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase);
+        CUSPARSEStatus CusparseDsctr(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase);
+        #endregion
         #endregion
     }
 }

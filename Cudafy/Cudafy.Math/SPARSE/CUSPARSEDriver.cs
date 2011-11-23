@@ -1,9 +1,7 @@
-﻿/*
- * Added by Kichang Kim
- * kkc0923@hotmail.com
- * */
+﻿/* Added by Kichang Kim (kkc0923@hotmail.com) */
 namespace Cudafy.Maths.SPARSE
 {
+    using GASS.CUDA;
     using GASS.CUDA.Types;
     using Cudafy.Maths.SPARSE.Types;
     using System;
@@ -22,13 +20,93 @@ namespace Cudafy.Maths.SPARSE
 
         [DllImport(CUSPARSE_DLL_NAME)]
         public static extern CUSPARSEStatus cusparseDestroy(cusparseHandle handle);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseGetVersion(cusparseHandle handle, ref int version);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseSetKernelStream(cusparseHandle handle, cudaStream streamId);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseCreateMatDescr(ref cusparseMatDescr descrA);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseDestroyMatDescr(cusparseMatDescr descrA);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseSetMatType(cusparseMatDescr descrA, cusparseMatrixType type);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern cusparseMatrixType cusparseGetMatType(cusparseMatDescr descrA);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseSetMatFillMode(cusparseMatDescr descrA, cusparseFillMode fillMode);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern cusparseFillMode cusparseGetMatFillMode(cusparseMatDescr descrA);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseSetMatDiagType(cusparseMatDescr descrA, cusparseDiagType diagType);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern cusparseDiagType cusparseGetMatDiagType(cusparseMatDescr descrA);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseSetMatIndexBase(cusparseMatDescr descrA, cusparseIndexBase ibase);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern cusparseIndexBase cusparseGetMatIndexBase(cusparseMatDescr descrA);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseCreateSolveAnalysisInfo(ref cusparseSolveAnalysisInfo info);
+
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseDestroySolveAnalysisInfo(cusparseSolveAnalysisInfo info);
         #endregion
 
         #region Native Functions : SPARSE Level 1
         #region AXPY
         [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseSaxpyi(cusparseHandle handle, int nnz, float alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase);
+        [DllImport(CUSPARSE_DLL_NAME)]
         public static extern CUSPARSEStatus cusparseDaxpyi(cusparseHandle handle, int nnz, double alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase);
         #endregion
+
+        #region DOT
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseSdoti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, ref float resultHost, cusparseIndexBase idxBase);
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseDdoti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, ref double resultHost, cusparseIndexBase idxBase);
+        #endregion
+
+        #region GTHR
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseSgthr(cusparseHandle handle, int nnz, IntPtr y, IntPtr xVal, IntPtr xInd, cusparseIndexBase ibase);
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseDgthr(cusparseHandle handle, int nnz, IntPtr y, IntPtr xVal, IntPtr xInd, cusparseIndexBase ibase);
+        #endregion
+
+        #region GTHRZ
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseSgthrz(cusparseHandle handle, int nnz, IntPtr y, IntPtr xVal, IntPtr xInd, cusparseIndexBase ibase);
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseDgthrz(cusparseHandle handle, int nnz, IntPtr y, IntPtr xVal, IntPtr xInd, cusparseIndexBase ibase);
+        #endregion
+
+        #region ROT
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseSroti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, float c, float s, cusparseIndexBase idxBase);
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseDroti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, double c, double s, cusparseIndexBase idxBase);
+        #endregion
+
+        #region SCTR
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseSsctr(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase ibase);
+        [DllImport(CUSPARSE_DLL_NAME)]
+        public static extern CUSPARSEStatus cusparseDsctr(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase ibase);
+        #endregion
+
         #endregion
 
         public string GetDllName()
@@ -49,83 +127,146 @@ namespace Cudafy.Maths.SPARSE
 
         public CUSPARSEStatus CusparseGetVersion(cusparseHandle handle, ref int version)
         {
-            throw new NotImplementedException();
+            return cusparseGetVersion(handle, ref version);
         }
 
         public CUSPARSEStatus CusparseSetKernelStream(cusparseHandle handle, GASS.CUDA.cudaStream streamId)
         {
-            throw new NotImplementedException();
+            return cusparseSetKernelStream(handle, streamId);
         }
 
         public CUSPARSEStatus CusparseCreateMatDescr(ref cusparseMatDescr descrA)
         {
-            throw new NotImplementedException();
+            return cusparseCreateMatDescr(ref descrA);
         }
 
         public CUSPARSEStatus CusparseDestroyMatDescr(cusparseMatDescr descrA)
         {
-            throw new NotImplementedException();
+            return cusparseDestroyMatDescr(descrA);
         }
 
         public CUSPARSEStatus CusparseSetMatType(cusparseMatDescr descrA, cusparseMatrixType type)
         {
-            throw new NotImplementedException();
+            return cusparseSetMatType(descrA, type);
         }
 
         public cusparseMatrixType CusparseGetMatType(cusparseMatDescr descrA)
         {
-            throw new NotImplementedException();
+            return cusparseGetMatType(descrA);
         }
 
         public CUSPARSEStatus CusparseSetMatFillMode(cusparseMatDescr descrA, cusparseFillMode fillMode)
         {
-            throw new NotImplementedException();
+            return cusparseSetMatFillMode(descrA, fillMode);
         }
 
         public cusparseFillMode CusparseGetMatFillMode(cusparseMatDescr descrA)
         {
-            throw new NotImplementedException();
+            return cusparseGetMatFillMode(descrA);
         }
 
         public CUSPARSEStatus CusparseSetMatDiagType(cusparseMatDescr descrA, cusparseDiagType diagType)
         {
-            throw new NotImplementedException();
+            return cusparseSetMatDiagType(descrA, diagType);
         }
 
         public cusparseDiagType CusparseGetMatDiagType(cusparseMatDescr descrA)
         {
-            throw new NotImplementedException();
+            return cusparseGetMatDiagType(descrA);
         }
 
         public CUSPARSEStatus CusparseSetMatIndexBase(cusparseMatDescr descrA, cusparseIndexBase ibase)
         {
-            throw new NotImplementedException();
+            return cusparseSetMatIndexBase(descrA, ibase);
         }
 
         public cusparseIndexBase CusparseGetMatIndexBase(cusparseMatDescr descrA)
         {
-            throw new NotImplementedException();
+            return cusparseGetMatIndexBase(descrA);
         }
 
         public CUSPARSEStatus CusparseCreateSolveAnalysisInfo(ref cusparseSolveAnalysisInfo info)
         {
-            throw new NotImplementedException();
+            return cusparseCreateSolveAnalysisInfo(ref info);
         }
 
         public CUSPARSEStatus CusparseDestroySolveAnalysisInfo(cusparseSolveAnalysisInfo info)
         {
-            throw new NotImplementedException();
+            return cusparseDestroySolveAnalysisInfo(info);
         }
 
         #endregion
 
         #region Wrapper Functions : SPARSE Level 1
         #region AXPY
+        public CUSPARSEStatus CusparseSaxpyi(cusparseHandle handle, int nnz, float alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase)
+        {
+            return cusparseSaxpyi(handle, nnz, alpha, xVal, xInd, y, idxBase);
+        }
         public CUSPARSEStatus CusparseDaxpyi(cusparseHandle handle, int nnz, double alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase)
         {
             return cusparseDaxpyi(handle, nnz, alpha, xVal, xInd, y, idxBase);
         }
         #endregion
+
+        #region DOT
+        public CUSPARSEStatus CusparseSdoti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, ref float resultHost, cusparseIndexBase idxBase)
+        {
+            return cusparseSdoti(handle, nnz, xVal, xInd, y, ref resultHost, idxBase);
+        }
+        public CUSPARSEStatus CusparseDdoti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, ref double resultHost, cusparseIndexBase idxBase)
+        {
+            return cusparseDdoti(handle, nnz, xVal, xInd, y, ref resultHost, idxBase);
+        }
         #endregion
+
+        #region GTHR
+        public CUSPARSEStatus CusparseSgthr(cusparseHandle handle, int nnz, IntPtr y, IntPtr xVal, IntPtr xInd, cusparseIndexBase ibase)
+        {
+            return cusparseSgthr(handle, nnz, y, xVal, xInd, ibase);
+        }
+        public CUSPARSEStatus CusparseDgthr(cusparseHandle handle, int nnz, IntPtr y, IntPtr xVal, IntPtr xInd, cusparseIndexBase ibase)
+        {
+            return cusparseDgthr(handle, nnz, y, xVal, xInd, ibase);
+        }
+        #endregion
+
+        #region GTHRZ
+        public CUSPARSEStatus CusparseSgthrz(cusparseHandle handle, int nnz, IntPtr y, IntPtr xVal, IntPtr xInd, cusparseIndexBase ibase)
+        {
+            return cusparseSgthrz(handle, nnz, y, xVal, xInd, ibase);
+        }
+        public CUSPARSEStatus CusparseDgthrz(cusparseHandle handle, int nnz, IntPtr y, IntPtr xVal, IntPtr xInd, cusparseIndexBase ibase)
+        {
+            return cusparseDgthrz(handle, nnz, y, xVal, xInd, ibase);
+        }
+        #endregion
+
+        #region ROT
+        public CUSPARSEStatus CusparseSroti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, float c, float s, cusparseIndexBase idxBase)
+        {
+            return cusparseSroti(handle, nnz, xVal, xInd, y, c, s, idxBase);
+        }
+        public CUSPARSEStatus CusparseDroti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, double c, double s, cusparseIndexBase idxBase)
+        {
+            return cusparseDroti(handle, nnz, xVal, xInd, y, c, s, idxBase);
+        }
+        #endregion
+
+        #region SCTR
+        public CUSPARSEStatus CusparseSsctr(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase ibase)
+        {
+            return cusparseSsctr(handle, nnz, xVal, xInd, y, ibase);
+        }
+        public CUSPARSEStatus CusparseDsctr(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase ibase)
+        {
+            return cusparseDsctr(handle, nnz, xVal, xInd, y, ibase);
+        }
+        #endregion
+
+        #endregion
+
+
+
     }
 }

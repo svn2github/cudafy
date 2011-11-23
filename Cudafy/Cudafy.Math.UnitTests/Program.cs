@@ -37,6 +37,10 @@ namespace Cudafy.Host.UnitTests
             CudafyModes.Target = eGPUType.Cuda;
             try
             {
+
+                SPARSE1 sparse = new SPARSE1();
+                CudafyUnitTest.PerformAllTests(sparse);
+
                 CURANDHostTests rt = new CURANDHostTests();
                 CudafyUnitTest.PerformAllTests(rt);
 
@@ -52,8 +56,7 @@ namespace Cudafy.Host.UnitTests
                 FFTDoubleTests dt = new FFTDoubleTests();
                 CudafyUnitTest.PerformAllTests(dt);
 
-                SPARSE1 sparse = new SPARSE1();
-                CudafyUnitTest.PerformAllTests(sparse);
+
 
             } 
             catch (Exception ex)

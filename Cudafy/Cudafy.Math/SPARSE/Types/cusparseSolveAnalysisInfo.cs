@@ -1,4 +1,5 @@
-﻿using System;
+﻿/* Added by Kichang Kim (kkc0923@hotmail.com) */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

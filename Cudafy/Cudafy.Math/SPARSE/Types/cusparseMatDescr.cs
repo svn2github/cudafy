@@ -1,7 +1,4 @@
-﻿/*
- * Added by Kichang Kim
- * kkc0923@hotmail.com
- * */
+﻿/* Added by Kichang Kim (kkc0923@hotmail.com) */
 namespace Cudafy.Maths.SPARSE.Types
 {
     using System;

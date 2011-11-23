@@ -678,6 +678,14 @@ namespace Cudafy
         /// </value>
         public bool GenerateDebug { get; set; }
 
+        ///// <summary>
+        ///// Gets or sets a value indicating whether to start the compilation in a new window.
+        ///// </summary>
+        ///// <value>
+        /////   <c>true</c> if suppress a new window; otherwise, <c>false</c>.
+        ///// </value>
+        //public bool SuppressWindow { get; set; }
+
         /// <summary>
         /// Compiles the module based on current Cuda source code and options.
         /// </summary>
@@ -724,7 +732,7 @@ namespace Cudafy
                     process.StartInfo.UseShellExecute = false;
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.RedirectStandardError = true;
-
+                    //process.StartInfo.CreateNoWindow = SuppressWindow;//WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
                     process.StartInfo.FileName = co.GetFileName();
                     process.StartInfo.Arguments = co.GetArguments();
                     CompilerArguments = process.StartInfo.Arguments;
