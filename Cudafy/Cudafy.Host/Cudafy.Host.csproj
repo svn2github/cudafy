@@ -19,7 +19,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -106,10 +106,6 @@
     <ProjectReference Include="..\3p\cuda.net3.0.0_win\src\CUDA.NET_3.0_Source\CUDA.NET.csproj">
       <Project>{1ABEC3F4-5CE8-469E-BB6E-9FEFEA6F75FF}</Project>
       <Name>CUDA.NET</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Cudafy.Translator\Cudafy.Translator.csproj">
-      <Project>{C971E684-9147-49CA-88DA-FD8C2D94B944}</Project>
-      <Name>Cudafy.Translator</Name>
     </ProjectReference>
     <ProjectReference Include="..\Cudafy\Cudafy.csproj">
       <Project>{16A11768-583A-47DB-A9A3-C7E4173073A5}</Project>

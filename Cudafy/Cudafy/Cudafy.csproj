@@ -122,11 +122,16 @@
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\3p\cuda.net3.0.0_win\src\CUDA.NET_3.0_Source\CUDA.NET.csproj">
+      <Project>{1ABEC3F4-5CE8-469E-BB6E-9FEFEA6F75FF}</Project>
+      <Name>CUDA.NET</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties Reactor_Enabled="1" Reactor_Commands="" Reactor_Project="" Reactor_Configuration="" Reactor_Output="" />
+      <UserProperties Reactor_Output="" Reactor_Configuration="" Reactor_Project="" Reactor_Commands="" Reactor_Enabled="1" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

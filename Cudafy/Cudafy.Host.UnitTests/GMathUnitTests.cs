@@ -76,7 +76,11 @@ namespace Cudafy.Host.UnitTests
         {
             double[] data = new double[N];
             double[] dev_data = _gpu.Allocate<double>(data);
+#if !NET35
             _gpu.Launch().mathtest(dev_data);
+#else
+            _gpu.Launch(1, 1, "mathtest", dev_data);
+#endif
             _gpu.CopyFromDevice(dev_data, data);
             double[] control = new double[N];
             mathtest(control);
@@ -89,7 +93,11 @@ namespace Cudafy.Host.UnitTests
         {
             float[] data = new float[N];
             float[] dev_data = _gpu.Allocate<float>(data);
+#if !NET35
             _gpu.Launch().gmathtest(dev_data);
+#else
+            _gpu.Launch(1, 1, "gmathtest", dev_data);
+#endif
             _gpu.CopyFromDevice(dev_data, data);
             float[] control = new float[N];
             gmathtest(control);

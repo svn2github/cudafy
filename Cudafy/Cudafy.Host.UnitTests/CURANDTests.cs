@@ -42,11 +42,16 @@ namespace Cudafy.Host.UnitTests
             int[] hostResults = new int[64 * 64];
 
             gpu.Set(devResults);
-
+#if !NET35
             gpu.Launch(64, 64).setup_kernel(devStates);
-
             for (i = 0; i < 10; i++)
                 gpu.Launch(64, 64).generate_kernel(devStates, devResults);
+#else
+            gpu.Launch(64, 64, "setup_kernel", devStates);
+            for (i = 0; i < 10; i++)
+                gpu.Launch(64, 64, "generate_kernel", devStates, devResults);
+#endif
+
 
             gpu.CopyFromDevice(devResults, hostResults);
 

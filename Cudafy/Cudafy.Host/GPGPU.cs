@@ -25,7 +25,9 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+#if !NET35
 using System.Dynamic;
+#endif
 using GASS.CUDA;
 using GASS.CUDA.Types;
 
@@ -46,7 +48,9 @@ namespace Cudafy.Host
 
             _deviceMemory = new Dictionary<object, DevicePtrEx>();
             _streams = new Dictionary<int, object>();
+#if !NET35
             _dynamicLauncher = new DynamicLauncher(this);
+#endif
             DeviceId = deviceId;
         }
 
@@ -70,9 +74,9 @@ namespace Cudafy.Host
 
         // Track whether Dispose has been called.
         private bool _disposed = false;
-
+#if !NET35
         private DynamicLauncher _dynamicLauncher;
-
+#endif
         /// <summary>
         /// Gets a value indicating whether this instance is disposed.
         /// </summary>
@@ -203,7 +207,7 @@ namespace Cudafy.Host
         private bool _isMultithreadedEnabled = false;
 
         #region Dynamic
-
+#if !NET35
         /// <summary>
         /// Gets the dynamic launcher with grid and block sizes equal to 1.
         /// Allows GPU functions to be called using dynamic language run-time. For example:
@@ -274,6 +278,8 @@ namespace Cudafy.Host
             return _dynamicLauncher;
         }
 
+
+#endif
         #endregion
 
         /// <summary>
@@ -356,7 +362,11 @@ namespace Cudafy.Host
         /// <returns></returns>
         protected bool DeviceMemoryValueExists(object val)
         {
-            return _deviceMemory.Values.Contains(val);
+#if !NET35
+                return _deviceMemory.Values.Contains(val);
+#else
+            return _deviceMemory.Values.Contains(val as DevicePtrEx); //foreach(var v in _deviceMemory.Values) 
+#endif
         }
 
         /// <summary>
@@ -367,7 +377,12 @@ namespace Cudafy.Host
         {
             lock (_lock)
             {
+#if !NET35                
                 return _deviceMemory.Values;
+#else
+                foreach (var v in _deviceMemory.Values)
+                    yield return v;
+#endif
             }
         }
 

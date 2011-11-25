@@ -251,6 +251,7 @@ namespace Cudafy.Host.UnitTests
             _gpu.Free(dev_a);
         }
 
+
         [Test]
         public void Test_dynamic()
         {
@@ -258,7 +259,11 @@ namespace Cudafy.Host.UnitTests
             int b = 2;
             int c;
             int[] dev_c = _gpu.Allocate<int>();
+#if !NET35
             _gpu.Launch().add(a, b, dev_c);
+#else
+            _gpu.Launch(1,1,"add", a, b, dev_c);
+#endif
             _gpu.CopyFromDevice(dev_c, out c);
             Assert.AreEqual(a + b, c);
             _gpu.Free(dev_c);
@@ -438,7 +443,7 @@ namespace Cudafy.Host.UnitTests
             int[,] input_dev = _gpu.CopyToDevice(input);
             int[] output_dev = _gpu.Allocate<int>(w * h);
             int coeff = 42;
-            _gpu.Launch(1, 1).twoDAddressingWrong(input_dev, coeff, output_dev);
+            _gpu.Launch(1, 1, "twoDAddressingWrong", input_dev, coeff, output_dev);
             _gpu.CopyFromDevice(output_dev, output);
             
             i = 0;
