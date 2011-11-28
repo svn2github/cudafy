@@ -27,6 +27,8 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Cudafy.Host;
 using Cudafy.Types;
+using Cudafy.Maths.BLAS.Types;
+
 namespace Cudafy.Maths.BLAS
 {
     /// <summary>
@@ -489,6 +491,226 @@ namespace Cudafy.Maths.BLAS
         }
 
         public override void SWAP(ComplexD[] vectorx, ComplexD[] vectory, int n = 0, int rowx = 0, int incx = 1, int rowy = 0, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void GBMV(int m, int n, int kl, int ku, float alpha, float[] A, float[] x, float beta, float[] y, Types.cublasOperation trans = cublasOperation.N, int lda = 0, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void GBMV(int m, int n, int kl, int ku, double alpha, double[] A, double[] x, double beta, double[] y, Types.cublasOperation trans = cublasOperation.N, int lda = 0, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void GEMV(int m, int n, float alpha, float[] A, float[] x, float beta, float[] y, cublasOperation op = cublasOperation.N, int lda = 0, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void GEMV(int m, int n, double alpha, double[] A, double[] x, double beta, double[] y, cublasOperation op = cublasOperation.N, int lda = 0, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void GER(int m, int n, float alpha, float[] x, float[] y, float[] A, int lda = 0, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void GER(int m, int n, double alpha, double[] x, double[] y, double[] A, int lda = 0, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SBMV(int n, int k, float alpha, float[] A, float[] x, float beta, float[] y, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SBMV(int n, int k, double alpha, double[] A, double[] x, double beta, double[] y, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SPMV(int n, float alpha, float[] Ap, float[] x, float beta, float[] y, cublasFillMode uplo = cublasFillMode.Lower, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SPMV(int n, double alpha, double[] Ap, double[] x, double beta, double[] y, cublasFillMode uplo = cublasFillMode.Lower, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SPR(int n, float alpha, float[] x, float[] ap, cublasFillMode uplo = cublasFillMode.Lower, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SPR(int n, double alpha, double[] x, double[] ap, cublasFillMode uplo = cublasFillMode.Lower, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SPR2(int n, float alpha, float[] x, float[] y, float[] ap, cublasFillMode uplo = cublasFillMode.Lower, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SPR2(int n, double alpha, double[] x, double[] y, double[] ap, cublasFillMode uplo = cublasFillMode.Lower, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SYMV(int n, float alpha, float[] A, float[] x, float beta, float[] y, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SYMV(int n, double alpha, double[] A, double[] x, double beta, double[] y, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SYR(int n, float alpha, float[] x, float[] A, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SYR(int n, double alpha, double[] x, double[] A, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SYR2(int n, float alpha, float[] x, float[] y, float[] A, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SYR2(int n, double alpha, double[] x, double[] y, double[] A, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1, int incy = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TBMV(int n, int k, float[] A, float[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TBMV(int n, int k, double[] A, double[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TBSV(int n, int k, float[] A, float[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TBSV(int n, int k, double[] A, double[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TPMV(int n, float[] AP, float[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TPMV(int n, double[] AP, double[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TPSV(int n, float[] AP, float[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TPSV(int n, double[] AP, double[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TRMV(int n, float[] a, float[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TRMV(int n, double[] a, double[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TRSV(int n, float[] A, float[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TRSV(int n, double[] A, double[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void GEMM(int m, int k, int n, float alpha, float[] A, float[] B, float beta, float[] C, cublasOperation transa = cublasOperation.N, cublasOperation transb = cublasOperation.N, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void GEMM(int m, int k, int n, double alpha, double[] A, double[] B, double beta, double[] C, cublasOperation transa = cublasOperation.N, cublasOperation transb = cublasOperation.N, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SYMM(int m, int n, float alpha, float[] A, float[] B, float beta, float[] C, cublasSideMode side = cublasSideMode.Left, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SYMM(int m, int n, double alpha, double[] A, double[] B, double beta, double[] C, cublasSideMode side = cublasSideMode.Left, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SYRK(int n, int k, float alpha, float[] A, float beta, float[] C, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int ldc = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SYRK(int n, int k, double alpha, double[] A, double beta, double[] C, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int ldc = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SYR2K(int n, int k, float alpha, float[] A, float[] B, float beta, float[] C, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SYR2K(int n, int k, double alpha, double[] A, double[] B, double beta, double[] C, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TRMM(int m, int n, float alpha, float[] A, float[] B, float[] C, cublasSideMode side = cublasSideMode.Left, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TRMM(int m, int n, double alpha, double[] A, double[] B, double[] C, cublasSideMode side = cublasSideMode.Left, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TRSM(int m, int n, float alpha, float[] A, float[] B, cublasSideMode side = cublasSideMode.Left, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int ldb = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void TRSM(int m, int n, double alpha, double[] A, double[] B, cublasSideMode side = cublasSideMode.Left, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int ldb = 0)
         {
             throw new NotImplementedException();
         }

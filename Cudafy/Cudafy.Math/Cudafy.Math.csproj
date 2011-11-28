@@ -88,9 +88,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BLAS\CUBLASDriver32Ex.cs" />
+    <Compile Include="BLAS\CUBLASDriver64Ex.cs" />
     <Compile Include="BLAS\CudaBLAS.cs" />
     <Compile Include="BLAS\GPGPUBLAS.cs" />
     <Compile Include="BLAS\HostBLAS.cs" />
+    <Compile Include="BLAS\ICUBLASDriverv2Ex.cs" />
+    <Compile Include="BLAS\IGPGPUBLAS.cs" />
+    <Compile Include="BLAS\Types\cublasDiagType.cs" />
+    <Compile Include="BLAS\Types\cublasFillMode.cs" />
+    <Compile Include="BLAS\Types\cublasOperation.cs" />
+    <Compile Include="BLAS\Types\cublasPointerMode.cs" />
+    <Compile Include="BLAS\Types\cublasSideMode.cs" />
     <Compile Include="RAND\CudaDeviceRAND.cs" />
     <Compile Include="RAND\CudaHostRAND.cs" />
     <Compile Include="RAND\CudaRAND.cs" />

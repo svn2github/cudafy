@@ -27,6 +27,7 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Cudafy.Types;
 using Cudafy.Host;
+using Cudafy.Maths.BLAS.Types;
 
 //using CUBLAS4Wrapper;
 
@@ -37,169 +38,6 @@ using GASS.CUDA;
 
 namespace Cudafy.Maths.BLAS
 {
-    internal interface ICUBLASDriverv2Ex
-    {
-        CUBLASStatusv2 cublasCaxpy(cublasHandle handle, int n, ref ComplexF alpha, IntPtr x, int incx, IntPtr y, int incy);
-        CUBLASStatusv2 cublasZaxpy(cublasHandle handle, int n, ref ComplexD alpha, IntPtr x, int incx, IntPtr y, int incy);
-        CUBLASStatusv2 cublasCdotu(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexF result);
-        CUBLASStatusv2 cublasCdotc(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexF result);
-        CUBLASStatusv2 cublasZdotu(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexD result);
-        CUBLASStatusv2 cublasZdotc(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexD result);
-        CUBLASStatusv2 cublasCrot(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref float c, ref ComplexF s);
-        CUBLASStatusv2 cublasZrot(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref double c, ref ComplexD s);
-        CUBLASStatusv2 cublasCrotg(cublasHandle handle, ref ComplexF a, ref ComplexF b, ref float c, ref ComplexF s);
-        CUBLASStatusv2 cublasZrotg(cublasHandle handle, ref ComplexD a, ref ComplexD b, ref double c, ref ComplexD s);
-    }
-
-    internal class CUBLASDriver32Ex : ICUBLASDriverv2Ex
-    {
-        [DllImport(CUBLASDriver32.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasCaxpy_v2(cublasHandle handle, int n, ref ComplexF alpha, IntPtr x, int incx, IntPtr y, int incy);
-        [DllImport(CUBLASDriver32.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasZaxpy_v2(cublasHandle handle, int n, ref ComplexD alpha, IntPtr x, int incx, IntPtr y, int incy);
-        [DllImport(CUBLASDriver32.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasCdotu_v2(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexF result);
-        [DllImport(CUBLASDriver32.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasCdotc_v2(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexF result);
-        [DllImport(CUBLASDriver32.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasZdotu_v2(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexD result);
-        [DllImport(CUBLASDriver32.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasZdotc_v2(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexD result);
-        [DllImport(CUBLASDriver32.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasCrot_v2(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref float c, ref ComplexF s);
-        [DllImport(CUBLASDriver32.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasZrot_v2(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref double c, ref ComplexD s);
-        [DllImport(CUBLASDriver32.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasCrotg_v2(cublasHandle handle, ref ComplexF a, ref ComplexF b, ref float c, ref ComplexF s);
-        [DllImport(CUBLASDriver32.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasZrotg_v2(cublasHandle handle, ref ComplexD a, ref ComplexD b, ref double c, ref ComplexD s);
-
-        public CUBLASStatusv2 cublasCaxpy(cublasHandle handle, int n, ref ComplexF alpha, IntPtr x, int incx, IntPtr y, int incy)
-        {
-            return cublasCaxpy_v2(handle, n, ref alpha, x, incx, y, incy);
-        }
-
-        public CUBLASStatusv2 cublasZaxpy(cublasHandle handle, int n, ref ComplexD alpha, IntPtr x, int incx, IntPtr y, int incy)
-        {
-            return cublasZaxpy_v2(handle, n, ref alpha, x, incx, y, incy);
-        }
-
-        public CUBLASStatusv2 cublasCdotu(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexF result)
-        {
-            return cublasCdotu_v2(handle, n, x, incx, y, incy, ref result);
-        }
-
-        public CUBLASStatusv2 cublasCdotc(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexF result)
-        {
-            return cublasCdotc_v2(handle, n, x, incx, y, incy, ref result);
-        }
-
-        public CUBLASStatusv2 cublasZdotu(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexD result)
-        {
-            return cublasZdotu_v2(handle, n, x, incx, y, incy, ref result);
-        }
-
-        public CUBLASStatusv2 cublasZdotc(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexD result)
-        {
-            return cublasZdotc_v2(handle, n, x, incx, y, incy, ref result);
-        }
-
-        public CUBLASStatusv2 cublasCrot(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref float c, ref ComplexF s)
-        {
-            return cublasCrot_v2(handle, n, x, incx, y, incy, ref c, ref s);
-        }
-
-        public CUBLASStatusv2 cublasZrot(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref double c, ref ComplexD s)
-        {
-            return cublasZrot_v2(handle, n, x, incx, y, incy, ref c, ref s);
-        }
-
-        public CUBLASStatusv2 cublasCrotg(cublasHandle handle, ref ComplexF a, ref ComplexF b, ref float c, ref ComplexF s)
-        {
-            return cublasCrotg_v2(handle, ref a, ref b, ref c, ref s);
-        }
-
-        public CUBLASStatusv2 cublasZrotg(cublasHandle handle, ref ComplexD a, ref ComplexD b, ref double c, ref ComplexD s)
-        {
-            return cublasZrotg_v2(handle, ref a, ref b, ref c, ref s);
-        }
-    }
-
-    internal class CUBLASDriver64Ex : ICUBLASDriverv2Ex
-    {
-        [DllImport(CUBLASDriver64.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasCaxpy_v2(cublasHandle handle, int n, ref ComplexF alpha, IntPtr x, int incx, IntPtr y, int incy);
-        [DllImport(CUBLASDriver64.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasZaxpy_v2(cublasHandle handle, int n, ref ComplexD alpha, IntPtr x, int incx, IntPtr y, int incy);
-        [DllImport(CUBLASDriver64.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasCdotu_v2(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexF result);
-        [DllImport(CUBLASDriver64.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasCdotc_v2(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexF result);
-        [DllImport(CUBLASDriver64.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasZdotu_v2(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexD result);
-        [DllImport(CUBLASDriver64.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasZdotc_v2(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexD result);
-        [DllImport(CUBLASDriver64.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasCrot_v2(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref float c, ref ComplexF s);
-        [DllImport(CUBLASDriver64.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasZrot_v2(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref double c, ref ComplexD s);
-        [DllImport(CUBLASDriver64.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasCrotg_v2(cublasHandle handle, ref ComplexF a, ref ComplexF b, ref float c, ref ComplexF s);
-        [DllImport(CUBLASDriver64.CUBLAS_DLL_NAME)]
-        private static extern CUBLASStatusv2 cublasZrotg_v2(cublasHandle handle, ref ComplexD a, ref ComplexD b, ref double c, ref ComplexD s);
-
-        public CUBLASStatusv2 cublasCaxpy(cublasHandle handle, int n, ref ComplexF alpha, IntPtr x, int incx, IntPtr y, int incy)
-        {
-            return cublasCaxpy_v2(handle, n, ref alpha, x, incx, y, incy);
-        }
-
-        public CUBLASStatusv2 cublasZaxpy(cublasHandle handle, int n, ref ComplexD alpha, IntPtr x, int incx, IntPtr y, int incy)
-        {
-            return cublasZaxpy_v2(handle, n, ref alpha, x, incx, y, incy);
-        }
-
-        public CUBLASStatusv2 cublasCdotu(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexF result)
-        {
-            return cublasCdotu_v2(handle, n, x, incx, y, incy, ref result);
-        }
-
-        public CUBLASStatusv2 cublasCdotc(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexF result)
-        {
-            return cublasCdotc_v2(handle, n, x, incx, y, incy, ref result);
-        }
-
-        public CUBLASStatusv2 cublasZdotu(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexD result)
-        {
-            return cublasZdotu_v2(handle, n, x, incx, y, incy, ref result);
-        }
-
-        public CUBLASStatusv2 cublasZdotc(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref ComplexD result)
-        {
-            return cublasZdotc_v2(handle, n, x, incx, y, incy, ref result);
-        }
-
-        public CUBLASStatusv2 cublasCrot(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref float c, ref ComplexF s)
-        {
-            return cublasCrot_v2(handle, n, x, incx, y, incy, ref c, ref s);
-        }
-
-        public CUBLASStatusv2 cublasZrot(cublasHandle handle, int n, IntPtr x, int incx, IntPtr y, int incy, ref double c, ref ComplexD s)
-        {
-            return cublasZrot_v2(handle, n, x, incx, y, incy, ref c, ref s);
-        }
-
-        public CUBLASStatusv2 cublasCrotg(cublasHandle handle, ref ComplexF a, ref ComplexF b, ref float c, ref ComplexF s)
-        {
-            return cublasCrotg_v2(handle, ref a, ref b, ref c, ref s);
-        }
-
-        public CUBLASStatusv2 cublasZrotg(cublasHandle handle, ref ComplexD a, ref ComplexD b, ref double c, ref ComplexD s)
-        {
-            return cublasZrotg_v2(handle, ref a, ref b, ref c, ref s);
-        }
-    }
-    
-    
     /// <summary>
     /// Wrapper around CUBLAS.
     /// </summary>
@@ -422,6 +260,7 @@ namespace Cudafy.Maths.BLAS
 
         #endregion
 
+        #region BLAS Level 1
         #region Max
 
         public override int IAMAX(float[] vectorx, int n = 0, int rowx = 0, int incx = 1)
@@ -1020,6 +859,645 @@ namespace Cudafy.Maths.BLAS
             LastStatus = _driver.cublasZswap(_blas, n, ptrx.Pointer, incx, ptry.Pointer, incy);
         }
 
+        #endregion
+        #endregion
+
+        #region BLAS Level 2
+        #region GBMV
+        public override void GBMV(int m, int n, int kl, int ku, float alpha, float[] A, float[] x, float beta, float[] y, cublasOperation trans = cublasOperation.N, int lda = 0, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? kl + ku + 1 : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 4);
+
+            LastStatus = _driverEx.cublasSgbmv(_blas, trans, m, n, kl, ku, ref alpha, ptra.Pointer, lda, ptrx.Pointer, incx, ref beta, ptry.Pointer, incy);
+        }
+
+        public override void GBMV(int m, int n, int kl, int ku, double alpha, double[] A, double[] x, double beta, double[] y, cublasOperation trans = cublasOperation.N, int lda = 0, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? kl + ku + 1 : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 8);
+
+            LastStatus = _driverEx.cublasDgbmv(_blas, trans, m, n, kl, ku, ref alpha, ptra.Pointer, lda, ptrx.Pointer, incx, ref beta, ptry.Pointer, incy);
+        }
+        #endregion
+
+        #region GEMV
+        public override void GEMV(int m, int n, float alpha, float[] A, float[] x, float beta, float[] y, cublasOperation op = cublasOperation.N, int lda = 0, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? m : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+            CUdeviceptr ptry = SetupVector(y, 0, ref m, ref incy, 4);
+
+            LastStatus = _driverEx.cublasSgemv(_blas, op, m, n, ref alpha, ptra.Pointer, lda, ptrx.Pointer, incx, ref beta, ptry.Pointer, incy);
+        }
+
+        public override void GEMV(int m, int n, double alpha, double[] A, double[] x, double beta, double[] y, cublasOperation op = cublasOperation.N, int lda = 0, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? m : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 8);
+
+            LastStatus = _driverEx.cublasDgemv(_blas, op, m, n, ref alpha, ptra.Pointer, lda, ptrx.Pointer, incx, ref beta, ptry.Pointer, incy);
+        }
+        #endregion
+
+        #region GER
+        public override void GER(int m, int n, float alpha, float[] x, float[] y, float[] A, int lda = 0, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? m : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 4);
+
+            LastStatus = _driverEx.cublasSger(_blas, m, n, ref alpha, ptrx.Pointer, incx, ptry.Pointer, incy, ptra.Pointer, lda);
+        }
+        public override void GER(int m, int n, double alpha, double[] x, double[] y, double[] A, int lda = 0, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? m : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 8);
+
+            LastStatus = _driverEx.cublasDger(_blas, m, n, ref alpha, ptrx.Pointer, incx, ptry.Pointer, incy, ptra.Pointer, lda);
+        }
+        #endregion
+
+        #region SBMV
+        public override void SBMV(int n, int k, float alpha, float[] A, float[] x, float beta, float[] y, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? k + 1 : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 4);
+
+            LastStatus = _driverEx.cublasSsbmv(_blas, uplo, n, k, ref alpha, ptra.Pointer, lda, ptrx.Pointer, incx, ref beta, ptry.Pointer, incy);
+        }
+        public override void SBMV(int n, int k, double alpha, double[] A, double[] x, double beta, double[] y, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? k + 1 : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 8);
+
+            LastStatus = _driverEx.cublasDsbmv(_blas, uplo, n, k, ref alpha, ptra.Pointer, lda, ptrx.Pointer, incx, ref beta, ptry.Pointer, incy);
+        }
+        #endregion
+
+        #region SPMV
+        public override void SPMV(int n, float alpha, float[] Ap, float[] x, float beta, float[] y, cublasFillMode uplo = cublasFillMode.Lower, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            CUdeviceptr ptrap = SetupVector(Ap, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 4);
+
+            LastStatus = _driverEx.cublasSspmv(_blas, uplo, n, ref alpha, ptrap.Pointer, ptrx.Pointer, incx, ref beta, ptry.Pointer, incy);
+        }
+        public override void SPMV(int n, double alpha, double[] Ap, double[] x, double beta, double[] y, cublasFillMode uplo = cublasFillMode.Lower, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            CUdeviceptr ptrap = SetupVector(Ap, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 8);
+
+            LastStatus = _driverEx.cublasDspmv(_blas, uplo, n, ref alpha, ptrap.Pointer, ptrx.Pointer, incx, ref beta, ptry.Pointer, incy);
+        }
+        #endregion
+
+        #region SPR
+        public override void SPR(int n, float alpha, float[] x, float[] ap, cublasFillMode uplo = cublasFillMode.Lower, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            CUdeviceptr ptrap = SetupVector(ap, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+
+            LastStatus = _driverEx.cublasSspr(_blas, uplo, n, ref alpha, ptrx.Pointer, incx, ptrap.Pointer);
+        }
+
+        public override void SPR(int n, double alpha, double[] x, double[] ap, cublasFillMode uplo = cublasFillMode.Lower, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            CUdeviceptr ptrap = SetupVector(ap, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+
+            LastStatus = _driverEx.cublasDspr(_blas, uplo, n, ref alpha, ptrx.Pointer, incx, ptrap.Pointer);
+        }
+        #endregion
+
+        #region SPR2
+        public override void SPR2(int n, float alpha, float[] x, float[] y, float[] ap, cublasFillMode uplo = cublasFillMode.Lower, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            CUdeviceptr ptrap = SetupVector(ap, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 4);
+
+            LastStatus = _driverEx.cublasSspr2(_blas, uplo, n, ref alpha, ptrx.Pointer, incx, ptry.Pointer, incy, ptrap.Pointer);
+        }
+        public override void SPR2(int n, double alpha, double[] x, double[] y, double[] ap, cublasFillMode uplo = cublasFillMode.Lower, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            CUdeviceptr ptrap = SetupVector(ap, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 8);
+
+            LastStatus = _driverEx.cublasDspr2(_blas, uplo, n, ref alpha, ptrx.Pointer, incx, ptry.Pointer, incy, ptrap.Pointer);
+        }
+        #endregion
+
+        #region SYMV
+        public override void SYMV(int n, float alpha, float[] A, float[] x, float beta, float[] y, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 4);
+
+            LastStatus = _driverEx.cublasSsymv(_blas, uplo, n, ref alpha, ptra.Pointer, lda, ptrx.Pointer, incx, ref beta, ptry.Pointer, incy);
+        }
+        public override void SYMV(int n, double alpha, double[] A, double[] x, double beta, double[] y, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 8);
+
+            LastStatus = _driverEx.cublasDsymv(_blas, uplo, n, ref alpha, ptra.Pointer, lda, ptrx.Pointer, incx, ref beta, ptry.Pointer, incy);
+        }
+        #endregion
+
+        #region SYR
+        public override void SYR(int n, float alpha, float[] x, float[] A, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+
+            LastStatus = _driverEx.cublasSsyr(_blas, uplo, n, ref alpha, ptrx.Pointer, incx, ptra.Pointer, lda);
+        }
+        public override void SYR(int n, double alpha, double[] x, double[] A, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+
+            LastStatus = _driverEx.cublasDsyr(_blas, uplo, n, ref alpha, ptrx.Pointer, incx, ptra.Pointer, lda);
+        }
+        #endregion
+
+        #region SYR2
+        public override void SYR2(int n, float alpha, float[] x, float[] y, float[] A, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 4);
+
+            LastStatus = _driverEx.cublasSsyr2(_blas, uplo, n, ref alpha, ptrx.Pointer, incx, ptry.Pointer, incy, ptra.Pointer, lda);
+        }
+
+        public override void SYR2(int n, double alpha, double[] x, double[] y, double[] A, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int incx = 1, int incy = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+            CUdeviceptr ptry = SetupVector(y, 0, ref mn, ref incy, 8);
+
+            LastStatus = _driverEx.cublasDsyr2(_blas, uplo, n, ref alpha, ptrx.Pointer, incx, ptry.Pointer, incy, ptra.Pointer, lda);
+        }
+        #endregion
+
+        #region TBMV
+        public override void TBMV(int n, int k, float[] A, float[] x, cublasOperation trans = cublasOperation.N,cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? k + 1 : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+
+            LastStatus = _driverEx.cublasStbmv(_blas, uplo, trans, diag, n, k, ptra.Pointer, lda, ptrx.Pointer, incx);
+        }
+
+        public override void TBMV(int n, int k, double[] A, double[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? k + 1 : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+
+            LastStatus = _driverEx.cublasDtbmv(_blas, uplo, trans, diag, n, k, ptra.Pointer, lda, ptrx.Pointer, incx);
+        }
+        #endregion
+
+        #region TBSV
+        public override void TBSV(int n, int k, float[] A, float[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? k + 1 : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+
+            LastStatus = _driverEx.cublasStbsv(_blas, uplo, trans, diag, n, k, ptra.Pointer, lda, ptrx.Pointer, incx);
+        }
+
+        public override void TBSV(int n, int k, double[] A, double[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? k + 1 : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+
+            LastStatus = _driverEx.cublasDtbsv(_blas, uplo, trans, diag, n, k, ptra.Pointer, lda, ptrx.Pointer, incx);
+        }
+        #endregion
+
+        #region TPMV
+        public override void TPMV(int n, float[] AP, float[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            CUdeviceptr ptrap = SetupVector(AP, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+
+            LastStatus = _driverEx.cublasStpmv(_blas, uplo, trans, diag, n, ptrap.Pointer, ptrx.Pointer, incx);
+        }
+
+        public override void TPMV(int n, double[] AP, double[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            CUdeviceptr ptrap = SetupVector(AP, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+
+            LastStatus = _driverEx.cublasStpmv(_blas, uplo, trans, diag, n, ptrap.Pointer, ptrx.Pointer, incx);
+        }
+        #endregion
+
+        #region TPSV
+        public override void TPSV(int n, float[] AP, float[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            CUdeviceptr ptrap = SetupVector(AP, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+
+            LastStatus = _driverEx.cublasStpsv(_blas, uplo, trans, diag, n, ptrap.Pointer, ptrx.Pointer, incx);
+        }
+
+        public override void TPSV(int n, double[] AP, double[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            CUdeviceptr ptrap = SetupVector(AP, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+
+            LastStatus = _driverEx.cublasStpsv(_blas, uplo, trans, diag, n, ptrap.Pointer, ptrx.Pointer, incx);
+        }
+        #endregion
+
+        #region TRMV
+        public override void TRMV(int n, float[] a, float[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+
+            CUdeviceptr ptra = SetupVector(a, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+
+            LastStatus = _driverEx.cublasStrmv(_blas, uplo, trans, diag, n, ptra.Pointer, lda, ptrx.Pointer, incx);
+        }
+
+        public override void TRMV(int n, double[] a, double[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+
+            CUdeviceptr ptra = SetupVector(a, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+
+            LastStatus = _driverEx.cublasDtrmv(_blas, uplo, trans, diag, n, ptra.Pointer, lda, ptrx.Pointer, incx);
+        }
+        #endregion
+
+        #region TRSV
+        public override void TRSV(int n, float[] A, float[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 4);
+
+            LastStatus = _driverEx.cublasStrsv(_blas, uplo, trans, diag, n, ptra.Pointer, lda, ptrx.Pointer, incx);
+        }
+
+        public override void TRSV(int n, double[] A, double[] x, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int incx = 1)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
+
+            LastStatus = _driverEx.cublasDtrsv(_blas, uplo, trans, diag, n, ptra.Pointer, lda, ptrx.Pointer, incx);
+        }
+        #endregion
+        #endregion
+
+        #region BLAS Level 3
+        #region GEMM
+        public override void GEMM(int m, int k, int n, float alpha, float[] A, float[] B, float beta, float[] C, cublasOperation transa = cublasOperation.N, cublasOperation transb = cublasOperation.N, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? m : lda);
+            ldb = (ldb == 0 ? k : ldb);
+            ldc = (ldc == 0 ? m : ldc);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrb = SetupVector(B, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrc = SetupVector(C, 0, ref mn, ref inca, 4);
+
+            LastStatus = _driverEx.cublasSgemm(_blas, transa, transb, m, n, k, ref alpha, ptra.Pointer, lda, ptrb.Pointer, ldb, ref beta, ptrc.Pointer, ldc);
+        }
+
+        public override void GEMM(int m, int k, int n, double alpha, double[] A, double[] B, double beta, double[] C, cublasOperation transa = cublasOperation.N, cublasOperation transb = cublasOperation.N, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? m : lda);
+            ldb = (ldb == 0 ? k : ldb);
+            ldc = (ldc == 0 ? m : ldc);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrb = SetupVector(B, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrc = SetupVector(C, 0, ref mn, ref inca, 8);
+
+            LastStatus = _driverEx.cublasDgemm(_blas, transa, transb, m, n, k, ref alpha, ptra.Pointer, lda, ptrb.Pointer, ldb, ref beta, ptrc.Pointer, ldc);
+        }
+        #endregion
+
+        #region SYMM
+        public override void SYMM(int m, int n, float alpha, float[] A, float[] B, float beta, float[] C, cublasSideMode side = cublasSideMode.Left, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? m : lda);
+            ldb = (ldb == 0 ? m : ldb);
+            ldc = (ldc == 0 ? m : ldc);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrb = SetupVector(B, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrc = SetupVector(C, 0, ref mn, ref inca, 4);
+
+            LastStatus = _driverEx.cublasSsymm(_blas, side, uplo, m, n, ref alpha, ptra.Pointer, lda, ptrb.Pointer, ldb, ref beta, ptrc.Pointer, ldc);
+        }
+
+        public override void SYMM(int m, int n, double alpha, double[] A, double[] B, double beta, double[] C, cublasSideMode side = cublasSideMode.Left, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? m : lda);
+            ldb = (ldb == 0 ? m : ldb);
+            ldc = (ldc == 0 ? m : ldc);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrb = SetupVector(B, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrc = SetupVector(C, 0, ref mn, ref inca, 8);
+
+            LastStatus = _driverEx.cublasDsymm(_blas, side, uplo, m, n, ref alpha, ptra.Pointer, lda, ptrb.Pointer, ldb, ref beta, ptrc.Pointer, ldc);
+        }
+        #endregion
+
+        #region SYRK
+        public override void SYRK(int n, int k, float alpha, float[] A, float beta, float[] C, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int ldc = 0)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+            ldc = (ldc == 0 ? n : ldc);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrc = SetupVector(C, 0, ref mn, ref inca, 4);
+
+            LastStatus = _driverEx.cublasSsyrk(_blas, uplo, trans, n, k, ref alpha, ptra.Pointer, lda, ref beta, ptrc.Pointer, ldc);
+        }
+
+        public override void SYRK(int n, int k, double alpha, double[] A, double beta, double[] C, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int ldc = 0)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+            ldc = (ldc == 0 ? n : ldc);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrc = SetupVector(C, 0, ref mn, ref inca, 8);
+
+            LastStatus = _driverEx.cublasDsyrk(_blas, uplo, trans, n, k, ref alpha, ptra.Pointer, lda, ref beta, ptrc.Pointer, ldc);
+        }
+        #endregion
+
+        #region SYR2K
+        public override void SYR2K(int n, int k, float alpha, float[] A, float[] B, float beta, float[] C, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+            ldb = (ldb == 0 ? n : ldb);
+            ldc = (ldc == 0 ? n : ldc);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrb = SetupVector(B, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrc = SetupVector(C, 0, ref mn, ref inca, 4);
+
+            LastStatus = _driverEx.cublasSsyr2k(_blas, uplo, trans, n, k, ref alpha, ptra.Pointer, lda, ptrb.Pointer, ldb, ref beta, ptrc.Pointer, ldc);
+        }
+
+        public override void SYR2K(int n, int k, double alpha, double[] A, double[] B, double beta, double[] C, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? n : lda);
+            ldb = (ldb == 0 ? n : ldb);
+            ldc = (ldc == 0 ? n : ldc);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrb = SetupVector(B, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrc = SetupVector(C, 0, ref mn, ref inca, 8);
+
+            LastStatus = _driverEx.cublasDsyr2k(_blas, uplo, trans, n, k, ref alpha, ptra.Pointer, lda, ptrb.Pointer, ldb, ref beta, ptrc.Pointer, ldc);
+        }
+        #endregion
+
+        #region TRMM
+        public override void TRMM(int m, int n, float alpha, float[] A, float[] B, float[] C, cublasSideMode side = cublasSideMode.Left, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? m : lda);
+            ldb = (ldb == 0 ? m : ldb);
+            ldc = (ldc == 0 ? m : ldc);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrb = SetupVector(B, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrc = SetupVector(C, 0, ref mn, ref inca, 4);
+
+            LastStatus = _driverEx.cublasStrmm(_blas, side, uplo, trans, diag, m, n, ref alpha, ptra.Pointer, lda, ptrb.Pointer, ldb, ptrc.Pointer, ldc);
+        }
+
+        public override void TRMM(int m, int n, double alpha, double[] A, double[] B, double[] C, cublasSideMode side = cublasSideMode.Left, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int ldb = 0, int ldc = 0)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? m : lda);
+            ldb = (ldb == 0 ? m : ldb);
+            ldc = (ldc == 0 ? m : ldc);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrb = SetupVector(B, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrc = SetupVector(C, 0, ref mn, ref inca, 8);
+
+            LastStatus = _driverEx.cublasDtrmm(_blas, side, uplo, trans, diag, m, n, ref alpha, ptra.Pointer, lda, ptrb.Pointer, ldb, ptrc.Pointer, ldc);
+        }
+        #endregion
+
+        #region TRSM
+        public override void TRSM(int m, int n, float alpha, float[] A, float[] B, cublasSideMode side = cublasSideMode.Left, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int ldb = 0)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? m : lda);
+            ldb = (ldb == 0 ? m : ldb);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
+            CUdeviceptr ptrb = SetupVector(B, 0, ref mn, ref inca, 4);
+
+            LastStatus = _driverEx.cublasStrsm(_blas, side, uplo, trans, diag, m, n, ref alpha, ptra.Pointer, lda, ptrb.Pointer, ldb);
+        }
+
+        public override void TRSM(int m, int n, double alpha, double[] A, double[] B, cublasSideMode side = cublasSideMode.Left, cublasOperation trans = cublasOperation.N, cublasFillMode uplo = cublasFillMode.Lower, cublasDiagType diag = cublasDiagType.NonUnit, int lda = 0, int ldb = 0)
+        {
+            int mn = 0;
+            int inca = 1;
+
+            lda = (lda == 0 ? m : lda);
+            ldb = (ldb == 0 ? m : ldb);
+
+            CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
+            CUdeviceptr ptrb = SetupVector(B, 0, ref mn, ref inca, 8);
+
+            LastStatus = _driverEx.cublasDtrsm(_blas, side, uplo, trans, diag, m, n, ref alpha, ptra.Pointer, lda, ptrb.Pointer, ldb);
+        }
+        #endregion
         #endregion
     }
 }

@@ -91,6 +91,8 @@
   <ItemGroup>
     <Compile Include="BLAS1_1D.cs" />
     <Compile Include="BLAS1_2D.cs" />
+    <Compile Include="BLAS2.cs" />
+    <Compile Include="BLAS3.cs" />
     <Compile Include="CURANDHostTests.cs" />
     <Compile Include="FFTDoubleTests.cs" />
     <Compile Include="FFTSingleTests.cs" />
