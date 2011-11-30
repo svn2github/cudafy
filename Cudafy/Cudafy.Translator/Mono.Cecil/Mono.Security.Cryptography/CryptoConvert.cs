@@ -29,6 +29,7 @@
 
 using System;
 using System.Security.Cryptography;
+#if TEST
 
 #if !(SILVERLIGHT || READ_ONLY)
 
@@ -240,4 +241,5 @@ namespace Mono.Security.Cryptography {
 	}
 }
 
+#endif
 #endif

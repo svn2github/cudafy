@@ -1604,7 +1604,7 @@ namespace Cudafy.Translator
 				    }
 				    NewLine();
 			    } else {
-                    IsTypeTranslation = true;
+                    IsTypeTranslationDepth++;
                     try
                     {
                         // Make an default constructor
@@ -1685,7 +1685,7 @@ namespace Cudafy.Translator
                     }
                     finally
                     {
-                        IsTypeTranslation = false;
+                        IsTypeTranslationDepth--;
                     }
 			    }
 			    CloseBrace(braceStyle);
@@ -1697,7 +1697,18 @@ namespace Cudafy.Translator
 
         private Dictionary<string,string> _FixedElementFields = new Dictionary<string,string>();
 
-        public bool IsTypeTranslation { get; set; }
+        public bool IsTypeTranslation 
+        {
+            get { return IsTypeTranslationDepth > 0; }
+        }
+
+        private int _typeTranslationDepth = 0;
+
+        private int IsTypeTranslationDepth 
+        {
+            get { return _typeTranslationDepth; }
+            set { _typeTranslationDepth = value; Debug.Assert(value >= 0); } 
+        }
 		
 		public object VisitUsingAliasDeclaration(UsingAliasDeclaration usingAliasDeclaration, object data)
 		{
@@ -2636,7 +2647,7 @@ namespace Cudafy.Translator
 
         void WriteCUDAModifiers(IEnumerable<CSharpModifierToken> modifierTokens, AstType returnType, eCudafyType ct)
         {
-            if(returnType.ToString() == "void" && ct != eCudafyType.Device)
+            if(returnType.ToString() == "void" && ct != eCudafyType.Device && IsTypeTranslationDepth == 0)
                 formatter.WriteKeyword(@"extern ""C"" __global__ ");
             else 
                 formatter.WriteKeyword(@"__device__ ");

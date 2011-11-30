@@ -25,15 +25,17 @@ using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Reflection;
+using System.IO;
 using Cudafy.Host;
 using Cudafy.UnitTests;
 using NUnit.Framework;
-using Cudafy.Translator;
+//using Cudafy.Translator;
 
-namespace Cudafy.Host.UnitTests
+namespace Cudafy.cudafycl.UnitTests
 {
     [Cudafy]
-    [StructLayout(LayoutKind.Sequential, Size=80, CharSet = CharSet.Unicode)]
+    [StructLayout(LayoutKind.Sequential, Size = 80, CharSet = CharSet.Unicode)]
     public unsafe struct PrimitiveStruct
     {
         public int Value1;
@@ -81,24 +83,12 @@ namespace Cudafy.Host.UnitTests
                 }
             }
         }
-
-        public int TestFunction(float v)
-        {
-            return (int)v;
-        }
-
-        public void TestAction(float v)
-        {
-            v++;
-        }
-
     }
-
-    [TestFixture]
-    public unsafe class BasicFunctionTests : CudafyUnitTest, ICudafyUnitTest
+    
+    public unsafe class EmbeddedCudafyModuleTests :  CudafyUnitTest, ICudafyUnitTest
     {
 
-        
+
         private CudafyModule _cm;
 
         private GPGPU _gpu;
@@ -108,17 +98,29 @@ namespace Cudafy.Host.UnitTests
         [TestFixtureSetUp]
         public void SetUp()
         {
-            _cm = CudafyModule.TryDeserialize();
-            if (_cm == null || !_cm.TryVerifyChecksums())
+            //_cm = CudafyModule.TryDeserialize();
+            //if (_cm == null || !_cm.TryVerifyChecksums())
+            //{
+            //    _cm = CudafyTranslator.Cudafy(typeof(PrimitiveStruct), typeof(BasicFunctionTests));
+            //    //_cm.TrySerialize();
+            //}
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            var resourceName = assembly.GetName().Name + ".cdfy";
+            if (assembly.GetManifestResourceNames().Contains(resourceName))
             {
-                _cm = CudafyTranslator.Cudafy(typeof(PrimitiveStruct), typeof(BasicFunctionTests));
-                //_cm.TrySerialize();
+                var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream == null)
+                    Console.WriteLine("stream was null!");
+                else
+                    _cm = CudafyModule.Deserialize(stream);
             }
-
+            else
+                Console.WriteLine("no resource!");
             _gpu = CudafyHost.GetDevice(CudafyModes.Target);
-            _gpu.LoadModule(_cm);
-            Console.WriteLine(_cm.CompilerOutput);
-           
+            if(_cm != null)
+                _gpu.LoadModule(_cm);
+            //Console.WriteLine(_cm.CompilerOutput);
+
         }
 
         [TestFixtureTearDown]
@@ -165,9 +167,9 @@ namespace Cudafy.Host.UnitTests
             }
         }
 
- //       struct __align__(8) float6 {
- //float2 u, v, w;
- //};
+        //       struct __align__(8) float6 {
+        //float2 u, v, w;
+        //};
 
 
         [Cudafy]
@@ -445,7 +447,7 @@ namespace Cudafy.Host.UnitTests
             int h = 128;
             int[,] input = new int[w, h];
             int[] output = new int[w * h];
-       
+
             int i = 0;
             for (int x = 0; x < w; x++)
                 for (int y = 0; y < h; y++)
@@ -456,7 +458,7 @@ namespace Cudafy.Host.UnitTests
             int coeff = 42;
             _gpu.Launch(1, 1, "twoDAddressingWrong", input_dev, coeff, output_dev);
             _gpu.CopyFromDevice(output_dev, output);
-            
+
             i = 0;
             for (int x = 0; x < w; x++)
                 for (int y = 0; y < h; y++)
@@ -762,13 +764,13 @@ namespace Cudafy.Host.UnitTests
         [SetUp]
         public void TestSetUp()
         {
-           
+
         }
 
         [TearDown]
         public void TestTearDown()
         {
-            
+
         }
     }
 }

@@ -23,13 +23,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Reflection;
+using Cudafy.UnitTests;
 
-using Cudafy;
-using CudafyExamples.Arrays;
-using CudafyExamples.Dummy;
-using CudafyExamples.Complex;
-using CudafyExamples.Misc;
-namespace CudafyExamples
+using NUnit.Framework;
+
+namespace Cudafy.cudafycl.UnitTests
 {
     class Program
     {
@@ -37,29 +36,21 @@ namespace CudafyExamples
         {
             try
             {
-                CudafyModes.Target = Cudafy.eGPUType.Cuda;
+                CudafyModes.Target = eGPUType.Cuda;
+                //Console.WriteLine("Press any key after attaching to process");
+                //Console.ReadKey();
+                EmbeddedCudafyModuleTests t = new EmbeddedCudafyModuleTests();
+                CudafyUnitTest.PerformAllTests(t);
 
-                Console.WriteLine("\r\nArrayBasicIndexing");
-                ArrayBasicIndexing.Execute();
-                Console.WriteLine("\r\nArrayMultidimensions");
-                ArrayMultidimensions.Execute();
-                Console.WriteLine("\r\nGlobalArrays");
-                GlobalArrays.Execute();
-                Console.WriteLine("\r\nComplexNumbersD");
-                ComplexNumbersD.Execute();
-                Console.WriteLine("\r\nComplexNumbersF");
-                ComplexNumbersF.Execute();
-                Console.WriteLine("\r\nDummyFunctions");
-                DummyFunctions.Execute();
-                Console.WriteLine("\r\nPinnedAsyncIO");
-                PinnedAsyncIO.Execute();
-                Console.WriteLine("Done!");
+
+                Console.WriteLine("Done");
+                Console.ReadLine();
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Console.WriteLine(ex.ToString());
+                Console.ReadLine();
             }
-            Console.ReadKey();
         }
     }
 }

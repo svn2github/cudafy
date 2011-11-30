@@ -48,13 +48,13 @@ namespace Cudafy.Host.UnitTests
         {
             CudafyTranslator.GenerateDebug = true;
             _cm = CudafyModule.TryDeserialize();
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
             if (_cm == null || !_cm.TryVerifyChecksums())
             {
-                _cm = CudafyTranslator.Cudafy();
-                _gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
-                _gpu.LoadModule(_cm);
+                _cm = CudafyTranslator.Cudafy();               
                 _cm.TrySerialize();
             }
+            _gpu.LoadModule(_cm);
         }
 
         [TestFixtureTearDown]

@@ -31,7 +31,7 @@ using System;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
-
+//#if READ_ONLY
 namespace Mono.Security.Cryptography {
 
 #if INSIDE_CORLIB
@@ -39,6 +39,8 @@ namespace Mono.Security.Cryptography {
 #else
 	public
 #endif
+
+
 	sealed class CryptoConvert {
 
 		private CryptoConvert () 
@@ -751,4 +753,6 @@ namespace Mono.Security.Cryptography {
 			return result;
 		}
 	}
+
 }
+//#endif

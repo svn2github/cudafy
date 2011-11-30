@@ -498,6 +498,18 @@ namespace Cudafy
 
             string path = Path.GetDirectoryName(filename);
 
+            return Deserialize(km, doc, path);
+        }
+
+        public static CudafyModule Deserialize(Stream stream)
+        {
+            CudafyModule km = new CudafyModule();
+            XDocument doc = XDocument.Load(stream);
+            return Deserialize(km, doc, null);
+        }
+
+        private static CudafyModule Deserialize(CudafyModule km, XDocument doc, string path)
+        {
             XElement root = doc.Element(csCUDAFYMODULE);
             if (root == null)
                 throw new XmlException(string.Format(GES.csELEMENT_X_NOT_FOUND, csCUDAFYMODULE));
@@ -535,11 +547,11 @@ namespace Cudafy
                 byte[] ba = Convert.FromBase64String(ptx);
                 km._PTXModules.Add(new PTXModule() { PTX = UnicodeEncoding.ASCII.GetString(ba), Platform = km.CurrentPlatform });
             }
-            else if(hasPtx == true)
+            else if (hasPtx == true)
             {
                 foreach (XElement xe in root.Elements(csPTXMODULE))
                 {
-                    string ptx = xe.Element(csPTX).Value;                    
+                    string ptx = xe.Element(csPTX).Value;
                     string platformStr = xe.GetAttributeValue(csPLATFORM);
                     ePlatform platform = (ePlatform)Enum.Parse(typeof(ePlatform), platformStr);
                     byte[] ba = Convert.FromBase64String(ptx);
