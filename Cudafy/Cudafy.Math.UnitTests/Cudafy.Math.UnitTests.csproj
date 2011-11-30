@@ -96,9 +96,12 @@
     <Compile Include="CURANDHostTests.cs" />
     <Compile Include="FFTDoubleTests.cs" />
     <Compile Include="FFTSingleTests.cs" />
+    <Compile Include="LASOLVER.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SPARSE1.cs" />
+    <Compile Include="SPARSE23.cs" />
+    <Compile Include="SPARSE_CONVERSION.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cudafy.Host\Cudafy.Host.csproj">

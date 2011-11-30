@@ -44,8 +44,17 @@ namespace Cudafy.Host.UnitTests
                 BLAS3 b3 = new BLAS3();
                 CudafyUnitTest.PerformAllTests(b3);
                 
-                SPARSE1 sparse = new SPARSE1();
-                CudafyUnitTest.PerformAllTests(sparse);
+                SPARSE1 sparse1 = new SPARSE1();
+                CudafyUnitTest.PerformAllTests(sparse1);
+
+                SPARSE_CONVERSION sparse_conv = new SPARSE_CONVERSION();
+                CudafyUnitTest.PerformAllTests(sparse_conv);
+
+                SPARSE23 sparse23 = new SPARSE23();
+                CudafyUnitTest.PerformAllTests(sparse23);
+
+                LASOLVER solver = new LASOLVER();
+                CudafyUnitTest.PerformAllTests(solver);
 
                 CURANDHostTests rt = new CURANDHostTests();
                 CudafyUnitTest.PerformAllTests(rt);
