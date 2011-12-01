@@ -30,7 +30,7 @@ using System.IO;
 using Cudafy.Host;
 using Cudafy.UnitTests;
 using NUnit.Framework;
-//using Cudafy.Translator;
+using Cudafy.Translator;
 
 namespace Cudafy.cudafycl.UnitTests
 {
@@ -87,8 +87,6 @@ namespace Cudafy.cudafycl.UnitTests
     
     public unsafe class EmbeddedCudafyModuleTests :  CudafyUnitTest, ICudafyUnitTest
     {
-
-
         private CudafyModule _cm;
 
         private GPGPU _gpu;
@@ -98,29 +96,22 @@ namespace Cudafy.cudafycl.UnitTests
         [TestFixtureSetUp]
         public void SetUp()
         {
-            //_cm = CudafyModule.TryDeserialize();
-            //if (_cm == null || !_cm.TryVerifyChecksums())
-            //{
-            //    _cm = CudafyTranslator.Cudafy(typeof(PrimitiveStruct), typeof(BasicFunctionTests));
-            //    //_cm.TrySerialize();
-            //}
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            var resourceName = assembly.GetName().Name + ".cdfy";
-            if (assembly.GetManifestResourceNames().Contains(resourceName))
+            if (CudafyModule.HasCudafyModuleInAssembly())
             {
-                var stream = assembly.GetManifestResourceStream(resourceName);
-                if (stream == null)
-                    Console.WriteLine("stream was null!");
-                else
-                    _cm = CudafyModule.Deserialize(stream);
+                _cm = GetType().Assembly.GetCudafyModule();
             }
             else
-                Console.WriteLine("no resource!");
+            {
+                _cm = CudafyModule.TryDeserialize();
+                if (_cm == null || !_cm.TryVerifyChecksums())
+                {
+                    _cm = CudafyTranslator.Cudafy(typeof(PrimitiveStruct), typeof(EmbeddedCudafyModuleTests));
+                    _cm.TrySerialize();
+                }
+            }
             _gpu = CudafyHost.GetDevice(CudafyModes.Target);
             if(_cm != null)
                 _gpu.LoadModule(_cm);
-            //Console.WriteLine(_cm.CompilerOutput);
-
         }
 
         [TestFixtureTearDown]

@@ -162,7 +162,7 @@ namespace Cudafy
         public const string csREFERENCED_CUDAFY_ASSEMBLIES_DO_NOT_MATCH = "Referenced Cudafy.dll assemblies do not match.";
         public const string csCOULD_NOT_LOAD_ASSEMBLY_X = "Could not load assembly '{0}'.";
         public const string csCOULD_NOT_FIND_FUNCTION_X = "Could not find function '{0}' in module.";
-        //public const string csNO_MODULE_LOADED = "No module loaded.";
+        public const string csRESOURCE_NOT_FOUND = "Resource not found.";
         public const string csCOULD_NOT_FIND_TYPE_X_IN_ASSEMBLY_X = "Could not find type '{0}' in assembly '{1}'.";
         public const string csCOULD_NOT_FIND_METHOD_X_IN_TYPE_X_IN_ASSEMBLY_X = "Could not find method '{0}' in type '{1}' in assembly '{1}'.";
         public const string csCHECKSUM_FOR_ASSEMBLY_X_DOES_NOT_MATCH_DESERIALIZED_VALUE = "Checksum for assembly '{0}' does not match deserialized value.";

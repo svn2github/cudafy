@@ -112,7 +112,7 @@ namespace cudafycl
 
         private static void EmbedInAssembly(string dllName)
         {
-            var readerParameters = new ReaderParameters { ReadSymbols = true, ReadingMode = ReadingMode.Immediate };
+            var readerParameters = new ReaderParameters { ReadSymbols = true };
             var assemblyDefinition = AssemblyDefinition.ReadAssembly(dllName, readerParameters);
             var newFilename = Path.ChangeExtension(dllName, "cdfy");
             var resourceName = Path.GetFileName(newFilename);
@@ -126,7 +126,6 @@ namespace cudafycl
             assemblyDefinition.MainModule.Resources.Add(erTemp);
             WriterParameters wp = new WriterParameters()
             {
-                SymbolStream = readerParameters.SymbolStream,
                 WriteSymbols = true
             };
             assemblyDefinition.Write(dllName, wp);

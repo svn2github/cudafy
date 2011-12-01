@@ -95,6 +95,10 @@
       <Project>{A9317DFD-B3E4-43A3-885E-CBA5930ACD65}</Project>
       <Name>Cudafy.Host</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Cudafy.Translator\Cudafy.Translator.csproj">
+      <Project>{C971E684-9147-49CA-88DA-FD8C2D94B944}</Project>
+      <Name>Cudafy.Translator</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Cudafy.UnitTests\Cudafy.UnitTests.csproj">
       <Project>{AE9D4B99-9D67-4423-8601-3DF241072A5D}</Project>
       <Name>Cudafy.UnitTests</Name>

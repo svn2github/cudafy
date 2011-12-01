@@ -473,6 +473,89 @@ namespace Cudafy
         }
 
         /// <summary>
+        /// Determines whether there is a cudafy module in the calling assembly.
+        /// </summary>
+        /// <returns>
+        ///   <c>true</c> if calling assembly has cudafy module; otherwise, <c>false</c>.
+        /// </returns>
+        public static bool HasCudafyModuleInAssembly()
+        {
+            StackTrace stackTrace = new StackTrace();
+            Type type = stackTrace.GetFrame(1).GetMethod().ReflectedType;
+            return HasCudafyModule(type.Assembly);
+        }
+
+        /// <summary>
+        /// Determines whether there is a cudafy module in the specified assembly.
+        /// </summary>
+        /// <param name="assembly">The assembly.</param>
+        /// <returns>
+        ///   <c>true</c> if assembly has a cudafy module; otherwise, <c>false</c>.
+        /// </returns>
+        public static bool HasCudafyModule(Assembly assembly)
+        {
+            var assemblyName = assembly.GetName().Name;
+            var resourceName = assemblyName + ".cdfy";
+            return assembly.GetManifestResourceNames().Contains(resourceName);
+        }
+
+        /// <summary>
+        /// Gets a cudafy module that was stored as a resource in the calling assembly.
+        /// </summary>
+        /// <returns>The stored cudafy module.</returns>
+        /// <exception cref="CudafyException">Resource not found.</exception>
+        public static CudafyModule GetFromAssembly()
+        {
+            var cm = TryGetFromAssembly();
+            if (cm == null)
+                throw new CudafyException(CudafyException.csRESOURCE_NOT_FOUND);
+            return cm;
+        }
+
+        /// <summary>
+        /// Gets a cudafy module that was stored as a resource in the specified assembly.
+        /// </summary>
+        /// <param name="assembly">The assembly.</param>
+        /// <returns>The stored cudafy module.</returns>
+        /// <exception cref="CudafyException">Resource not found.</exception>
+        public static CudafyModule GetFromAssembly(Assembly assembly)
+        {
+            var cm = TryGetFromAssembly(assembly);
+            if (cm == null)
+                throw new CudafyException(CudafyException.csRESOURCE_NOT_FOUND);
+            return cm;
+        }
+
+        /// <summary>
+        /// Tries to get a cudafy module that was stored as a resource in the calling assembly.
+        /// </summary>
+        /// <param name="assembly">The assembly.</param>
+        /// <returns>The stored cudafy module, or null if not present.</returns>
+        public static CudafyModule TryGetFromAssembly()
+        {
+            StackTrace stackTrace = new StackTrace();
+            Type type = stackTrace.GetFrame(1).GetMethod().ReflectedType;
+            return TryGetFromAssembly(type.Assembly);
+        }
+
+        /// <summary>
+        /// Tries to get a cudafy module that was stored as a resource in the specified assembly.
+        /// </summary>
+        /// <param name="assembly">The assembly.</param>
+        /// <returns>The stored cudafy module, or null if not present.</returns>
+        public static CudafyModule TryGetFromAssembly(Assembly assembly)
+        {
+            var assemblyName = assembly.GetName().Name;
+            var resourceName = assemblyName + ".cdfy";
+            if (assembly.GetManifestResourceNames().Contains(resourceName))
+            {
+                var stream = assembly.GetManifestResourceStream(resourceName);
+                return CudafyModule.Deserialize(stream);
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Deserializes from a file with the same name as the calling type.
         /// </summary>
         /// <returns>Cudafy module.</returns>
@@ -690,13 +773,13 @@ namespace Cudafy
         /// </value>
         public bool GenerateDebug { get; set; }
 
-        ///// <summary>
-        ///// Gets or sets a value indicating whether to start the compilation in a new window.
-        ///// </summary>
-        ///// <value>
-        /////   <c>true</c> if suppress a new window; otherwise, <c>false</c>.
-        ///// </value>
-        //public bool SuppressWindow { get; set; }
+        /// <summary>
+        /// Gets or sets a value indicating whether to start the compilation in a new window.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if suppress a new window; otherwise, <c>false</c>.
+        /// </value>
+        public bool SuppressWindow { get; set; }
 
         /// <summary>
         /// Compiles the module based on current Cuda source code and options.
@@ -744,7 +827,7 @@ namespace Cudafy
                     process.StartInfo.UseShellExecute = false;
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.RedirectStandardError = true;
-                    //process.StartInfo.CreateNoWindow = SuppressWindow;//WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                    process.StartInfo.CreateNoWindow = SuppressWindow;//WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
                     process.StartInfo.FileName = co.GetFileName();
                     process.StartInfo.Arguments = co.GetArguments();
                     CompilerArguments = process.StartInfo.Arguments;
