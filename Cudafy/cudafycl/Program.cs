@@ -44,7 +44,9 @@ namespace cudafycl
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("Usage: cudafycl.exe myassembly.dll [-arch=sm_11|sm_12|sm_13|sm_20]");
+                Console.WriteLine("Usage: cudafycl.exe myassembly.dll [-arch=sm_11|sm_12|sm_13|sm_20] [-cdfy]");
+                Console.WriteLine("\t-arch: CUDA architecture. Optional. Default is sm_12.");
+                Console.WriteLine("\t-cdfy: cudafy the assembly and create the *.cdfy output file where * is assembly name. Optional.");
                 return -1;
             }
             try
@@ -55,7 +57,6 @@ namespace cudafycl
                     process.StartInfo.UseShellExecute = false;
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.RedirectStandardError = true;
-                    //process.StartInfo.CreateNoWindow = false;
                     process.StartInfo.FileName = "cudafycl.exe";
                     StringBuilder sb = new StringBuilder();
                     foreach (var arg in args)
@@ -70,7 +71,7 @@ namespace cudafycl
                         string s = process.StandardError.ReadToEnd();
                         throw new CudafyCompileException(CudafyCompileException.csCOMPILATION_ERROR_X, s);
                     }
-                    else
+                    else if(!args.Contains("-cdfy"))
                         EmbedInAssembly(args[0]);
                 }
                 else

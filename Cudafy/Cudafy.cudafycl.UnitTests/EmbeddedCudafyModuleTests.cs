@@ -96,19 +96,17 @@ namespace Cudafy.cudafycl.UnitTests
         [TestFixtureSetUp]
         public void SetUp()
         {
-            if (CudafyModule.HasCudafyModuleInAssembly())
-            {
+            if (CudafyModule.HasCudafyModuleInAssembly())   // Post-build event command line was: cudafycl.exe $(TargetPath)
+            {                                               // Do this for Release
                 _cm = GetType().Assembly.GetCudafyModule();
             }
-            else
-            {
-                _cm = CudafyModule.TryDeserialize();
-                if (_cm == null || !_cm.TryVerifyChecksums())
-                {
-                    _cm = CudafyTranslator.Cudafy(typeof(PrimitiveStruct), typeof(EmbeddedCudafyModuleTests));
-                    _cm.TrySerialize();
-                }
+            else // Post-build event command line was: cudafycl.exe $(TargetPath) -cdfy
+            {    // Do this for Debug
+                string name = this.GetType().Assembly.GetName().Name;
+                _cm = CudafyModule.TryDeserialize(name);
             }
+            Assert.IsFalse(_cm == null);
+            Assert.IsTrue(_cm.TryVerifyChecksums());
             _gpu = CudafyHost.GetDevice(CudafyModes.Target);
             if(_cm != null)
                 _gpu.LoadModule(_cm);

@@ -37,8 +37,6 @@ namespace Cudafy.cudafycl.UnitTests
             try
             {
                 CudafyModes.Target = eGPUType.Cuda;
-                Console.WriteLine("Press any key after attaching to process");
-                Console.ReadKey();
                 EmbeddedCudafyModuleTests t = new EmbeddedCudafyModuleTests();
                 CudafyUnitTest.PerformAllTests(t);
 
