@@ -60,7 +60,7 @@ namespace Cudafy.Maths.UnitTests
         {
             _gpu = CudafyHost.CreateDevice(CudafyModes.Target);
             _blas = GPGPUBLAS.Create(_gpu);
-
+            
             _hiMatrixS = new float[M * N];
             _hoMatrixS = new float[M * N];
             _hiVectorXMS = new float[M];
@@ -1025,7 +1025,7 @@ namespace Cudafy.Maths.UnitTests
 
         /* TPSV : Singularity test need. cublas does not support singularity test. */
 
-        [Test]
+        [Test]//[Ignore]
         public void TestTRMV()
         {
             // No Transpose, Lower matrix.

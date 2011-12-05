@@ -68,7 +68,8 @@ namespace cudafycl
                         System.Threading.Thread.Sleep(10);
                     if (process.ExitCode != 0)
                     {
-                        string s = process.StandardError.ReadToEnd();
+                        string s = process.StandardError.ReadToEnd() + "\r\n";
+                        s += process.StandardOutput.ReadToEnd();
                         throw new CudafyCompileException(CudafyCompileException.csCOMPILATION_ERROR_X, s);
                     }
                     else if(!args.Contains("-cdfy"))

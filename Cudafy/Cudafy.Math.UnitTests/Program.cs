@@ -43,7 +43,14 @@ namespace Cudafy.Host.UnitTests
 
                 BLAS3 b3 = new BLAS3();
                 CudafyUnitTest.PerformAllTests(b3);
-                
+
+
+                BLAS1_1D bt = new BLAS1_1D();
+                CudafyUnitTest.PerformAllTests(bt);
+
+                BLAS1_2D bt2 = new BLAS1_2D();
+                CudafyUnitTest.PerformAllTests(bt2);
+
                 SPARSE1 sparse1 = new SPARSE1();
                 CudafyUnitTest.PerformAllTests(sparse1);
 
@@ -58,12 +65,6 @@ namespace Cudafy.Host.UnitTests
 
                 CURANDHostTests rt = new CURANDHostTests();
                 CudafyUnitTest.PerformAllTests(rt);
-
-                BLAS1_1D bt = new BLAS1_1D();
-                CudafyUnitTest.PerformAllTests(bt);
-
-                BLAS1_2D bt2 = new BLAS1_2D();
-                CudafyUnitTest.PerformAllTests(bt2);
 
                 FFTSingleTests st = new FFTSingleTests();
                 CudafyUnitTest.PerformAllTests(st);
