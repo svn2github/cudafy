@@ -41,6 +41,31 @@ namespace Cudafy.Maths.LA
             gpu.LoadModule(km);
         }
 
+        #region CUDAfy Functions
+        [Cudafy]
+        public static void SetValueGPUSingle(GThread thread, int n, float[] vector, float value)
+        {
+            int tid = thread.blockIdx.x;
+
+            if (tid < n)
+            {
+                vector[tid] = value;
+            }
+        }
+
+        [Cudafy]
+        public static void SetValueGPUDouble(GThread thread, int n, double[] vector, double value)
+        {
+            int tid = thread.blockIdx.x;
+
+            if (tid < n)
+            {
+                vector[tid] = value;
+            }
+        }
+
+
+
         [Cudafy]
         public static void DefineLower(GThread thread, int n, int[] rowsICP, int[] colsICP)
         {
@@ -95,13 +120,28 @@ namespace Cudafy.Maths.LA
             }
         }
 
+        #endregion
+
+        #region help Functions
+        public void SetValue(int n, float[] x, float val)
+        {
+            gpu.Launch(n, 1).SetValueGPUSingle(n, x, val);
+        }
+
+        public void SetValue(int n, double[] x, double val)
+        {
+            gpu.Launch(n, 1).SetValueGPUDouble(n, x, val);
+        }
+        #endregion
+
+        #region Conjugate gradient solver (CG)
         /// <summary>
         /// Solves symmetric linear system with conjugate gradient solver.
         /// A * x = b
         /// </summary>
         /// <param name="n">number of rows and columns of matrix A.</param>
         /// <param name="csrValA">array of nnz elements, where nnz is the number of non-zero elements and can be obtained from csrRowA[m] - csrRowA[0].</param>
-        /// <param name="csrRowA">array of m+1 index elements.</param>
+        /// <param name="csrRowA">array of n+1 index elements.</param>
         /// <param name="csrColA">array of nnz column indices.</param>
         /// <param name="dx">vector of n elements.</param>
         /// <param name="db">vector of n elements.</param>
@@ -117,6 +157,14 @@ namespace Cudafy.Maths.LA
             SolveResult result = new SolveResult();
             int k; // Iterate count.
             float a, b, r0, r1;
+
+            if (blas.DOT(db, db) == 0)
+            {
+                SetValue(n, dx, 0);
+                result.IsSuccess = true;
+
+                return result;
+            }
 
             sparse.CSRMV(n, n, 1.0f, csrValA, csrRowA, csrColA, dx, 0.0f, dAx);
             blas.AXPY(-1.0f, dAx, db);
@@ -169,31 +217,79 @@ namespace Cudafy.Maths.LA
             return result;
         }
 
-        /// <summary>
-        /// Now working ...
-        /// </summary>
-        /// <param name="n"></param>
-        /// <param name="csrValA"></param>
-        /// <param name="csrRowA"></param>
-        /// <param name="csrColA"></param>
-        /// <param name="dx"></param>
-        /// <param name="db"></param>
-        /// <param name="csrValICP"></param>
-        /// <param name="csrRowICP"></param>
-        /// <param name="csrColICP"></param>
-        /// <param name="dy"></param>
-        /// <param name="dp"></param>
-        /// <param name="domega"></param>
-        /// <param name="zm1"></param>
-        /// <param name="zm2"></param>
-        /// <param name="rm2"></param>
-        /// <param name="tolerence"></param>
-        /// <param name="maxIterate"></param>
-        /// <returns></returns>
+        public SolveResult CG(
+            int n, double[] csrValA, int[] csrRowA, int[] csrColA,
+            double[] dx, double[] db, double[] dp, double[] dAx, double tolerence = 0.00001f, int maxIterate = 300)
+        {
+            SolveResult result = new SolveResult();
+            int k; // Iterate count.
+            double a, b, r0, r1;
+
+            if (blas.DOT(db, db) == 0.0)
+            {
+                SetValue(n, dx, 0);
+                result.IsSuccess = true;
+
+                return result;
+            }
+
+            sparse.CSRMV(n, n, 1.0f, csrValA, csrRowA, csrColA, dx, 0.0f, dAx);
+            blas.AXPY(-1.0f, dAx, db);
+
+            r1 = blas.DOT(db, db);
+
+            k = 1;
+            r0 = 0;
+
+            while (true)
+            {
+                if (k > 1)
+                {
+                    b = r1 / r0;
+                    blas.SCAL(b, dp);
+                    blas.AXPY(1.0f, db, dp);
+                }
+                else
+                {
+                    blas.COPY(db, dp);
+                }
+
+                sparse.CSRMV(n, n, 1.0f, csrValA, csrRowA, csrColA, dp, 0.0f, dAx);
+                a = r1 / blas.DOT(dp, dAx);
+                blas.AXPY(a, dp, dx);
+                blas.AXPY(-a, dAx, db);
+
+                r0 = r1;
+                r1 = blas.DOT(db, db);
+
+                k++;
+
+                if (r1 <= tolerence * tolerence)
+                {
+                    result.IsSuccess = true;
+                    result.LastError = r1;
+                    result.IterateCount = k;
+                    break;
+                }
+
+                if (k > maxIterate)
+                {
+                    result.IsSuccess = false;
+                    result.LastError = r1;
+                    result.IterateCount = k;
+                    break;
+                }
+            }
+
+            return result;
+        }
+        #endregion
+
+        #region Preconditioned conjugate gradient solver (Preconditioned CG) (Not inplemented yet)
         public SolveResult CGPreconditioned(
-            int n, float[] csrValA, int[] csrRowA, int[] csrColA, float[] dx, float[] db, 
-            float[] csrValICP, int[] csrRowICP, int[] csrColICP, 
-            float[] dy,float[] dp, float[] domega, float[] zm1, float[] zm2, float[] rm2, float tolerence = 0.0001f, int maxIterate = 300)
+            int n, float[] csrValA, int[] csrRowA, int[] csrColA, float[] dx, float[] db,
+            float[] csrValICP, int[] csrRowICP, int[] csrColICP,
+            float[] dy, float[] dp, float[] domega, float[] zm1, float[] zm2, float[] rm2, float tolerence = 0.0001f, int maxIterate = 300)
         {
             SolveResult result = new SolveResult();
 
@@ -267,6 +363,167 @@ namespace Cudafy.Maths.LA
             return result;
         }
 
+        #endregion
 
+        #region Biconjugate gradient stabilized method (BiCGSTAB) Alpha version (Reducing memory required.)
+        /// <summary>
+        /// Solve linear system with Biconjugate gradient stabilized method (BiCGSTAB).
+        /// </summary>
+        /// <param name="n">number of rows and columns of matrix A.</param>
+        /// <param name="csrValA">array of nnz elements, where nnz is the number of non-zero elements and can be obtained from csrRowA[m] - csrRowA[0].</param>
+        /// <param name="csrRowA">array of n+1 index elements.</param>
+        /// <param name="csrColA">array of nnz column indices.</param>
+        /// <param name="x">vector of n elements. (updated after solving.)</param>
+        /// <param name="b">vector of n elements.</param>
+        /// <param name="ax">temporary memory for BiCGSTAB.</param>
+        /// <param name="r0">temporary memory for BiCGSTAB.</param>
+        /// <param name="r">temporary memory for BiCGSTAB.</param>
+        /// <param name="v">temporary memory for BiCGSTAB.</param>
+        /// <param name="p">temporary memory for BiCGSTAB.</param>
+        /// <param name="s">temporary memory for BiCGSTAB.</param>
+        /// <param name="t">temporary memory for BiCGSTAB.</param>
+        /// <param name="threshold">iterate tolerence of BiCGSTAB solver.</param>
+        /// <param name="maxIterate">max iterate count of BiCGSTAB solver.</param>
+        /// <returns></returns>
+        public SolveResult BiCGSTAB(int n, double[] csrValA, int[] csrRowA, int[] csrColA, double[] x, double[] b, double[] ax, double[] r0, double[] r, double[] v, double[] p, double[] s, double[] t, double threshold = 1e-10, int maxIterate = 1000)
+        {
+            SolveResult result = new SolveResult();
+            double l0 = 1.0, alpha = 1.0, w0 = 1.0;
+            double l1, beta, w1;
+            double bn = blas.NRM2(b);
+            int k = 1;
+
+            blas.COPY(b, r0);
+            sparse.CSRMV(n, n, -1.0, csrValA, csrRowA, csrColA, x, 1.0, r0);
+            blas.COPY(r0, r);
+
+            SetValue(n, v, 0.0);
+            SetValue(n, p, 0.0);
+
+            double residual = 0.0;
+
+            while (true)
+            {
+                l1 = blas.DOT(r0, r);
+                beta = (l1 / l0) * (alpha / w0);
+
+                // Update p
+                blas.AXPY(-w0, v, p);
+                blas.SCAL(beta, p);
+                blas.AXPY(1.0, r, p);
+
+                sparse.CSRMV(n, n, 1.0, csrValA, csrRowA, csrColA, p, 0.0, v);
+
+                // Update v
+                alpha = l1 / blas.DOT(r0, v);
+                blas.COPY(r, s);
+                blas.AXPY(-alpha, v, s);
+                sparse.CSRMV(n, n, 1.0, csrValA, csrRowA, csrColA, s, 0.0, t);
+                w1 = blas.DOT(t, s) / blas.DOT(t, t);
+
+                // Update x
+                blas.AXPY(alpha, p, x);
+                blas.AXPY(w1, s, x);
+
+                // Update r
+                blas.COPY(s, r);
+                blas.AXPY(-w1, t, r);
+
+                //reidual = blas.NRM2(r) / bn;
+                residual = blas.NRM2(s);
+
+                if (k > maxIterate)
+                {
+                    result.IterateCount = k;
+                    result.IsSuccess = false;
+                    result.LastError = residual;
+                    return result;
+                }
+
+                if (residual <= threshold)
+                {
+                    result.IterateCount = k;
+                    result.IsSuccess = true;
+                    result.LastError = residual;
+                    return result;
+                }
+
+                k++;
+
+                w0 = w1;
+                l0 = l1;
+            }
+        }
+
+        public SolveResult BiCGSTAB(int n, float[] csrValA, int[] csrRowA, int[] csrColA, float[] x, float[] b, float[] ax, float[] r0, float[] r, float[] v, float[] p, float[] s, float[] t, float threshold = 0.000001f, int maxIterate = 1000)
+        {
+            SolveResult result = new SolveResult();
+            float l0 = 1.0f, alpha = 1.0f, w0 = 1.0f;
+            float l1, beta, w1;
+            float bn = blas.NRM2(b);
+            int k = 1;
+
+            blas.COPY(b, r0);
+            sparse.CSRMV(n, n, -1.0f, csrValA, csrRowA, csrColA, x, 1.0f, r0);
+            blas.COPY(r0, r);
+
+            SetValue(n, v, 0.0f);
+            SetValue(n, p, 0.0f);
+
+            double residual = 0.0;
+
+            while (true)
+            {
+                l1 = blas.DOT(r0, r);
+                beta = (l1 / l0) * (alpha / w0);
+
+                // Update p
+                blas.AXPY(-w0, v, p);
+                blas.SCAL(beta, p);
+                blas.AXPY(1.0f, r, p);
+
+                sparse.CSRMV(n, n, 1.0f, csrValA, csrRowA, csrColA, p, 0.0f, v);
+
+                // Update v
+                alpha = l1 / blas.DOT(r0, v);
+                blas.COPY(r, s);
+                blas.AXPY(-alpha, v, s);
+                sparse.CSRMV(n, n, 1.0f, csrValA, csrRowA, csrColA, s, 0.0f, t);
+                w1 = blas.DOT(t, s) / blas.DOT(t, t);
+
+                // Update x
+                blas.AXPY(alpha, p, x);
+                blas.AXPY(w1, s, x);
+
+                // Update r
+                blas.COPY(s, r);
+                blas.AXPY(-w1, t, r);
+
+                //reidual = blas.NRM2(r) / bn;
+                residual = blas.NRM2(s);
+
+                if (k > maxIterate)
+                {
+                    result.IterateCount = k;
+                    result.IsSuccess = false;
+                    result.LastError = residual;
+                    return result;
+                }
+
+                if (residual <= threshold)
+                {
+                    result.IterateCount = k;
+                    result.IsSuccess = true;
+                    result.LastError = residual;
+                    return result;
+                }
+
+                k++;
+
+                w0 = w1;
+                l0 = l1;
+            }
+        }
+        #endregion
     }
 }

@@ -101,6 +101,7 @@
     <Compile Include="BLAS\Types\cublasOperation.cs" />
     <Compile Include="BLAS\Types\cublasPointerMode.cs" />
     <Compile Include="BLAS\Types\cublasSideMode.cs" />
+    <Compile Include="LA\ISolver.cs" />
     <Compile Include="LA\Solver.cs" />
     <Compile Include="LA\SolveResult.cs" />
     <Compile Include="RAND\CudaDeviceRAND.cs" />
