@@ -777,15 +777,15 @@ namespace Cudafy.Translator
 		
 		public object VisitCheckedExpression(CheckedExpression checkedExpression, object data)
 		{
-            throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Checked expressions");
-            //StartNode(checkedExpression);
+            //throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Checked expressions");
+            StartNode(checkedExpression);
             //WriteKeyword("checked");
             //LPar();
             //Space(policy.SpacesWithinCheckedExpressionParantheses);
-            //checkedExpression.Expression.AcceptVisitor(this, data);
+            checkedExpression.Expression.AcceptVisitor(this, data);
             //Space(policy.SpacesWithinCheckedExpressionParantheses);
             //RPar();
-            //return EndNode(checkedExpression);
+            return EndNode(checkedExpression);
 		}
 		
 		public object VisitConditionalExpression(ConditionalExpression conditionalExpression, object data)
@@ -1310,15 +1310,15 @@ namespace Cudafy.Translator
 		
 		public object VisitUncheckedExpression(UncheckedExpression uncheckedExpression, object data)
 		{
-            throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Unchecked expressions");
-            //StartNode(uncheckedExpression);
+            //throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Unchecked expressions");
+            StartNode(uncheckedExpression);
             //WriteKeyword("unchecked");
             //LPar();
             //Space(policy.SpacesWithinCheckedExpressionParantheses);
-            //uncheckedExpression.Expression.AcceptVisitor(this, data);
+            uncheckedExpression.Expression.AcceptVisitor(this, data);
             //Space(policy.SpacesWithinCheckedExpressionParantheses);
             //RPar();
-            //return EndNode(uncheckedExpression);
+            return EndNode(uncheckedExpression);
 		}
 		#endregion
 		
