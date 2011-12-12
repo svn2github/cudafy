@@ -27,7 +27,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;NET_4_0;READ_ONLY;FULL_AST</DefineConstants>
+    <DefineConstants>TRACE;NET_4_0;FULL_AST</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\Cudafy.Translator.XML</DocumentationFile>

@@ -71,6 +71,10 @@
     <ApplicationIcon>CUDAfy2.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Cudafy.NET, Version=1.6.4363.18155, Culture=neutral, PublicKeyToken=63a4c9931616906b, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Cudafy.NET\bin\Release\Cudafy.NET_Secure\Cudafy.NET.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -134,28 +138,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="CUDAfy2.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\3p\cuda.net3.0.0_win\src\CUDA.NET_3.0_Source\CUDA.NET.csproj">
-      <Project>{1ABEC3F4-5CE8-469E-BB6E-9FEFEA6F75FF}</Project>
-      <Name>CUDA.NET</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Cudafy.Host\Cudafy.Host.csproj">
-      <Project>{A9317DFD-B3E4-43A3-885E-CBA5930ACD65}</Project>
-      <Name>Cudafy.Host</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Cudafy.NET\Cudafy.NET.csproj">
-      <Project>{114A41DB-276B-4279-9640-BBB8CE3B7936}</Project>
-      <Name>Cudafy.NET</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Cudafy.Translator\Cudafy.Translator.csproj">
-      <Project>{C971E684-9147-49CA-88DA-FD8C2D94B944}</Project>
-      <Name>Cudafy.Translator</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Cudafy\Cudafy.csproj">
-      <Project>{16A11768-583A-47DB-A9A3-C7E4173073A5}</Project>
-      <Name>Cudafy</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
