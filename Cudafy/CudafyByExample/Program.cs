@@ -32,8 +32,8 @@ namespace CudafyByExample
                 simple_kernel.Execute();
                 Console.WriteLine("\r\nsimple_kernel_params");
                 simple_kernel_params.Execute();
-                //Console.WriteLine("\r\nenum_gpu");
-                //enum_gpu.Execute();
+                Console.WriteLine("\r\nenum_gpu");
+                enum_gpu.Execute();
 
                 // Chapter 4
                 Console.WriteLine("\r\nChapter 4");

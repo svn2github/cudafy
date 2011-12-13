@@ -37,8 +37,8 @@ namespace Cudafy.cudafycl.UnitTests
             try
             {
                 CudafyModes.Target = eGPUType.Cuda;
-                //EmbeddedCudafyModuleTests t = new EmbeddedCudafyModuleTests();
-                //CudafyUnitTest.PerformAllTests(t);
+                EmbeddedCudafyModuleTests t = new EmbeddedCudafyModuleTests();
+                CudafyUnitTest.PerformAllTests(t);
 
                 CudafyModuleAssemblyTests t2 = new CudafyModuleAssemblyTests();
                 CudafyUnitTest.PerformAllTests(t2);
