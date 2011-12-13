@@ -19,7 +19,7 @@ namespace CudafyByExample
 
         public static void Execute()
         {
-            CudafyModule km = CudafyTranslator.Cudafy();
+            CudafyModule km = CudafyTranslator.Cudafy();//ePlatform.Auto, eArchitecture.sm_11, new Version(4,0), true, typeof(add_loop_gpu));
 
             GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target);
             gpu.LoadModule(km);
@@ -45,7 +45,7 @@ namespace CudafyByExample
             gpu.CopyToDevice(b, dev_b);
 
             // launch add on N threads
-            gpu.Launch(N, 1).add(dev_a, dev_b, dev_c);
+            gpu.Launch(N, 1).adder(dev_a, dev_b, dev_c);
 
             // copy the array 'c' back from the GPU to the CPU
             gpu.CopyFromDevice(dev_c, c);
@@ -63,7 +63,7 @@ namespace CudafyByExample
         }
 
         [Cudafy]
-        public static void add(GThread thread, int[] a, int[] b, int[] c)
+        public static void adder(GThread thread, int[] a, int[] b, int[] c)
         {
             int tid = thread.blockIdx.x;
             if (tid < N)

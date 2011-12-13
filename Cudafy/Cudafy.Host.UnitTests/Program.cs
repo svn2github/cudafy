@@ -60,7 +60,7 @@ namespace Cudafy.Host.UnitTests
                 if (CudafyHost.GetDeviceCount(CudafyModes.Target) > 1)
                 {
                     MultiGPUTests mgt = new MultiGPUTests();
-                    CudafyUnitTest.PerformAllTests(mgt);
+                    CudafyUnitTest.PerformAllTests(mgt);//, "Test_SingleThreadTwoGPU");
                 }
 
                 Console.WriteLine("Done");

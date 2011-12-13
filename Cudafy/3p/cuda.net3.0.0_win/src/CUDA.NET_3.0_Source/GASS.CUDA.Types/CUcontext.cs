@@ -7,6 +7,10 @@ namespace GASS.CUDA.Types
     public struct CUcontext
     {
         public IntPtr Pointer;
+        public override string ToString()
+        {
+            return Pointer.ToString();
+        }
     }
 }
 

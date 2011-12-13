@@ -68,9 +68,6 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Cudafy.NET">
-      <HintPath>..\Cudafy.NET\bin\Release\Cudafy.NET_Secure\Cudafy.NET.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -106,6 +103,20 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Cudafy.Host\Cudafy.Host.csproj">
+      <Project>{A9317DFD-B3E4-43A3-885E-CBA5930ACD65}</Project>
+      <Name>Cudafy.Host</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Cudafy.Translator\Cudafy.Translator.csproj">
+      <Project>{C971E684-9147-49CA-88DA-FD8C2D94B944}</Project>
+      <Name>Cudafy.Translator</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Cudafy\Cudafy.csproj">
+      <Project>{16A11768-583A-47DB-A9A3-C7E4173073A5}</Project>
+      <Name>Cudafy</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

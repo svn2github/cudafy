@@ -50,6 +50,10 @@ namespace GASS.CUDA
         [DllImport("nvcuda")]
         public static extern CUResult cuCtxGetDevice(ref CUdevice device);
         [DllImport("nvcuda")]
+        public static extern CUResult cuCtxGetCurrent(ref CUcontext pctx);
+        [DllImport("nvcuda")]
+        public static extern CUResult cuCtxSetCurrent(CUcontext pctx);
+        [DllImport("nvcuda")]
         public static extern CUResult cuCtxPopCurrent(ref CUcontext pctx);
         [DllImport("nvcuda")]
         public static extern CUResult cuCtxPopCurrent_v2(ref CUcontext pctx);

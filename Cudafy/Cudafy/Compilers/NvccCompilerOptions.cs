@@ -140,10 +140,18 @@ namespace Cudafy.Compilers
             string progFiles = Utility.ProgramFiles();
             string toolkitbasedir = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT;
             string cvStr = GetCudaVersion(cudaVersion, toolkitbasedir);
+            if (string.IsNullOrEmpty(cvStr))
+            {
+                progFiles = "C:\\Program Files";
+                toolkitbasedir = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT;
+                cvStr = GetCudaVersion(cudaVersion, toolkitbasedir);
+            }
+
+
             Debug.WriteLineIf(!string.IsNullOrEmpty(cvStr), "Compiler version: " + cvStr);
-            string gpuToolKit = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT + cudaVersion;
-            string compiler = gpuToolKit + Path.DirectorySeparatorChar + cvStr + Path.DirectorySeparatorChar + @"bin\nvcc.exe";
-            string includeDir = gpuToolKit + Path.DirectorySeparatorChar + cvStr + Path.DirectorySeparatorChar + @"include";
+            string gpuToolKit = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT + cvStr;
+            string compiler = gpuToolKit + Path.DirectorySeparatorChar + @"bin\nvcc.exe";
+            string includeDir = gpuToolKit + Path.DirectorySeparatorChar + @"include";
             NvccCompilerOptions opt = new NvccCompilerOptions("NVidia CC (x86)", compiler, includeDir);
             if (!opt.TryTest())
             {
@@ -190,15 +198,15 @@ namespace Cudafy.Compilers
             string toolkitbasedir = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT;
             string cvStr = GetCudaVersion(cudaVersion, toolkitbasedir);
             Debug.WriteLineIf(!string.IsNullOrEmpty(cvStr), "Compiler version: " + cvStr);
-            string gpuToolKit = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT + cudaVersion;
-            string compiler = gpuToolKit + Path.DirectorySeparatorChar + cvStr + Path.DirectorySeparatorChar + @"bin\nvcc.exe";
-            string includeDir = gpuToolKit + Path.DirectorySeparatorChar + cvStr + Path.DirectorySeparatorChar + @"include";
+            string gpuToolKit = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT + cvStr;// cudaVersion;
+            string compiler = gpuToolKit + Path.DirectorySeparatorChar + @"bin\nvcc.exe";
+            string includeDir = gpuToolKit + Path.DirectorySeparatorChar + @"include";
             NvccCompilerOptions opt = new NvccCompilerOptions("NVidia CC (x64)", compiler, includeDir);
             if (!opt.TryTest())
             {
                 opt = new NvccCompilerOptions("NVidia CC (x64)", "nvcc.exe", string.Empty);
 #if DEBUG
-                throw new CudafyCompileException("Test failed for NvccCompilerOptions for x86");
+                throw new CudafyCompileException("Test failed for NvccCompilerOptions for x64");
 #endif
             }
             opt.AddOption("-m64");
@@ -217,9 +225,15 @@ namespace Cudafy.Compilers
         {
             string s = "v{0}.{1}";
             if (cudaVersion != null)
-                return string.Format(s, cudaVersion.Major, cudaVersion.Minor);
-
-            // Version 4.x Support            
+            {
+                string version = string.Format(s, cudaVersion.Major, cudaVersion.Minor);
+                string dir = gpuToolKitDir + version;
+                if (System.IO.Directory.Exists(dir))
+                    return version;
+                else
+                    return string.Empty;
+            }
+           
             for (int i = 9; i >= 0; i--)
             {
                 string version = string.Format(s, 4, i);
@@ -227,15 +241,6 @@ namespace Cudafy.Compilers
                 if (System.IO.Directory.Exists(dir))
                     return version;
             }
-            //// Version 3.2 Support            
-            //for (int i = 9; i >= 2; i--)
-            //{
-            //    string version = string.Format(s, 3, i);
-            //    string dir = gpuToolKitDir + version;
-            //    if (System.IO.Directory.Exists(dir))
-            //        return version;
-            //}
-
             return string.Empty;
         }
     }

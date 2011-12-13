@@ -70,14 +70,16 @@ namespace GASS.CUDA
             return this.AllocateHost(this.GetSize<T>(array));
         }
 
+        [Obsolete]
         public void AttachContext(CUcontext ctx)
         {
             this.AttachContext(ctx, CUCtxFlags.SchedAuto);
         }
-
+        [Obsolete]
         public void AttachContext(CUcontext ctx, CUCtxFlags flags)
         {
-            this.LastError = CUDADriver.cuCtxAttach(ref this.curCtx, (uint) flags);
+            //this.LastError = CUDADriver.cuCtxAttach(ref this.curCtx, (uint) flags);
+            this.LastError = CUDADriver.cuCtxAttach(ref ctx, (uint)flags);
         }
 
         public void Copy2D(CUDAMemCpy2D desc)
@@ -369,12 +371,12 @@ namespace GASS.CUDA
         {
             this.LastError = CUDADriver.cuTexRefDestroy(tex);
         }
-
+        [Obsolete]
         public void DetachContext()
         {
             this.DetachContext(this.curCtx);
         }
-
+        [Obsolete]
         public void DetachContext(CUcontext ctx)
         {
             this.LastError = CUDADriver.cuCtxDetach(ctx);
@@ -812,6 +814,18 @@ namespace GASS.CUDA
             this.LastError = CUDADriver.cuMemsetD2D32(ptr, pitch, value, width, height);
         }
 
+        public void SetCurrentContext(CUcontext ctx)
+        {
+            this.LastError = CUDADriver.cuCtxSetCurrent(ctx);
+        }
+
+        public CUcontext GetCurrentContext()
+        {
+            CUcontext ctx = new CUcontext();
+            this.LastError = CUDADriver.cuCtxGetCurrent(ref ctx);
+            return ctx;
+        }
+
         public CUcontext PopCurrentContext()
         {
             CUcontext pctx = new CUcontext();
@@ -985,13 +999,24 @@ namespace GASS.CUDA
 
         public CUcontext CurrentContext
         {
+            //get
+            //{
+            //    return this.curCtx;
+            //}
+            //internal set
+            //{
+            //    this.curCtx = value;
+            //}
             get
             {
-                return this.curCtx;
+                var ctx = new CUcontext();
+                this.LastError = CUDADriver.cuCtxGetCurrent(ref ctx);
+                return ctx;
             }
             internal set
             {
-                this.curCtx = value;
+                //this.curCtx = value;
+                this.LastError = CUDADriver.cuCtxSetCurrent(value);
             }
         }
 

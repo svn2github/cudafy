@@ -1443,19 +1443,22 @@ namespace Cudafy.Host
             try
             {
                 if (!ptrEx.CreatedFromCast && DeviceMemoryValueExists(ptrEx))
-                {  
-                    if (ptrEx.Context != null)
+                {
+                    var curCtx = _cuda.GetCurrentContext();
+                    if (ptrEx.Context.Value.Pointer != curCtx.Pointer)
                     {
-                        _cuda.PushCurrentContext((CUcontext)ptrEx.Context);
+                        _cuda.SetCurrentContext(ptrEx.Context.Value);
                         _cuda.Free(ptrEx.DevPtr);
-                        _cuda.PopCurrentContext();
+                        _cuda.SetCurrentContext(curCtx);
                     }
                     else
-                    {
-                        _cuda.AttachContext(_cuda.CurrentContext);
                         _cuda.Free(ptrEx.DevPtr);
-                    }
                     ptrEx.Disposed = true;
+                }
+                else
+                { 
+                    Debug.WriteLine(string.Format("ptrEx.CreatedFromCast={0} && _cuda{1} && ptrEx.Disposed={2}",
+                        ptrEx.CreatedFromCast, _cuda == null ? "==null" : "!=null", ptrEx.Disposed));
                 }
                 RemoveFromDeviceMemoryEx(ptrEx);
                 ptrEx.RemoveChildren();
@@ -1479,23 +1482,29 @@ namespace Cudafy.Host
                     {
                         if (!ptrEx.CreatedFromCast && _cuda != null && !ptrEx.Disposed)
                         {
-                            if (ptrEx.Context != null)
+                            var curCtx = _cuda.GetCurrentContext();
+                            if (ptrEx.Context.Value.Pointer != curCtx.Pointer)
                             {
-                                _cuda.PushCurrentContext((CUcontext)ptrEx.Context);
+                                _cuda.SetCurrentContext(ptrEx.Context.Value);
                                 _cuda.Free(ptrEx.DevPtr);
-                                _cuda.PopCurrentContext();                                
+                                _cuda.SetCurrentContext(curCtx);
                             }
                             else
                             {
-                                _cuda.AttachContext(_cuda.CurrentContext);
                                 _cuda.Free(ptrEx.DevPtr);
                             }
                             ptrEx.Disposed = true;
                         }
+                        else
+                            Debug.WriteLine(string.Format("ptrEx.CreatedFromCast={0} && _cuda{1} && ptrEx.Disposed={2}",
+                                ptrEx.CreatedFromCast, _cuda == null ? "==null" : "!=null", ptrEx.Disposed));
                     }
                     catch (CUDAException ex)
-                    {
-                        Debug.WriteLine(ex.Message);
+                    {                        
+#if DEBUG
+                        HandleCUDAException(ex);
+#endif
+                        Trace.WriteLine(ex.Message);
                     }
                 }
                 ClearDeviceMemory();
@@ -1572,6 +1581,9 @@ namespace Cudafy.Host
             }
             catch (Exception ex)
             {
+#if DEBUG
+                throw;
+#endif
                 Debug.WriteLine(ex.Message);
             }
             return cnt;

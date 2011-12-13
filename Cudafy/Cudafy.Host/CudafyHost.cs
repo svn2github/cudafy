@@ -73,7 +73,7 @@ namespace Cudafy.Host
                     {
                         gpu = GetDevice(eGPUType.Cuda, i);
                         props = gpu.GetDeviceProperties(useAdvanced);
-                        RemoveDevice(gpu);
+                        //RemoveDevice(gpu);
                     }
                     yield return props;
                 }
