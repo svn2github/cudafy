@@ -36,7 +36,7 @@ namespace Cudafy.UnitTests
                 raitt.SetUp();
                 CudafyUnitTest.PerformAllTests(raitt);
                 raitt.TearDown();
-                
+
                 RelectorAddInFunctionsTests raift = new RelectorAddInFunctionsTests();
                 raift.SetUp();
                 CudafyUnitTest.PerformAllTests(raift);

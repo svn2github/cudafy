@@ -92,12 +92,22 @@ namespace Cudafy.UnitTests
             {
                 if (specificTestName != "" && specificTestName != mi.Name)
                     continue;
+                Type expectedExceptionType = null;
                 try
                 {
                     bool isTest = false;
+                    
                     foreach (object o in Attribute.GetCustomAttributes(mi))
+                    {
                         if (o is TestAttribute)
+                        {
                             isTest = true;
+                        }
+                        else if(o is ExpectedExceptionAttribute)
+                        {
+                            expectedExceptionType = (o as ExpectedExceptionAttribute).ExpectedException;
+                        }
+                    }
                     if (!isTest)
                     {
                         continue;
@@ -109,20 +119,31 @@ namespace Cudafy.UnitTests
                         if (testSetup != null)
                             testSetup.Invoke(test, null);
                         mi.Invoke(test, null);
-                        if (testTearDown != null)
-                            testTearDown.Invoke(test, null);
+                        if (expectedExceptionType != null)
+                            throw new Exception(string.Format("Expected an exception of type '{0}'", expectedExceptionType.Name));
                     }
                 }
                 catch (TargetInvocationException ex)
                 {
-                    if (ex.InnerException is CudafyException)
-                        Console.WriteLine(ex.InnerException.GetType().Name + ": " + ex.InnerException.Message);
+                    if (ex.InnerException != null)
+                    {
+                        if (expectedExceptionType.Name != ex.InnerException.GetType().Name)
+                            throw new Exception(string.Format("Expected an exception of type '{0}', got '{1}'.", expectedExceptionType.Name, ex.InnerException.GetType().Name));
+                        //Console.WriteLine(ex.InnerException.GetType().Name + ": " + ex.InnerException.Message);
+                    }
                     else
                         throw ex;
                 }
                 catch (Exception ex)
                 {
+                    if (expectedExceptionType.Name != ex.GetType().Name)
+                        throw new Exception(string.Format("Expected an exception of type '{0}', got '{1}'.", expectedExceptionType.Name, ex.GetType().Name));                    
                     throw ex;
+                }
+                finally
+                {
+                    if (testTearDown != null)
+                        testTearDown.Invoke(test, null);       
                 }
             }
             if (tearDown != null)

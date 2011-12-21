@@ -33,6 +33,13 @@ using NUnit.Framework;
 
 namespace Cudafy.Host.UnitTests
 {
+
+    //[Cudafy]
+    //public struct StructWithBool
+    //{
+    //    public bool B;
+    //}
+    
     [TestFixture]
     public class CopyTests1D : CudafyUnitTest, ICudafyUnitTest
     {
@@ -97,6 +104,8 @@ namespace Cudafy.Host.UnitTests
         private ComplexF[] _gpucplxFBufferIn;
 
         private ComplexF[] _gpucplxFBufferOut;
+
+        private StructWithBool[] _gpuStructWithBool;
 
         [TestFixtureSetUp]
         public void SetUp()
@@ -570,6 +579,17 @@ namespace Cudafy.Host.UnitTests
                     Encoding.Unicode.GetBytes(value, 0, 16, _Message, 0);
                 }
             }
+        }
+
+        [Test]
+        [ExpectedException(typeof(ArgumentException))]
+        public void Test_structWithBoolean()
+        {
+            var swbArray = new StructWithBool[1024];
+
+            StructWithBool[] swbArray_dev = _gpu.CopyToDevice(swbArray);
+
+            ClearOutputsAndGPU();
         }
 
         unsafe private IntPtr MarshalArray(ref MyStruct[] items)

@@ -94,6 +94,7 @@ namespace Cudafy.Host.UnitTests
 
     }
 
+
     [TestFixture]
     public unsafe class BasicFunctionTests : CudafyUnitTest, ICudafyUnitTest
     {
@@ -125,6 +126,13 @@ namespace Cudafy.Host.UnitTests
         public void TearDown()
         {
             _gpu.FreeAll();
+        }
+
+        [Test]
+        public void Test_getFreeMemory()
+        {
+            ulong mem = _gpu.FreeMemory;
+            Assert.Greater(mem, 0);
         }
 
         [Test]

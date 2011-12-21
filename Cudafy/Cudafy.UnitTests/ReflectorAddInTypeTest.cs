@@ -27,6 +27,33 @@ using NUnit.Framework;
 using Cudafy.Translator;
 namespace Cudafy.UnitTests
 {
+    public struct UncudafiedStruct
+    {
+        public int x;
+        public int y;
+    }
+
+    [Cudafy]
+    public struct StructB
+    {
+        public int x;
+        public int y;
+    }
+
+    [Cudafy]
+    public struct StructA
+    {
+        public int x;
+        public StructB SB;
+    }
+    
+
+    [Cudafy]
+    public struct StructWithBool
+    {
+        public bool B;
+    }
+    
     [TestFixture]
     public class RelectorAddInTypeTests : CudafyUnitTest, ICudafyUnitTest
     {
@@ -40,6 +67,17 @@ namespace Cudafy.UnitTests
             public float x;
             public float y;
             public float z;
+           // [CudafyIgnore]
+            public Sphere(float unwanted)
+            {
+                r = unwanted;
+                b = unwanted;
+                g = unwanted;                
+                x = unwanted;
+                y = unwanted;
+                z = unwanted;
+                radius = unwanted;
+            }
 
             public float hit(float ox1, float oy1, ref float n1)
             {
@@ -52,6 +90,12 @@ namespace Cudafy.UnitTests
                     return dz + z;
                 }
                 return -2e10f;
+            }
+
+            public float dostuff()
+            {
+                Sphere s = new Sphere(42);
+                return s.r;
             }
         }
         
@@ -86,6 +130,27 @@ namespace Cudafy.UnitTests
         public void TestHasConstantSphereArray()
         {
             Assert.Contains("constantSphereArray", _cm.Constants.Keys);
+        }
+
+        [Test]
+        [ExpectedException(typeof(CudafyLanguageException))]
+        public void TestCudafyStructWithoutAttribute()
+        {
+            var mod = CudafyTranslator.Cudafy(typeof(UncudafiedStruct));
+        }
+
+        [Test]
+        public void TestStructDependencies()
+        {
+            var mod = CudafyTranslator.Cudafy(typeof(StructA), typeof(StructB));
+            mod.Serialize("TestStructDependencies");
+        }
+
+        [Test]
+        public void TestStructWithBoolean()
+        {
+            var mod = CudafyTranslator.Cudafy(typeof(StructWithBool));
+            mod.Serialize("TestStructWithBoolean");
         }
 
         public const int DIM = 1024;
@@ -151,7 +216,6 @@ namespace Cudafy.UnitTests
             
         }
     }
-
 
 }
 
