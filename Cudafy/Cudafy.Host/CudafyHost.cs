@@ -123,9 +123,9 @@ namespace Cudafy.Host
             else
             {
                 gpu = GPGPUs[name];
-                if(gpu.IsDisposed)
+                if (gpu.IsDisposed)
                 {
-                    gpu = CreateDevice(type, deviceId); 
+                    gpu = CreateDevice(type, deviceId);
                 }
             }
                

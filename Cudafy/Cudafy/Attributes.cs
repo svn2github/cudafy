@@ -110,7 +110,7 @@ namespace Cudafy
     /// <summary>
     /// Informs the CudafyTranslator to ignore the member of a struct.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Constructor)]
     public class CudafyIgnoreAttribute : Attribute
     {
     }

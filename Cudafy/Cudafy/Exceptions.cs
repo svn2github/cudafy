@@ -190,7 +190,7 @@ namespace Cudafy
 
         
 
-        protected void CheckParamsAreNoExceptions(object[] args)
+        protected virtual void CheckParamsAreNoExceptions(object[] args)
         {
             foreach (object o in args)
                 if ((o is Exception))
@@ -244,7 +244,7 @@ namespace Cudafy
     /// Base exception for all dataflow exceptions except for DataflowFatalException.
     /// </summary>
     [global::System.Serializable]
-    public class CudafyLanguageException : Exception
+    public class CudafyLanguageException : CudafyException
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CudafyLanguageException"/> class.
@@ -306,7 +306,9 @@ namespace Cudafy
 
         public const string csSHARED_MEMORY_MUST_BE_CONSTANT = "Shared memory size must be constant at compile time.";
 
-        protected void CheckParamsAreNoExceptions(object[] args)
+        //public const string csCUDAFY_ATTRIBUTE_IS_MISSING_ON_X = "Cudafy attribute is missing on {0}.";
+
+        protected override void CheckParamsAreNoExceptions(object[] args)
         {
             foreach (object o in args)
                 if ((o is Exception))

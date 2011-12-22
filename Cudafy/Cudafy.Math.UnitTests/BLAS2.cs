@@ -56,7 +56,7 @@ namespace Cudafy.Maths.UnitTests
         [TestFixtureSetUp]
         public void SetUp()
         {
-            _gpu = CudafyHost.CreateDevice(CudafyModes.Target);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target);
             _blas = GPGPUBLAS.Create(_gpu);
 
             // Initialize CPU Buffer
@@ -81,7 +81,7 @@ namespace Cudafy.Maths.UnitTests
         {
             _blas.Dispose();
             _gpu.FreeAll();
-            _gpu.Dispose();
+            //_gpu.Dispose();
         }
  
         public void TestSetUp()

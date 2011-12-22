@@ -37,12 +37,15 @@ namespace Cudafy.Host.UnitTests
             CudafyModes.Target = eGPUType.Cuda;
             try
             {
+                for (int i = 0; i < 100; i++)
+                {
+                    Console.WriteLine(i);
+                    BLAS2 b2 = new BLAS2();
+                    CudafyUnitTest.PerformAllTests(b2);
 
-                BLAS2 b2 = new BLAS2();
-                CudafyUnitTest.PerformAllTests(b2);
-
-                BLAS3 b3 = new BLAS3();
-                CudafyUnitTest.PerformAllTests(b3);
+                    BLAS3 b3 = new BLAS3();
+                    CudafyUnitTest.PerformAllTests(b3);
+                }
 
 
                 BLAS1_1D bt = new BLAS1_1D();

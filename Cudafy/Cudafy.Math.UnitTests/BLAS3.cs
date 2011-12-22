@@ -56,7 +56,7 @@ namespace Cudafy.Maths.UnitTests
         [TestFixtureSetUp]
         public void SetUp()
         {
-            _gpu = CudafyHost.CreateDevice(CudafyModes.Target);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target);
             _blas = GPGPUBLAS.Create(_gpu);
 
             hiMatrixAMM = new double[M * M];
@@ -83,7 +83,7 @@ namespace Cudafy.Maths.UnitTests
 
             _gpu.FreeAll();
 
-            _gpu.Dispose();
+            //_gpu.Dispose();
         }
 
         public void TestSetUp()
