@@ -1217,7 +1217,7 @@ namespace Cudafy.Maths.BLAS
             CUdeviceptr ptrap = SetupVector(AP, 0, ref mn, ref inca, 8);
             CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
 
-            LastStatus = _driverEx.cublasStpmv(_blas, uplo, trans, diag, n, ptrap.Pointer, ptrx.Pointer, incx);
+            LastStatus = _driverEx.cublasDtpmv(_blas, uplo, trans, diag, n, ptrap.Pointer, ptrx.Pointer, incx);
         }
         #endregion
 
@@ -1241,7 +1241,7 @@ namespace Cudafy.Maths.BLAS
             CUdeviceptr ptrap = SetupVector(AP, 0, ref mn, ref inca, 8);
             CUdeviceptr ptrx = SetupVector(x, 0, ref mn, ref incx, 8);
 
-            LastStatus = _driverEx.cublasStpsv(_blas, uplo, trans, diag, n, ptrap.Pointer, ptrx.Pointer, incx);
+            LastStatus = _driverEx.cublasDtpsv(_blas, uplo, trans, diag, n, ptrap.Pointer, ptrx.Pointer, incx);
         }
         #endregion
 
@@ -1309,8 +1309,24 @@ namespace Cudafy.Maths.BLAS
             int mn = 0;
             int inca = 1;
 
-            lda = (lda == 0 ? m : lda);
-            ldb = (ldb == 0 ? k : ldb);
+            if (transa == cublasOperation.N)
+            {
+                lda = (lda == 0 ? m : lda);
+            }
+            else
+            {
+                lda = (lda == 0 ? k : lda);
+            }
+
+            if (transb == cublasOperation.N)
+            {
+                ldb = (ldb == 0 ? k : ldb);
+            }
+            else
+            {
+                ldb = (ldb == 0 ? n : ldb);
+            }
+
             ldc = (ldc == 0 ? m : ldc);
 
             CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
@@ -1325,8 +1341,24 @@ namespace Cudafy.Maths.BLAS
             int mn = 0;
             int inca = 1;
 
-            lda = (lda == 0 ? m : lda);
-            ldb = (ldb == 0 ? k : ldb);
+            if (transa == cublasOperation.N)
+            {
+                lda = (lda == 0 ? m : lda);
+            }
+            else
+            {
+                lda = (lda == 0 ? k : lda);
+            }
+
+            if (transb == cublasOperation.N)
+            {
+                ldb = (ldb == 0 ? k : ldb);
+            }
+            else
+            {
+                ldb = (ldb == 0 ? n : ldb);
+            }
+
             ldc = (ldc == 0 ? m : ldc);
 
             CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
@@ -1343,7 +1375,15 @@ namespace Cudafy.Maths.BLAS
             int mn = 0;
             int inca = 1;
 
-            lda = (lda == 0 ? m : lda);
+            if (side == cublasSideMode.Left)
+            {
+                lda = (lda == 0 ? m : lda);
+            }
+            else
+            {
+                lda = (lda == 0 ? n : lda);
+            }
+
             ldb = (ldb == 0 ? m : ldb);
             ldc = (ldc == 0 ? m : ldc);
 
@@ -1359,7 +1399,15 @@ namespace Cudafy.Maths.BLAS
             int mn = 0;
             int inca = 1;
 
-            lda = (lda == 0 ? m : lda);
+            if (side == cublasSideMode.Left)
+            {
+                lda = (lda == 0 ? m : lda);
+            }
+            else
+            {
+                lda = (lda == 0 ? n : lda);
+            }
+
             ldb = (ldb == 0 ? m : ldb);
             ldc = (ldc == 0 ? m : ldc);
 
@@ -1377,7 +1425,15 @@ namespace Cudafy.Maths.BLAS
             int mn = 0;
             int inca = 1;
 
-            lda = (lda == 0 ? n : lda);
+            if (trans == cublasOperation.N)
+            {
+                lda = (lda == 0 ? n : lda);
+            }
+            else
+            {
+                lda = (lda == 0 ? k : lda);
+            }
+
             ldc = (ldc == 0 ? n : ldc);
 
             CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
@@ -1391,7 +1447,15 @@ namespace Cudafy.Maths.BLAS
             int mn = 0;
             int inca = 1;
 
-            lda = (lda == 0 ? n : lda);
+            if (trans == cublasOperation.N)
+            {
+                lda = (lda == 0 ? n : lda);
+            }
+            else
+            {
+                lda = (lda == 0 ? k : lda);
+            }
+
             ldc = (ldc == 0 ? n : ldc);
 
             CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
@@ -1407,8 +1471,16 @@ namespace Cudafy.Maths.BLAS
             int mn = 0;
             int inca = 1;
 
-            lda = (lda == 0 ? n : lda);
-            ldb = (ldb == 0 ? n : ldb);
+            if (trans == cublasOperation.N)
+            {
+                lda = (lda == 0 ? n : lda);
+                ldb = (ldb == 0 ? n : ldb);
+            }
+            else
+            {
+                lda = (lda == 0 ? k : lda);
+                ldb = (ldb == 0 ? k : ldb);
+            }
             ldc = (ldc == 0 ? n : ldc);
 
             CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
@@ -1423,8 +1495,16 @@ namespace Cudafy.Maths.BLAS
             int mn = 0;
             int inca = 1;
 
-            lda = (lda == 0 ? n : lda);
-            ldb = (ldb == 0 ? n : ldb);
+            if (trans == cublasOperation.N)
+            {
+                lda = (lda == 0 ? n : lda);
+                ldb = (ldb == 0 ? n : ldb);
+            }
+            else
+            {
+                lda = (lda == 0 ? k : lda);
+                ldb = (ldb == 0 ? k : ldb);
+            }
             ldc = (ldc == 0 ? n : ldc);
 
             CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
@@ -1441,7 +1521,15 @@ namespace Cudafy.Maths.BLAS
             int mn = 0;
             int inca = 1;
 
-            lda = (lda == 0 ? m : lda);
+            if (side == cublasSideMode.Left)
+            {
+                lda = (lda == 0 ? m : lda);
+            }
+            else
+            {
+                lda = (lda == 0 ? n : lda);
+            }
+
             ldb = (ldb == 0 ? m : ldb);
             ldc = (ldc == 0 ? m : ldc);
 
@@ -1457,7 +1545,15 @@ namespace Cudafy.Maths.BLAS
             int mn = 0;
             int inca = 1;
 
-            lda = (lda == 0 ? m : lda);
+            if (side == cublasSideMode.Left)
+            {
+                lda = (lda == 0 ? m : lda);
+            }
+            else
+            {
+                lda = (lda == 0 ? n : lda);
+            }
+
             ldb = (ldb == 0 ? m : ldb);
             ldc = (ldc == 0 ? m : ldc);
 
@@ -1475,7 +1571,15 @@ namespace Cudafy.Maths.BLAS
             int mn = 0;
             int inca = 1;
 
-            lda = (lda == 0 ? m : lda);
+            if (side == cublasSideMode.Left)
+            {
+                lda = (lda == 0 ? m : lda);
+            }
+            else
+            {
+                lda = (lda == 0 ? n : lda);
+            }
+            
             ldb = (ldb == 0 ? m : ldb);
 
             CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 4);
@@ -1489,7 +1593,15 @@ namespace Cudafy.Maths.BLAS
             int mn = 0;
             int inca = 1;
 
-            lda = (lda == 0 ? m : lda);
+            if (side == cublasSideMode.Left)
+            {
+                lda = (lda == 0 ? m : lda);
+            }
+            else
+            {
+                lda = (lda == 0 ? n : lda);
+            }
+
             ldb = (ldb == 0 ? m : ldb);
 
             CUdeviceptr ptra = SetupVector(A, 0, ref mn, ref inca, 8);
