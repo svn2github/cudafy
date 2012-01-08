@@ -44,7 +44,7 @@ namespace Cudafy.Maths.UnitTests
         [TestFixtureSetUp]
         public void SetUp()
         {
-            _gpu = CudafyHost.CreateDevice(CudafyModes.Target);
+            _gpu = CudafyHost.GetDevice();
             _sparse = GPGPUSPARSE.Create(_gpu);
                         
             _hiVectorX = new float[N];
@@ -71,9 +71,7 @@ namespace Cudafy.Maths.UnitTests
         {
             _sparse.Dispose();
 
-            _gpu.Free(_diValsX);
-            _gpu.Free(_diIndicesX);
-            _gpu.Free(_diVectorY);
+            _gpu.FreeAll();
         }
 
         public void TestSetUp()
@@ -141,7 +139,7 @@ namespace Cudafy.Maths.UnitTests
         }
 
         [Test]
-        public void TestSparseAXPY()
+        public void Test_SPARSE1_AXPY()
         {
             _gpu.CopyToDevice(_hiValsX, _diValsX);
             _gpu.CopyToDevice(_hiIndicesX, _diIndicesX);
@@ -159,7 +157,7 @@ namespace Cudafy.Maths.UnitTests
         }
 
         [Test]
-        public void TestSparseDOT()
+        public void Test_SPARSE1_DOT()
         {
             _gpu.CopyToDevice(_hiValsX, _diValsX);
             _gpu.CopyToDevice(_hiIndicesX, _diIndicesX);
@@ -178,7 +176,7 @@ namespace Cudafy.Maths.UnitTests
         }
 
         [Test]
-        public void TestSparseGTHR()
+        public void Test_SPARSE1_GTHR()
         {
             _gpu.CopyToDevice(_hiValsX, _diValsX);
             _gpu.CopyToDevice(_hiIndicesX, _diIndicesX);
@@ -195,7 +193,7 @@ namespace Cudafy.Maths.UnitTests
         }
 
         [Test]
-        public void TestSparseGTHRZ()
+        public void Test_SPARSE1_GTHRZ()
         {
             _gpu.CopyToDevice(_hiValsX, _diValsX);
             _gpu.CopyToDevice(_hiIndicesX, _diIndicesX);
@@ -214,7 +212,7 @@ namespace Cudafy.Maths.UnitTests
         }
 
         [Test]
-        public void TestSparseROT()
+        public void Test_SPARSE1_ROT()
         {
             _gpu.CopyToDevice(_hiValsX, _diValsX);
             _gpu.CopyToDevice(_hiIndicesX, _diIndicesX);
@@ -236,7 +234,7 @@ namespace Cudafy.Maths.UnitTests
         }
 
         [Test]
-        public void TestSparseSCTR()
+        public void Test_SPARSE1_SCTR()
         {
             _gpu.CopyToDevice(_hiValsX, _diValsX);
             _gpu.CopyToDevice(_hiIndicesX, _diIndicesX);

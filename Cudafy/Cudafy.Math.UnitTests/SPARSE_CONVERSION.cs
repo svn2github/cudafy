@@ -20,11 +20,11 @@ namespace Cudafy.Maths.UnitTests
         private const int M = 512;
         private const int N = 128;
 
-        private float[] _hiMatrixMN;
-        private float[] _hiMatrixMN2;
-        private float[] _diMatrixMN;
-        private float[] _diMatrixMN2;
-        private float[] _hoMatrixMN;
+        private double[] _hiMatrixMN;
+        private double[] _hiMatrixMN2;
+        private double[] _diMatrixMN;
+        private double[] _diMatrixMN2;
+        private double[] _hoMatrixMN;
 
         
         private int[] _diPerVector;
@@ -34,8 +34,8 @@ namespace Cudafy.Maths.UnitTests
         private int[] _diCSCRows;
         private int[] _diCSCCols;
         private int[] _diCOORows;
-        private float[] _diVals;
-        private float[] _diVals2;
+        private double[] _diVals;
+        private double[] _diVals2;
         private int[] _hoPerVector;
         private int[] _hoPerVector2;
         private int[] _hoCSRRows;
@@ -46,13 +46,13 @@ namespace Cudafy.Maths.UnitTests
         private int[] _hoCOORows;
         private int[] _hoCSCRows_r;
         private int[] _hoCSCCols_r;
-        private float[] _hoVals;
-        private float[] _hoVals2;
-        private float[] _hoVals2_r;
+        private double[] _hoVals;
+        private double[] _hoVals2;
+        private double[] _hoVals2_r;
 
         private int[] _hoCSRRowsCPU;
         private int[] _hoCSRColsCPU;
-        private float[] _hoValsCPU;
+        private double[] _hoValsCPU;
 
         private GPGPU _gpu;
 
@@ -64,9 +64,9 @@ namespace Cudafy.Maths.UnitTests
             _gpu = CudafyHost.CreateDevice(CudafyModes.Target);
             _sparse = GPGPUSPARSE.Create(_gpu);
 
-            _hiMatrixMN = new float[M * N];
-            _hiMatrixMN2 = new float[M * N];
-            _hoMatrixMN = new float[M * N];
+            _hiMatrixMN = new double[M * N];
+            _hiMatrixMN2 = new double[M * N];
+            _hoMatrixMN = new double[M * N];
             _hoPerVector = new int[M];
             _hoPerVector2 = new int[N];
 
@@ -89,7 +89,7 @@ namespace Cudafy.Maths.UnitTests
             _gpu.Free(_diPerVector2);
         }
 
-        private void FillBuffer(float[] buffer)
+        private void FillBuffer(double[] buffer)
         {
             Random rand = new Random(Environment.TickCount);
 
@@ -101,7 +101,7 @@ namespace Cudafy.Maths.UnitTests
             System.Threading.Thread.Sleep(rand.Next(50));
         }
 
-        private void CreateDenseMatrixCSR(float[] buffer, int m, int n, out int[] nnzPerRow, out int nnz)
+        private void CreateDenseMatrixCSR(double[] buffer, int m, int n, out int[] nnzPerRow, out int nnz)
         {
             nnz = 0;
             nnzPerRow = new int[m];
@@ -114,7 +114,7 @@ namespace Cudafy.Maths.UnitTests
 
                 for (int j = 0; j < n; j++)
                 {
-                    float value = rand.Next(32);
+                    double value = rand.Next(32);
                     buffer[_sparse.GetIndexColumnMajor(i, j, M)] = value;
 
                     if (value != 0)
@@ -130,7 +130,7 @@ namespace Cudafy.Maths.UnitTests
             System.Threading.Thread.Sleep(rand.Next(50));
         }
 
-        private void CreateDenseMatrixCSC(float[] buffer, int m, int n, out int[] nnzPerCol, out int nnz)
+        private void CreateDenseMatrixCSC(double[] buffer, int m, int n, out int[] nnzPerCol, out int nnz)
         {
             nnz = 0;
             nnzPerCol = new int[m];
@@ -142,7 +142,7 @@ namespace Cudafy.Maths.UnitTests
                 int nnzcol = 0;
                 for (int i = 0; i < m; i++)
                 {
-                    float value = rand.Next(32);
+                    double value = rand.Next(32);
                     buffer[_sparse.GetIndexColumnMajor(i, j, M)] = value;
 
                     if (value != 0)
@@ -158,9 +158,9 @@ namespace Cudafy.Maths.UnitTests
             System.Threading.Thread.Sleep(rand.Next(50));
         }
 
-        private void CPUDense2COO(float[] buffer, int m, int n, int nnz, out int[] rows, out int[] cols, out float[] vals)
+        private void CPUDense2COO(double[] buffer, int m, int n, int nnz, out int[] rows, out int[] cols, out double[] vals)
         {
-            vals = new float[nnz];
+            vals = new double[nnz];
             cols = new int[nnz];
             rows = new int[nnz];
 
@@ -170,7 +170,7 @@ namespace Cudafy.Maths.UnitTests
             {
                 for (int j = 0; j < n; j++)
                 {
-                    float val = buffer[_sparse.GetIndexColumnMajor(i, j, m)];
+                    double val = buffer[_sparse.GetIndexColumnMajor(i, j, m)];
 
                     if (val != 0)
                     {
@@ -184,11 +184,11 @@ namespace Cudafy.Maths.UnitTests
             }
         }
 
-        private void CPUDense2CSR(float[] buffer, int m, int n, int nnz, out int[] rows, out int[] cols, out float[] vals)
+        private void CPUDense2CSR(double[] buffer, int m, int n, int nnz, out int[] rows, out int[] cols, out double[] vals)
         {
             rows = new int[m + 1];
             cols = new int[nnz];
-            vals = new float[nnz];
+            vals = new double[nnz];
 
             int nnzCount = 0;
 
@@ -198,7 +198,7 @@ namespace Cudafy.Maths.UnitTests
 
                 for (int j = 0; j < n; j++)
                 {
-                    float val = buffer[_sparse.GetIndexColumnMajor(i, j, m)];
+                    double val = buffer[_sparse.GetIndexColumnMajor(i, j, m)];
 
                     if (val != 0)
                     {
@@ -219,11 +219,11 @@ namespace Cudafy.Maths.UnitTests
             rows[m] = nnz + rows[0];
         }
 
-        private void CPUDense2CSC(float[] buffer, int m, int n, int nnz, out int[] rows, out int[] cols, out float[] vals)
+        private void CPUDense2CSC(double[] buffer, int m, int n, int nnz, out int[] rows, out int[] cols, out double[] vals)
         {
             rows = new int[nnz];
             cols = new int[n + 1];
-            vals = new float[nnz];
+            vals = new double[nnz];
 
             int nnzCount = 0;
 
@@ -232,7 +232,7 @@ namespace Cudafy.Maths.UnitTests
                 bool flagFirst = true;
                 for (int i = 0; i < m; i++)
                 {
-                    float val = buffer[_sparse.GetIndexColumnMajor(i, j, m)];
+                    double val = buffer[_sparse.GetIndexColumnMajor(i, j, m)];
 
                     if (val != 0)
                     {
@@ -287,7 +287,7 @@ namespace Cudafy.Maths.UnitTests
 
             int nnz = _sparse.NNZ(M, N, _diMatrixMN, _diPerVector);
 
-            _hoVals = new float[nnz];
+            _hoVals = new double[nnz];
             _hoCSRRows = new int[M + 1];
             _hoCSRCols = new int[nnz];
             
@@ -327,7 +327,7 @@ namespace Cudafy.Maths.UnitTests
 
             int nnz = _sparse.NNZ(M, N, _diMatrixMN, _diPerVector);
 
-            _hoVals = new float[nnz];
+            _hoVals = new double[nnz];
             _hoCSRRows = new int[M + 1];
             _hoCSRCols = new int[nnz];
 
@@ -370,7 +370,7 @@ namespace Cudafy.Maths.UnitTests
 
             int nnz = _sparse.NNZ(M, N, _diMatrixMN, _diPerVector, cusparseDirection.Column);
 
-            _hoVals = new float[nnz];
+            _hoVals = new double[nnz];
             _hoCSRRows = new int[nnz];
             _hoCSRCols = new int[N + 1];
 
@@ -409,7 +409,7 @@ namespace Cudafy.Maths.UnitTests
 
             int nnz = _sparse.NNZ(M, N, _diMatrixMN, _diPerVector, cusparseDirection.Column);
 
-            _hoVals = new float[nnz];
+            _hoVals = new double[nnz];
             _hoCSRRows = new int[nnz];
             _hoCSRCols = new int[N + 1];
 
@@ -449,7 +449,7 @@ namespace Cudafy.Maths.UnitTests
             int nnz = _sparse.NNZ(M, N, _diMatrixMN, _diPerVector); // For CSR
             int nnz2 = _sparse.NNZ(M, N, _diMatrixMN, _diPerVector2, cusparseDirection.Column); // For CSC
 
-            _hoVals = new float[nnz];
+            _hoVals = new double[nnz];
             _hoCSRRows = new int[M + 1];
             _hoCSRCols = new int[nnz];
 
@@ -457,10 +457,10 @@ namespace Cudafy.Maths.UnitTests
             _diCSRRows = _gpu.Allocate(_hoCSRRows);
             _diCSRCols = _gpu.Allocate(_hoCSRCols);
 
-            _hoVals2 = new float[nnz2];
+            _hoVals2 = new double[nnz2];
             _hoCSCRows = new int[nnz2];
             _hoCSCCols = new int[N + 1];
-            _hoVals2_r = new float[nnz2];
+            _hoVals2_r = new double[nnz2];
             _hoCSCRows_r = new int[nnz2];
             _hoCSCCols_r = new int[N + 1];
 
@@ -514,11 +514,11 @@ namespace Cudafy.Maths.UnitTests
 
             int[] cooRowsCpu;
             int[] cooColsCpu;
-            float[] cooValsCpu;
+            double[] cooValsCpu;
 
             CPUDense2COO(_hiMatrixMN, M, N, nnz, out cooRowsCpu, out cooColsCpu, out cooValsCpu);
 
-            _hoVals = new float[nnz];
+            _hoVals = new double[nnz];
             _hoCSRRows = new int[M + 1];
             _hoCSRRows2 = new int[M + 1];
             _hoCSRCols = new int[nnz];

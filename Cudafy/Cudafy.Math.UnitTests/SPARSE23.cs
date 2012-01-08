@@ -20,61 +20,62 @@ namespace Cudafy.Maths.UnitTests
 
         private GPGPUSPARSE _sparse;
 
-        int M = 512;
-        int N = 128;
-        int K = 256;
+        // Constants
+        const int M = 256;
+        const int K = 128;
+        const int N = 128;
 
-        private float[] _hiMatrixMN;
-        private float[] _hiMatrixMK;
-        private float[] _hiMatrixKN;
-        private float[] _hiVectorN;
-        private float[] _hiVectorM;
+        const int NNZRATIO = 10; // non-zero elements ratio. %
+        const int RandomMax = 255; // all of elements are 1 <= value <= RandomMax + 1
 
-        private float[] _hoVectorM;
-        private float[] _hoMatrixMN;
+        const double Alpha = 3.0;
+        const double Beta = 4.0;
 
-        private float[] _diMatrixMN;
-        private float[] _diVectorN;
-        private float[] _diVectorM;
-        private float[] _diMatrixMK;
-        private float[] _diMatrixKN;
+        // CPU Buffers
+        double[] hiMatrixMN;
+        double[] hiMatrixMK;
+        double[] hiMatrixKN;
+        double[] hiMatrixKM;
+        double[] hiMatrixNN;
+        double[] hiVectorXM;
+        double[] hiVectorXN;
+        double[] hiVectorYM;
+        double[] hiVectorYN;
+        double[] gpuResultM;
+        double[] gpuResultN;
+        double[] gpuResultMN;
 
-        private float[] _hiCSRVals;
-        private int[] _hiCSRRows;
-        private int[] _hiCSRCols;
-        private float[] _diCSRVals;
-        private int[] _diCSRRows;
-        private int[] _diCSRCols;
-        private int[] _hinnzPerRow;
-        private int[] _dinnzPerRow;
-
-        float alpha = 3.0f;
-        float beta = 4.0f;
+        double[] diMatrixA;
+        double[] diMatrixB;
+        double[] diMatrixC;
+        int[] diNNZRows;
+        double[] diVals;
+        int[] diRows;
+        int[] diCols;
+        double[] diVectorXM;
+        double[] diVectorXN;
+        double[] diVectorYM;
+        double[] diVectorYN;
 
         [TestFixtureSetUp]
         public void SetUp()
         {
-            _gpu = CudafyHost.CreateDevice(CudafyModes.Target);
+            _gpu = CudafyHost.GetDevice();
+
             _sparse = GPGPUSPARSE.Create(_gpu);
 
-            _hiMatrixMN = new float[M * N];
-            _hiVectorM = new float[M];
-            _hiVectorN = new float[N];
-            _hiMatrixMK = new float[M * K];
-            _hiMatrixKN = new float[K * N];
-
-            _hoMatrixMN = new float[M * N];
-            _hoVectorM = new float[M];
-
-            _diMatrixMN = _gpu.Allocate(_hiMatrixMN);
-            _diVectorN = _gpu.Allocate(_hiVectorN);
-            _diVectorM = _gpu.Allocate(_hiVectorM);
-            _diMatrixMK = _gpu.Allocate(_hiMatrixMK);
-            _diMatrixKN = _gpu.Allocate(_hiMatrixKN);
-
-            _hinnzPerRow = new int[M + 1];
-
-            _dinnzPerRow = _gpu.Allocate(_hinnzPerRow);
+            hiMatrixMN = new double[M * N];
+            hiMatrixMK = new double[M * K];
+            hiMatrixKM = new double[K * M];
+            hiMatrixKN = new double[K * N];
+            hiMatrixNN = new double[N * N];
+            hiVectorXM = new double[M];
+            hiVectorXN = new double[N];
+            hiVectorYM = new double[M];
+            hiVectorYN = new double[N];
+            gpuResultM = new double[M];
+            gpuResultN = new double[N];
+            gpuResultMN = new double[M * N];
         }
 
         [TestFixtureTearDown]
@@ -82,137 +83,8 @@ namespace Cudafy.Maths.UnitTests
         {
             _sparse.Dispose();
 
-            _gpu.Free(_diMatrixMN);
-            _gpu.Free(_diMatrixMK);
-            _gpu.Free(_diMatrixKN);
-            _gpu.Free(_diVectorN);
-            _gpu.Free(_diVectorM);
-
-            _gpu.Free(_dinnzPerRow);
+            _gpu.FreeAll();
         }
-
-        private void FillBuffer(float[] buffer)
-        {
-            Random rand = new Random(Environment.TickCount);
-            for (int i = 0; i < buffer.Length; i++)
-            {
-                buffer[i] = (float)rand.Next(32);
-            }
-
-            System.Threading.Thread.Sleep(rand.Next(50));
-        }
-
-        private void FillBufferSparse(float[] buffer)
-        {
-            Random rand = new Random(Environment.TickCount);
-            for (int i = 0; i < buffer.Length; i++)
-            {
-                if (rand.Next(5) < 2)
-                {
-                    buffer[i] = (float)rand.Next(32);
-                }
-                else
-                {
-                    buffer[i] = 0.0f;
-                }
-            }
-
-            System.Threading.Thread.Sleep(rand.Next(50));
-        }
-
-        [Test]
-        public void TestCSRMV()
-        {
-            FillBufferSparse(_hiMatrixMN);
-            FillBuffer(_hiVectorM);
-            FillBuffer(_hiVectorN);
-
-            _gpu.CopyToDevice(_hiMatrixMN, _diMatrixMN);
-            _gpu.CopyToDevice(_hiVectorM, _diVectorM);
-            _gpu.CopyToDevice(_hiVectorN, _diVectorN);
-
-            int nnz = _sparse.NNZ(M, N, _diMatrixMN, _dinnzPerRow);
-
-            _hiCSRVals = new float[nnz];
-            _hiCSRCols = new int[nnz];
-            _hiCSRRows = new int[M + 1];
-            _diCSRVals = _gpu.Allocate(_hiCSRVals);
-            _diCSRCols = _gpu.Allocate(_hiCSRCols);
-            _diCSRRows = _gpu.Allocate(_hiCSRRows);
-            
-            _sparse.Dense2CSR(M, N, _diMatrixMN, _dinnzPerRow, _diCSRVals, _diCSRRows, _diCSRCols);
-
-            _sparse.CSRMV(M, N, alpha, _diCSRVals, _diCSRRows, _diCSRCols, _diVectorN, beta, _diVectorM);
-
-            _gpu.CopyFromDevice(_diVectorM, _hoVectorM);
-
-            _gpu.Free(_diCSRVals);
-            _gpu.Free(_diCSRCols);
-            _gpu.Free(_diCSRRows);
-
-            for (int i = 0; i < M; i++)
-            {
-                float cpuResult = 0.0f;
-
-                for (int j = 0; j < N; j++)
-                {
-                    cpuResult += alpha * _hiMatrixMN[_sparse.GetIndexColumnMajor(i, j, M)] * _hiVectorN[j];
-                }
-
-                cpuResult += beta * _hiVectorM[i];
-
-                Assert.AreEqual(cpuResult, _hoVectorM[i]);
-            }
-        }
-
-        [Test]
-        public void TestCSRMM()
-        {
-            FillBufferSparse(_hiMatrixMK);
-            FillBuffer(_hiMatrixKN);
-            FillBuffer(_hiMatrixMN);
-
-            _gpu.CopyToDevice(_hiMatrixMK, _diMatrixMK);
-            _gpu.CopyToDevice(_hiMatrixKN, _diMatrixKN);
-            _gpu.CopyToDevice(_hiMatrixMN, _diMatrixMN);
-
-            int nnz = _sparse.NNZ(M, K, _diMatrixMK, _dinnzPerRow);
-
-            _hiCSRVals = new float[nnz];
-            _hiCSRCols = new int[nnz];
-            _hiCSRRows = new int[M + 1];
-            _diCSRVals = _gpu.Allocate(_hiCSRVals);
-            _diCSRCols = _gpu.Allocate(_hiCSRCols);
-            _diCSRRows = _gpu.Allocate(_hiCSRRows);
-
-            _sparse.Dense2CSR(M, K, _diMatrixMK, _dinnzPerRow, _diCSRVals, _diCSRRows, _diCSRCols);
-
-            _sparse.CSRMM(M, K, N, alpha, _diCSRVals, _diCSRRows, _diCSRCols, _diMatrixKN, beta, _diMatrixMN);
-
-            _gpu.Free(_diCSRVals);
-            _gpu.Free(_diCSRCols);
-            _gpu.Free(_diCSRRows);
-
-            _gpu.CopyFromDevice(_diMatrixMN, _hoMatrixMN);
-
-            for (int i = 0; i < M; i++)
-            {
-                for (int j = 0; j < N; j++)
-                {
-                    float cpuResult = 0.0f;
-
-                    for (int k = 0; k < K; k++)
-                    {
-                        cpuResult += alpha * _hiMatrixMK[_sparse.GetIndexColumnMajor(i, k, M)] * _hiMatrixKN[_sparse.GetIndexColumnMajor(k, j, K)];
-                    }
-
-                    cpuResult += beta * _hiMatrixMN[_sparse.GetIndexColumnMajor(i, j, M)];
-
-                    Assert.AreEqual(cpuResult, _hoMatrixMN[_sparse.GetIndexColumnMajor(i, j, M)]);
-                }
-            }
-        }
-
 
         public void TestSetUp()
         {
@@ -222,6 +94,359 @@ namespace Cudafy.Maths.UnitTests
         public void TestTearDown()
         {
 
+        }
+
+        private int GetIndexColumnMajor(int i, int j, int m)
+        {
+            return i + j * m;
+        }
+
+        private void FillBuffer(double[] buffer)
+        {
+            Random rand = new Random(Environment.TickCount);
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                buffer[i] = rand.Next(RandomMax) + 1;
+            }
+
+            System.Threading.Thread.Sleep(rand.Next(50));
+        }
+
+        private void FillBufferSparse(double[] buffer)
+        {
+            Random rand = new Random(Environment.TickCount);
+
+            bool allZero = true;
+
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                if (rand.Next(99) + 1 < NNZRATIO)
+                {
+                    buffer[i] = rand.Next(RandomMax) + 1;
+                    allZero = false;
+                }
+                else
+                {
+                    buffer[i] = 0.0f;
+                }
+            }
+
+            if (allZero == true)
+            {
+                buffer[0] = 1.0;
+            }
+
+            System.Threading.Thread.Sleep(rand.Next(50));
+        }
+
+        private void CreateMainDiagonalOnlyMatrix(double[] buffer, int n)
+        {
+            Random rand = new Random(Environment.TickCount);
+            for (int i = 0; i < n; i++)
+            {
+                buffer[GetIndexColumnMajor(i, i, n)] = rand.Next(RandomMax) + 1;
+            }
+            System.Threading.Thread.Sleep(rand.Next(RandomMax));
+        }
+
+        private void ClearBuffer(double[] buffer)
+        {
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                buffer[i] = 0.0;
+            }
+        }
+
+        [Test]
+        public void Test_SPARSE2_CSRMV()
+        {
+            int nnz;
+
+            // No transpose
+            ClearBuffer(hiMatrixMN);
+            ClearBuffer(hiVectorXN);
+            ClearBuffer(hiVectorYM);
+
+            FillBufferSparse(hiMatrixMN);
+            FillBuffer(hiVectorXN);
+            FillBuffer(hiVectorYM);
+
+            diMatrixA = _gpu.CopyToDevice(hiMatrixMN);
+            diVectorXN = _gpu.CopyToDevice(hiVectorXN);
+            diVectorYM = _gpu.CopyToDevice(hiVectorYM);
+
+            diNNZRows = _gpu.Allocate<int>(M);
+            nnz = _sparse.NNZ(M, N, diMatrixA, diNNZRows);
+            diVals = _gpu.Allocate<double>(nnz);
+            diRows = _gpu.Allocate<int>(M + 1);
+            diCols = _gpu.Allocate<int>(nnz);
+
+            _sparse.Dense2CSR(M, N, diMatrixA, diNNZRows, diVals, diRows, diCols);
+
+            _sparse.CSRMV(M, N, Alpha, diVals, diRows, diCols, diVectorXN, Beta, diVectorYM);
+
+            _gpu.CopyFromDevice(diVectorYM, gpuResultM);
+
+            for (int i = 0; i < M; i++)
+            {
+                double cpuResult = 0.0;
+                for (int j = 0; j < N; j++)
+                {
+                    cpuResult += Alpha * hiMatrixMN[GetIndexColumnMajor(i, j, M)] * hiVectorXN[j];
+                }
+
+                cpuResult += Beta * hiVectorYM[i];
+
+                Assert.AreEqual(cpuResult, gpuResultM[i]);
+            }
+
+            _gpu.FreeAll();
+
+            // Transpose
+            ClearBuffer(hiMatrixMN);
+            ClearBuffer(hiVectorXM);
+            ClearBuffer(hiVectorYN);
+
+            FillBufferSparse(hiMatrixMN);
+            FillBuffer(hiVectorXM);
+            FillBuffer(hiVectorYN);
+
+            diMatrixA = _gpu.CopyToDevice(hiMatrixMN);
+            diVectorXM = _gpu.CopyToDevice(hiVectorXM);
+            diVectorYN = _gpu.CopyToDevice(hiVectorYN);
+
+            diNNZRows = _gpu.Allocate<int>(M);
+            nnz = _sparse.NNZ(M, N, diMatrixA, diNNZRows);
+            diVals = _gpu.Allocate<double>(nnz);
+            diRows = _gpu.Allocate<int>(M + 1);
+            diCols = _gpu.Allocate<int>(nnz);
+
+            _sparse.Dense2CSR(M, N, diMatrixA, diNNZRows, diVals, diRows, diCols);
+
+            _sparse.CSRMV(M, N, Alpha, diVals, diRows, diCols, diVectorXM, Beta, diVectorYN, SPARSE.Types.cusparseOperation.Transpose);
+
+            _gpu.CopyFromDevice(diVectorYN, gpuResultN);
+
+            for (int j = 0; j < N; j++)
+            {
+                double cpuResult = 0.0;
+                for (int i = 0; i < M; i++)
+                {
+                    cpuResult += Alpha * hiMatrixMN[GetIndexColumnMajor(i, j, M)] * hiVectorXM[i];
+                }
+
+                cpuResult += Beta * hiVectorYN[j];
+
+                Assert.AreEqual(cpuResult, gpuResultN[j]);
+            }
+
+            _gpu.FreeAll();
+        }
+
+        [Test]
+        public void Test_SPARSE2_CSRSV()
+        {
+            int nnz;
+            double maxError;
+
+            SPARSE.Types.cusparseSolveAnalysisInfo info = new SPARSE.Types.cusparseSolveAnalysisInfo();
+            _sparse.CreateSolveAnalysisInfo(ref info);
+            SPARSE.Types.cusparseMatDescr desc = new SPARSE.Types.cusparseMatDescr();
+            desc.MatrixType = SPARSE.Types.cusparseMatrixType.Triangular;
+
+            // No transpose
+            ClearBuffer(hiMatrixNN);
+            ClearBuffer(hiVectorXN);
+            ClearBuffer(hiVectorYN);
+
+            CreateMainDiagonalOnlyMatrix(hiMatrixNN, N);
+            FillBuffer(hiVectorXN);
+            FillBuffer(hiVectorYN);
+
+            diMatrixA = _gpu.CopyToDevice(hiMatrixNN);
+            diVectorXN = _gpu.CopyToDevice(hiVectorXN);
+            diVectorYN = _gpu.CopyToDevice(hiVectorYN);
+
+            diNNZRows = _gpu.Allocate<int>(N);
+            nnz = _sparse.NNZ(N, N, diMatrixA, diNNZRows);
+            diVals = _gpu.Allocate<double>(nnz);
+            diRows = _gpu.Allocate<int>(N + 1);
+            diCols = _gpu.Allocate<int>(nnz);
+
+            _sparse.Dense2CSR(N, N, diMatrixA, diNNZRows, diVals, diRows, diCols);
+
+            _sparse.CSRSV_ANALYSIS(N, diVals, diRows, diCols, SPARSE.Types.cusparseOperation.NonTranspose, info, desc);
+
+            _sparse.CSRSV_SOLVE(N, Alpha, diVals, diRows, diCols, diVectorXN, diVectorYN, SPARSE.Types.cusparseOperation.NonTranspose, info, desc);
+
+            _gpu.CopyFromDevice(diVectorYN, gpuResultN);
+
+            maxError = 0.0;
+
+            for (int i = 0; i < N; i++)
+            {
+                double cpuResult = 0.0;
+
+                for (int j = 0; j < N; j++)
+                {
+                    cpuResult += hiMatrixNN[GetIndexColumnMajor(i, j, N)] * gpuResultN[j];
+                }
+
+                double error = Math.Abs(cpuResult - Alpha * hiVectorXN[i]);
+
+                if (maxError < error)
+                {
+                    maxError = error;
+                }
+            }
+
+            Console.WriteLine("max error : {0} (No transpose)", maxError);
+
+            _gpu.FreeAll();
+
+            // Transpose
+            ClearBuffer(hiMatrixNN);
+            ClearBuffer(hiVectorXN);
+            ClearBuffer(hiVectorYN);
+
+            CreateMainDiagonalOnlyMatrix(hiMatrixNN, N);
+            FillBuffer(hiVectorXN);
+            FillBuffer(hiVectorYN);
+
+            diMatrixA = _gpu.CopyToDevice(hiMatrixNN);
+            diVectorXN = _gpu.CopyToDevice(hiVectorXN);
+            diVectorYN = _gpu.CopyToDevice(hiVectorYN);
+
+            diNNZRows = _gpu.Allocate<int>(N);
+            nnz = _sparse.NNZ(N, N, diMatrixA, diNNZRows);
+            diVals = _gpu.Allocate<double>(nnz);
+            diRows = _gpu.Allocate<int>(N + 1);
+            diCols = _gpu.Allocate<int>(nnz);
+
+            _sparse.Dense2CSR(N, N, diMatrixA, diNNZRows, diVals, diRows, diCols);
+
+            _sparse.CSRSV_ANALYSIS(N, diVals, diRows, diCols, SPARSE.Types.cusparseOperation.Transpose, info, desc);
+
+            _sparse.CSRSV_SOLVE(N, Alpha, diVals, diRows, diCols, diVectorXN, diVectorYN, SPARSE.Types.cusparseOperation.Transpose, info, desc);
+
+            _gpu.CopyFromDevice(diVectorYN, gpuResultN);
+
+            maxError = 0.0;
+
+            for (int i = 0; i < N; i++)
+            {
+                double cpuResult = 0.0;
+
+                for (int j = 0; j < N; j++)
+                {
+                    cpuResult += hiMatrixNN[GetIndexColumnMajor(j, i, N)] * gpuResultN[j];
+                }
+
+                double error = Math.Abs(cpuResult - Alpha * hiVectorXN[i]);
+
+                if (maxError < error)
+                {
+                    maxError = error;
+                }
+            }
+
+            Console.WriteLine("max error : {0} (Transpose)", maxError);
+
+            _gpu.FreeAll();
+        }
+
+        [Test]
+        public void Test_SPARSE3_CSRMM()
+        {
+            int nnz;
+
+            // No transpose
+            ClearBuffer(hiMatrixMK);
+            ClearBuffer(hiMatrixKN);
+            ClearBuffer(hiMatrixMN);
+
+            FillBufferSparse(hiMatrixMK);
+            FillBuffer(hiMatrixKN);
+            FillBuffer(hiMatrixMN);
+
+            diMatrixA = _gpu.CopyToDevice(hiMatrixMK);
+            diMatrixB = _gpu.CopyToDevice(hiMatrixKN);
+            diMatrixC = _gpu.CopyToDevice(hiMatrixMN);
+
+            diNNZRows = _gpu.Allocate<int>(M);
+            nnz = _sparse.NNZ(M, K, diMatrixA, diNNZRows);
+            diVals = _gpu.Allocate<double>(nnz);
+            diRows = _gpu.Allocate<int>(M + 1);
+            diCols = _gpu.Allocate<int>(nnz);
+
+            _sparse.Dense2CSR(M, K, diMatrixA, diNNZRows, diVals, diRows, diCols);
+
+            _sparse.CSRMM(M, K, N, Alpha, diVals, diRows, diCols, diMatrixB, Beta, diMatrixC);
+
+            _gpu.CopyFromDevice(diMatrixC, gpuResultMN);
+
+            for (int i = 0; i < M; i++)
+            {
+                for (int j = 0; j < N; j++)
+                {
+                    double cpuResult = 0.0;
+
+                    for (int k = 0; k < K; k++)
+                    {
+                        cpuResult += Alpha * hiMatrixMK[GetIndexColumnMajor(i, k, M)] * hiMatrixKN[GetIndexColumnMajor(k, j, K)];
+                    }
+
+                    cpuResult += Beta * hiMatrixMN[GetIndexColumnMajor(i, j, M)];
+
+                    Assert.AreEqual(cpuResult, gpuResultMN[GetIndexColumnMajor(i, j, M)]);
+                }
+            }
+
+            _gpu.FreeAll();
+
+            // Transpose
+            ClearBuffer(hiMatrixKM);
+            ClearBuffer(hiMatrixKN);
+            ClearBuffer(hiMatrixMN);
+
+            FillBufferSparse(hiMatrixKM);
+            FillBuffer(hiMatrixKN);
+            FillBuffer(hiMatrixMN);
+
+            diMatrixA = _gpu.CopyToDevice(hiMatrixKM);
+            diMatrixB = _gpu.CopyToDevice(hiMatrixKN);
+            diMatrixC = _gpu.CopyToDevice(hiMatrixMN);
+
+            diNNZRows = _gpu.Allocate<int>(K);
+            nnz = _sparse.NNZ(K, M, diMatrixA, diNNZRows);
+            diVals = _gpu.Allocate<double>(nnz);
+            diRows = _gpu.Allocate<int>(K + 1);
+            diCols = _gpu.Allocate<int>(nnz);
+
+            _sparse.Dense2CSR(K, M, diMatrixA, diNNZRows, diVals, diRows, diCols);
+
+            _sparse.CSRMM(K, M, N, Alpha, diVals, diRows, diCols, diMatrixB, Beta, diMatrixC, SPARSE.Types.cusparseOperation.Transpose);
+
+            _gpu.CopyFromDevice(diMatrixC, gpuResultMN);
+
+            for (int i = 0; i < M; i++)
+            {
+                for (int j = 0; j < N; j++)
+                {
+                    double cpuResult = 0.0;
+
+                    for (int k = 0; k < K; k++)
+                    {
+                        cpuResult += Alpha * hiMatrixKM[GetIndexColumnMajor(k, i, K)] * hiMatrixKN[GetIndexColumnMajor(k, j, K)];
+                    }
+
+                    cpuResult += Beta * hiMatrixMN[GetIndexColumnMajor(i, j, M)];
+
+                    Assert.AreEqual(cpuResult, gpuResultMN[GetIndexColumnMajor(i, j, M)]);
+                }
+            }
+
+            _gpu.FreeAll();
         }
     }
 }

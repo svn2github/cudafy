@@ -64,7 +64,7 @@ namespace Cudafy.Maths.SPARSE
         {
             int version = 0;
             _driver.CusparseGetVersion(_sparse, ref version);
-            return string.Format("CUDA Version : {0}", version);
+            return string.Format("CUSPARSE Version : {0}", version);
         }
 
         private static eDataType GetDataType<T>()
@@ -191,7 +191,7 @@ namespace Cudafy.Maths.SPARSE
             CUdeviceptr ptrrow = GetDeviceMemory(csrRowA);
             CUdeviceptr ptrcol = GetDeviceMemory(csrColA);
 
-            LastStatus = _driver.CusparseScsr2dense(_sparse, m, n, descrA, ptrval.Pointer, ptrrow.Pointer, ptrcol.Pointer, ptra.Pointer, lda);
+            LastStatus = _driver.CusparseDcsr2dense(_sparse, m, n, descrA, ptrval.Pointer, ptrrow.Pointer, ptrcol.Pointer, ptra.Pointer, lda);
         }
         #endregion
 
@@ -495,8 +495,16 @@ namespace Cudafy.Maths.SPARSE
         #region CSRMM
         public override void CSRMM(int m, int k, int n, float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] B, float beta, float[] C, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0)
         {
-            ldb = (ldb == 0 ? k : ldb);
-            ldc = (ldc == 0 ? m : ldc);
+            if (op == cusparseOperation.NonTranspose)
+            {
+                ldb = (ldb == 0 ? k : ldb);
+                ldc = (ldc == 0 ? m : ldc);
+            }
+            else
+            {
+                ldb = (ldb == 0 ? m : ldb);
+                ldc = (ldc == 0 ? k : ldc);
+            }
 
             CUdeviceptr ptrcsrv = GetDeviceMemory(csrValA);
             CUdeviceptr ptrcsrr = GetDeviceMemory(csrRowA);
@@ -510,8 +518,16 @@ namespace Cudafy.Maths.SPARSE
 
         public override void CSRMM(int m, int k, int n, double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] B, double beta, double[] C, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0)
         {
-            ldb = (ldb == 0 ? k : ldb);
-            ldc = (ldc == 0 ? m : ldc);
+            if (op == cusparseOperation.NonTranspose)
+            {
+                ldb = (ldb == 0 ? k : ldb);
+                ldc = (ldc == 0 ? m : ldc);
+            }
+            else
+            {
+                ldb = (ldb == 0 ? m : ldb);
+                ldc = (ldc == 0 ? k : ldc);
+            }
 
             CUdeviceptr ptrcsrv = GetDeviceMemory(csrValA);
             CUdeviceptr ptrcsrr = GetDeviceMemory(csrRowA);
