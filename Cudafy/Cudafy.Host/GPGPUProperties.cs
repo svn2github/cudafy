@@ -211,6 +211,6 @@ namespace Cudafy.Host
         /// Gets the total global memory.
         /// </summary>
         /// <value>The total global memory.</value>
-        public int TotalGlobalMem { get; internal set; }
+        public long TotalGlobalMem { get; internal set; }
     }
 }
