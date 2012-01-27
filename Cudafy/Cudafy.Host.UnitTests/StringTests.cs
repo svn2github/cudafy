@@ -51,7 +51,7 @@ namespace Cudafy.Host.UnitTests
             _gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
             if (_cm == null || !_cm.TryVerifyChecksums())
             {
-                _cm = CudafyTranslator.Cudafy();               
+                _cm = CudafyTranslator.Cudafy(eArchitecture.sm_13);               
                 _cm.TrySerialize();
             }
             _gpu.LoadModule(_cm);
@@ -81,7 +81,8 @@ namespace Cudafy.Host.UnitTests
         [Cudafy]
         public static void TransferUnicodeChar(char a, char[] c)
         {
-            c[0] = a;            
+            c[0] = a;
+            Console.WriteLine("hello from your gpu!");
         }
 
         [Test]

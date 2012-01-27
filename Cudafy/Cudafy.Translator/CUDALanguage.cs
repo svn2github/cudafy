@@ -228,8 +228,18 @@ namespace Cudafy.Translator
             SpecialMethods.Add(new SpecialMember("ComplexD", "ctor", new Func<MemberReferenceExpression, object, string>(TranslateComplexDCtor)));
             SpecialMethods.Add(new SpecialMember("ComplexF", "ctor", new Func<MemberReferenceExpression, object, string>(TranslateComplexFCtor)));
             
+            //SpecialMethods.Add(new SpecialMember("Debug", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
+            //SpecialMethods.Add(new SpecialMember("Console", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
+
+            SpecialMethods.Add(new SpecialMember("Debug", "Write", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
+            SpecialMethods.Add(new SpecialMember("Debug", "WriteIf", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
+            SpecialMethods.Add(new SpecialMember("Debug", "WriteLine", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
+            SpecialMethods.Add(new SpecialMember("Debug", "WriteLineIf", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
             SpecialMethods.Add(new SpecialMember("Debug", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
+            SpecialMethods.Add(new SpecialMember("Console", "Write", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
+            SpecialMethods.Add(new SpecialMember("Console", "WriteLine", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
             SpecialMethods.Add(new SpecialMember("Console", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
+
             SpecialMethods.Add(new SpecialMember("Trace", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
 
             SpecialProperties.Add(new SpecialMember("ArrayType", "Length", new Func<MemberReferenceExpression, object, string>(TranslateArrayLength)));
@@ -259,11 +269,13 @@ namespace Cudafy.Translator
             OptionalHeaders = new List<OptionalHeader>();
             OptionalHeaders.Add(new OptionalHeader("cuComplex", @"#include <cuComplex.h>"));
             OptionalHeaders.Add(new OptionalHeader(csCURAND_KERNEL, @"#include <curand_kernel.h>"));
-
+            OptionalHeaders.Add(new OptionalHeader(csSTDIO, @"#include <stdio.h>"));
             DisableSmartArray = false;
         }
 
         private const string csCURAND_KERNEL = "curand_kernel";
+
+        private const string csSTDIO = "stdio";
 
         public struct SpecialTypeProps
         {
@@ -422,6 +434,17 @@ namespace Cudafy.Translator
             if (ComputeCapability < new Version(2, 0))
                 throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED_FOR_COMPUTE_X, mre.MemberName, ComputeCapability);
             return "atomicAdd";
+        }
+
+        static string TranslateToPrintF(MemberReferenceExpression mre, object data)
+        {
+            // TODO: detect architecture
+            if (ComputeCapability < new Version(2, 0))
+                return CommentMeOut(mre, data);
+            UseOptionalHeader(csSTDIO);
+            string dbugwrite = string.Empty;
+            dbugwrite = mre.TranslateToPrintF(data);
+            return dbugwrite;
         }
 
         static string GetMemberName(MemberReferenceExpression mre, object data)

@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using Mono.Cecil;
 using ICSharpCode.NRefactory.CSharp;
 
@@ -336,6 +337,79 @@ namespace Cudafy.Translator
                 }
             }
             return string.Empty;
+        }
+
+        public static string TranslateToPrintF(this MemberReferenceExpression mre, object data)
+        {
+            TextWriter output = new StringWriter();
+            CUDAOutputVisitor visitor = new CUDAOutputVisitor(new TextWriterOutputFormatter(output), new CSharpFormattingOptions());
+            var ex = data as InvocationExpression;
+            if (ex == null)
+                throw new ArgumentNullException("data as InvocationExpression");
+
+            bool isWriteLine = ((MemberReferenceExpression)ex.Target).MemberName.StartsWith("WriteLine");
+            bool hasIfCondition = ((MemberReferenceExpression)ex.Target).MemberName.EndsWith("If");
+            List<Expression> arguments = ex.Arguments.ToList();
+            int i = 0;
+
+            if (hasIfCondition)
+            {
+                i = -1;
+                output.Write("if(");
+                arguments[0].AcceptVisitor(visitor, data);
+                output.Write(") ");
+            }
+
+            output.Write("printf(");
+            foreach (var arg in arguments)
+            {
+                if (i == -1) { /* skip it, it was an if condition */ }
+                else if (i == 0)
+                {
+                    if (!(arg is PrimitiveExpression))
+                        throw new CudafyLanguageException("When using Debug.Write" + (isWriteLine ? "Line" : "") + (hasIfCondition ? "If" : "") + "() the first parameter must be a string literal");
+
+                    string strFormat = arg.ToString();
+                    if (!strFormat.StartsWith("\""))
+                        throw new CudafyLanguageException("When using Debug.Write" + (isWriteLine ? "Line" : "") + "() the first parameter must be a string literal");
+
+                    if (hasIfCondition)
+                    {
+                        // Since debug if condition messages don't support parameters, escape any % to avoid ErrorUnknown
+                        strFormat = strFormat.Replace("%", "%%");
+                    }
+
+                    // NOTE: unless you know the type of each parameter passed to printf, 
+                    // then I don't see a good way to convert String.Format() rules to printf() rules
+                    //strFormat = CUDALanguage.TranslateStringFormat(strFormat);
+
+                    if (isWriteLine)
+                        strFormat = strFormat.Insert(strFormat.Length - 1, "\\n");
+
+                    output.Write(strFormat);
+                }
+                else if (hasIfCondition)
+                {
+                    // Skip any other parameters if they are there, debug if conditions don't support formatting
+                }
+                else if (arg is ArrayCreateExpression)
+                {
+                    var arrayCreateExpression = arg as ArrayCreateExpression;
+                    foreach (var arrayArg in arrayCreateExpression.Initializer.Elements)
+                    {
+                        output.Write(',');
+                        arrayArg.AcceptVisitor(visitor, data);
+                    }
+                }
+                else
+                {
+                    output.Write(',');
+                    arg.AcceptVisitor(visitor, data);
+                }
+                i++;
+            }
+            output.Write(")");
+            return output.ToString();
         }
 
         public static bool IsSyncThreads(this MemberReferenceExpression mre)

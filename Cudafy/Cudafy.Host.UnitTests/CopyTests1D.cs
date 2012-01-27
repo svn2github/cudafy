@@ -581,16 +581,16 @@ namespace Cudafy.Host.UnitTests
             }
         }
 
-        [Test]
-        [ExpectedException(typeof(ArgumentException))]
-        public void Test_structWithBoolean()
-        {
-            var swbArray = new StructWithBool[1024];
+        //[Test]
+        //[ExpectedException(typeof(ArgumentException))]
+        //public void Test_structWithBoolean()
+        //{
+        //    var swbArray = new StructWithBool[1024];
 
-            StructWithBool[] swbArray_dev = _gpu.CopyToDevice(swbArray);
+        //    StructWithBool[] swbArray_dev = _gpu.CopyToDevice(swbArray);
 
-            ClearOutputsAndGPU();
-        }
+        //    ClearOutputsAndGPU();
+        //}
 
         unsafe private IntPtr MarshalArray(ref MyStruct[] items)
         {
