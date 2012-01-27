@@ -211,6 +211,7 @@ namespace Cudafy.Translator
         public static CudafyModule Cudafy(ePlatform platform, eArchitecture arch, Version cudaVersion, bool compile, params Type[] types)
         {
             CudafyModule km = null;
+            CUDALanguage.ComputeCapability = GetComputeCapability(arch);
             km = Cudafy(eGPUCodeGenerator.CudaC, types);
             if (km == null)
                 throw new CudafyFatalException(CudafyFatalException.csUNEXPECTED_STATE_X, "CudafyModule km = null");
@@ -228,6 +229,19 @@ namespace Cudafy.Translator
             if (types.Length > 0)
                 km.Name = types[types.Length - 1].Name;
             return km;
+        }
+
+        private static Version GetComputeCapability(eArchitecture arch)
+        {
+            if (arch == eArchitecture.sm_11)
+                return new Version(1, 1);
+            else if (arch == eArchitecture.sm_12)
+                return new Version(1, 2);
+            else if (arch == eArchitecture.sm_13)
+                return new Version(1, 3);
+            else if (arch == eArchitecture.sm_20)
+                return new Version(2, 0);
+            throw new ArgumentException("Unknown architecture.");
         }
         
         private static CudafyModule Cudafy(eGPUCodeGenerator mode, params Type[] types)

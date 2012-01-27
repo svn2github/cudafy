@@ -280,6 +280,8 @@ namespace Cudafy
 
         public const string csX_IS_NOT_SUPPORTED_IN_X = "{0} is not supported in {1}.";
 
+        public const string csX_IS_NOT_SUPPORTED_FOR_COMPUTE_X = "{0} is not supported for compute capability {1}.";
+
         public const string csX_ARE_NOT_SUPPORTED = "{0} are not supported.";
 
         public const string csCONSTANTS_MUST_BE_INITIALIZED = "Constant memory variables must be initialized in-line.";

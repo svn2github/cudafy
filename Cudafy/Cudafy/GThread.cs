@@ -43,6 +43,17 @@ namespace Cudafy
             block = parent;
         }
 
+         /// <summary>
+        /// Gets the warp id this thread belongs too
+        /// </summary>
+        /// <value>
+        /// The warp id
+        /// </value>
+        internal int WarpId()
+        {
+            return threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
+        }
+
         /// <summary>
         /// Gets the size of the warp.
         /// </summary>
@@ -84,6 +95,38 @@ namespace Cudafy
         public void SyncThreads()
         {
             block.SyncThreads();
+        }
+
+         /// <summary>
+        /// NOTE Compute Capability 2.x only. Syncs the threads in the block.
+        /// </summary>
+        public int SyncThreadsCount(bool condition)
+        {
+            return block.SyncThreadsCount(condition);
+        }
+
+        /// <summary>
+        /// Syncs threads in warp, returns true if any had true predicate 
+        /// </summary>
+        public bool Any(bool predicate)
+        {
+            return block.Any(predicate, WarpId());
+        }
+
+        /// <summary>
+        /// Syncs threads in warp, returns true if any had true predicate 
+        /// </summary>
+        public bool All(bool predicate)
+        {
+            return block.All(predicate, WarpId());
+        }
+
+        /// <summary>
+        /// NOTE Compute Capability 2.x only. Syncs threads in warp, returns true if any had true predicate. 
+        /// </summary>
+        public int Ballot(bool predicate)
+        {
+            return block.Ballot(predicate, WarpId());
         }
 
         /// <summary>

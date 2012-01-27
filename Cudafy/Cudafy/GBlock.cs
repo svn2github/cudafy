@@ -25,6 +25,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using info.jhpc.thread;
+using info.jhpc.warp;
 namespace Cudafy
 {
     /// <summary>
@@ -44,6 +45,7 @@ namespace Cudafy
             Idx = new dim3(x, y);
             Dim = size;
             Barrier = new SimpleBarrier(size.x * size.y * size.z);
+            WarpBarrier = new SimpleWarpBarrier((int)Math.Ceiling((size.x * size.y * size.z) / 32.0f), 32); 
             Grid = grid;
             _shared = new Dictionary<string, object>();
             _lock = new object();
@@ -70,6 +72,7 @@ namespace Cudafy
         /// The barrier.
         /// </value>
         private SimpleBarrier Barrier { get; set; }
+        private SimpleWarpBarrier WarpBarrier { get; set; }
         private Dictionary<string, object> _shared;
 
         private object _lock;
@@ -143,6 +146,38 @@ namespace Cudafy
         internal void SyncThreads()
         {
             Barrier.SignalAndWait();
+        }
+
+        /// <summary>
+        /// Syncs the threads in this block, returns number of threads that have true predicate in block
+        /// </summary>
+        internal int SyncThreadsCount(bool predicate)
+        {
+            return Barrier.SignalAndWaitAndCountPredicate(predicate);
+        }
+
+        /// <summary>
+        /// Syncs the threads in the warp, returns true is any have true prediate
+        /// </summary>
+        internal bool Any(bool predicate, int warpId)
+        {
+            return WarpBarrier.SignalAnyPredicateAndWait(predicate, warpId);
+        }
+
+        /// <summary>
+        /// Syncs the threads in the warp, returns true iff all threads in warp are have true predicate;
+        /// </summary>
+        internal bool All(bool predicate, int warpId)
+        {
+            return WarpBarrier.SignalAllPredicateAndWait(predicate, warpId);
+        }
+
+        /// <summary>
+        /// Syncs the threads in the warp, returns number of threads with true predicate, in warp
+        /// </summary>
+        internal int Ballot(bool predicate, int warpId)
+        {
+            return WarpBarrier.SignalBallotPredicateAndWait(predicate, warpId);
         }
     }
 }

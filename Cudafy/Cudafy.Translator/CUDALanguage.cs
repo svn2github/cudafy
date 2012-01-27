@@ -77,6 +77,11 @@ namespace Cudafy.Translator
     //[Export(typeof(Language))]
     public class CUDALanguage : Language
     {
+        public CUDALanguage()
+        {
+            
+        }
+        
         private Predicate<IAstTransform> transformAbortCondition = null;
 
         public static bool DisableSmartArray { get; set; }
@@ -90,6 +95,8 @@ namespace Cudafy.Translator
         {
             get { return "CUDA"; }
         }
+
+        public static Version ComputeCapability { get; set; }
 
         public int[] GetFieldInfoDimensions(System.Reflection.FieldInfo fieldInfo)
         {            
@@ -179,7 +186,13 @@ namespace Cudafy.Translator
         /// </summary>
         static CUDALanguage()
         {
+            ComputeCapability = new Version(1, 2);
+            
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "SyncThreads", new Func<MemberReferenceExpression, object, string>(TranslateSyncThreads)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "SyncThreadsCount", new Func<MemberReferenceExpression, object, string>(TranslateSyncThreadsCount)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "All", new Func<MemberReferenceExpression, object, string>(TranslateAll)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "Any", new Func<MemberReferenceExpression, object, string>(TranslateAny)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "Ballot", new Func<MemberReferenceExpression, object, string>(TranslateBallot)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicAdd", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicSub", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicExch", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
@@ -331,6 +344,11 @@ namespace Cudafy.Translator
 
 
         public readonly static string csSyncThreads = "SyncThreads";
+        public readonly static string csSyncThreadsCount = "SyncThreadsCount";
+        
+        public readonly static string csAll = "All";
+        public readonly static string csAny = "Any";
+        public readonly static string csBallot = "Ballot";
         public readonly static string csAllocateShared = "AllocateShared";
 
         public readonly static List<SpecialMember> SpecialMethods = new List<SpecialMember>();
@@ -373,6 +391,37 @@ namespace Cudafy.Translator
         static string TranslateSyncThreads(MemberReferenceExpression mre, object data)
         {
             return "__syncthreads";
+        }
+
+        static string TranslateSyncThreadsCount(MemberReferenceExpression mre, object data)
+        {
+            if (ComputeCapability < new Version(2, 0))
+                throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED_FOR_COMPUTE_X, mre.MemberName, ComputeCapability);
+            return "__syncthreads_count";
+        }
+
+        static string TranslateAll(MemberReferenceExpression mre, object data)
+        {
+            return "__all";
+        }
+
+        static string TranslateAny(MemberReferenceExpression mre, object data)
+        {
+            return "__any";
+        }
+
+        static string TranslateBallot(MemberReferenceExpression mre, object data)
+        {
+            if (ComputeCapability < new Version(2, 0))
+                throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED_FOR_COMPUTE_X, mre.MemberName, ComputeCapability);
+            return "__ballot";
+        }
+
+        static string TranslateAtomicAddFloat(MemberReferenceExpression mre, object data)
+        {
+            if (ComputeCapability < new Version(2, 0))
+                throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED_FOR_COMPUTE_X, mre.MemberName, ComputeCapability);
+            return "atomicAdd";
         }
 
         static string GetMemberName(MemberReferenceExpression mre, object data)

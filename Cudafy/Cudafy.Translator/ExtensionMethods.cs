@@ -343,6 +343,26 @@ namespace Cudafy.Translator
             return mre.MemberName == CL.csSyncThreads;
         }
 
+        public static bool IsSyncThreadsCount(this MemberReferenceExpression mre)
+        {
+            return mre.MemberName == CL.csSyncThreadsCount;
+        }
+
+        public static bool IsAll(this MemberReferenceExpression mre)
+        {
+            return mre.MemberName == CL.csAll;
+        }
+
+        public static bool IsAny(this MemberReferenceExpression mre)
+        {
+            return mre.MemberName == CL.csAny;
+        }
+
+        public static bool IsBallot(this MemberReferenceExpression mre)
+        {
+            return mre.MemberName == CL.csBallot;
+        }
+
         public static bool IsAllocateShared(this MemberReferenceExpression mre)
         {
             return mre.MemberName == CL.csAllocateShared;

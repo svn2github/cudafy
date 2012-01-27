@@ -50,7 +50,7 @@ namespace Cudafy.UnitTests
         [SetUp]
         public void SetUp()
         {
-            _cm = CudafyTranslator.Cudafy(typeof(RelectorAddInFunctionsTests));
+            _cm = CudafyTranslator.Cudafy(eArchitecture.sm_20);//typeof(RelectorAddInFunctionsTests));
         }
 
         [TearDown]
@@ -276,6 +276,16 @@ namespace Cudafy.UnitTests
 
         [Cudafy]
         public enum MyEnum { A = 1, B = 2, C = 4, D = 8 };
+
+        [Cudafy]
+        public static void AllAnyBallotTests(GThread thread, float[] data)
+        {
+            thread.SyncThreadsCount(true);
+            thread.All(true);
+            thread.Any(true);
+            thread.Ballot(true);
+
+        }
 
         //[Cudafy]
         //public static void TestTryCatchFinally()

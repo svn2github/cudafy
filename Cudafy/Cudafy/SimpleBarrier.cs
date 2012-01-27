@@ -115,6 +115,13 @@ namespace info.jhpc.thread
 		 */
 
 		protected int count;
+        /**
+
+		 * Number of threads that still must gather.
+
+		 */
+
+        protected int predicate_sum;
 
 		/**
 
@@ -147,7 +154,7 @@ namespace info.jhpc.thread
 
 
 			initCount = count = n;
-
+            predicate_sum = 0;
 		}
 
 	
@@ -164,10 +171,10 @@ namespace info.jhpc.thread
 
 		 */
 
-		public virtual void gather() {
+		public virtual int gather(bool predicate) {
 
 			System.Threading.Monitor.Enter(this);
-
+            predicate_sum += (predicate) ? 1 : 0;
 			if (--count > 0)
 
 				System.Threading.Monitor.Wait(this);
@@ -175,14 +182,31 @@ namespace info.jhpc.thread
 			else {
 
 				count = initCount;
-
+                predicate_sum = 0;
 				System.Threading.Monitor.PulseAll(this);
 
 			}
 
 			System.Threading.Monitor.Exit(this);
-
+            return predicate_sum;
 		}
+
+        public virtual void gather()
+        {
+            System.Threading.Monitor.Enter(this);
+            if (--count > 0)
+
+                System.Threading.Monitor.Wait(this);
+
+            else
+            {
+                count = initCount;
+                System.Threading.Monitor.PulseAll(this);
+
+            }
+
+            System.Threading.Monitor.Exit(this);
+        }
 
 		/// <summary>
 		/// Calls gather();
@@ -191,6 +215,14 @@ namespace info.jhpc.thread
 		{
 			gather();
 		}
+
+         /// <summary>
+        /// Calls gather(predicate); Returns sum of true predicates within block
+        /// </summary>
+        public virtual int SignalAndWaitAndCountPredicate(bool predicate)
+        {
+            return gather(predicate);
+        }
 
 	}
 
