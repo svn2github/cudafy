@@ -272,9 +272,9 @@ namespace Cudafy.Translator
             CudafyModule cm = new CudafyModule();
 
             // Test structs
-            foreach (var strct in types.Where(t => !t.IsClass))
-                if (strct.GetCustomAttributes(typeof(CudafyAttribute), false).Length == 0)
-                    throw new CudafyLanguageException(CudafyLanguageException.csCUDAFY_ATTRIBUTE_IS_MISSING_ON_X, strct.Name);
+            //foreach (var strct in types.Where(t => !t.IsClass))
+            //    if (strct.GetCustomAttributes(typeof(CudafyAttribute), false).Length == 0)
+            //        throw new CudafyLanguageException(CudafyLanguageException.csCUDAFY_ATTRIBUTE_IS_MISSING_ON_X, strct.Name);
 
             IEnumerable<Type> typeList = GetWithNestedTypes(types);
             foreach (var type in typeList)

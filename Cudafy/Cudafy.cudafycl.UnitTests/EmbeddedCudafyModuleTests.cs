@@ -96,6 +96,8 @@ namespace Cudafy.cudafycl.UnitTests
         [TestFixtureSetUp]
         public void SetUp()
         {
+            //var cm = CudafyTranslator.Cudafy(typeof(PrimitiveStruct), GetType());
+            //
             if (CudafyModule.HasCudafyModuleInAssembly())   // Post-build event command line was: cudafycl.exe $(TargetPath)
             {                                               // Do this for Release
                 _cm = GetType().Assembly.GetCudafyModule();
@@ -107,6 +109,7 @@ namespace Cudafy.cudafycl.UnitTests
             }
             Assert.IsFalse(_cm == null);
             Assert.IsTrue(_cm.TryVerifyChecksums());
+
             _gpu = CudafyHost.GetDevice(CudafyModes.Target);
             if(_cm != null)
                 _gpu.LoadModule(_cm);

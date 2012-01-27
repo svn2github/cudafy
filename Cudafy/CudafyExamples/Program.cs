@@ -39,7 +39,7 @@ namespace CudafyExamples
             {
                 CudafyModes.Target = Cudafy.eGPUType.Cuda;
 
-                Console.WriteLine("\r\nArrayBasicIndexing");
+                /*Console.WriteLine("\r\nArrayBasicIndexing");
                 ArrayBasicIndexing.Execute();
                 Console.WriteLine("\r\nArrayMultidimensions");
                 ArrayMultidimensions.Execute();
@@ -52,7 +52,15 @@ namespace CudafyExamples
                 Console.WriteLine("\r\nDummyFunctions");
                 DummyFunctions.Execute();
                 Console.WriteLine("\r\nPinnedAsyncIO");
-                PinnedAsyncIO.Execute();
+                PinnedAsyncIO.Execute();*/
+                Console.WriteLine("\r\nVoting.Ballot");
+                Voting.Ballot.Execute();
+                Console.WriteLine("\r\nVoting.SyncThreadCount");
+                Voting.SyncThreadCount.Execute();
+                //Console.WriteLine("\r\nFinanceTest");
+                //FinanceTest.Execute();
+
+
                 Console.WriteLine("Done!");
             }
             catch (Exception ex)

@@ -69,7 +69,7 @@ namespace info.jhpc.warp
             if (count[warpid] == initCount[warpid])
                 predicate_sum[warpid] = (predicate) ? 1 : 0;
             else
-                predicate_sum[warpid] &= (predicate) ? 1 : 0;
+                predicate_sum[warpid] |= (predicate) ? 1 : 0;
 
             if (--count[warpid] > 0)
 

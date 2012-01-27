@@ -122,6 +122,7 @@ namespace info.jhpc.thread
 		 */
 
         protected int predicate_sum;
+	    protected int predicate_sum_final;
 
 		/**
 
@@ -182,13 +183,14 @@ namespace info.jhpc.thread
 			else {
 
 				count = initCount;
+                predicate_sum_final = predicate_sum; 
                 predicate_sum = 0;
 				System.Threading.Monitor.PulseAll(this);
 
 			}
 
 			System.Threading.Monitor.Exit(this);
-            return predicate_sum;
+            return predicate_sum_final;
 		}
 
         public virtual void gather()

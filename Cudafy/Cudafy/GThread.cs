@@ -51,7 +51,7 @@ namespace Cudafy
         /// </value>
         internal int WarpId()
         {
-            return threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
+            return (threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y) / warpSize;
         }
 
         /// <summary>
