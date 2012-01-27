@@ -239,7 +239,7 @@ namespace Cudafy.Translator
             SpecialMethods.Add(new SpecialMember("Console", "Write", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
             SpecialMethods.Add(new SpecialMember("Console", "WriteLine", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
             SpecialMethods.Add(new SpecialMember("Console", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
-
+            SpecialMethods.Add(new SpecialMember("Debug", "Assert", new Func<MemberReferenceExpression, object, string>(TranslateAssert), false));
             SpecialMethods.Add(new SpecialMember("Trace", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
 
             SpecialProperties.Add(new SpecialMember("ArrayType", "Length", new Func<MemberReferenceExpression, object, string>(TranslateArrayLength)));
@@ -270,12 +270,15 @@ namespace Cudafy.Translator
             OptionalHeaders.Add(new OptionalHeader("cuComplex", @"#include <cuComplex.h>"));
             OptionalHeaders.Add(new OptionalHeader(csCURAND_KERNEL, @"#include <curand_kernel.h>"));
             OptionalHeaders.Add(new OptionalHeader(csSTDIO, @"#include <stdio.h>"));
+            OptionalHeaders.Add(new OptionalHeader(csASSERT, @"#include <assert.h>"));
             DisableSmartArray = false;
         }
 
         private const string csCURAND_KERNEL = "curand_kernel";
 
         private const string csSTDIO = "stdio";
+
+        private const string csASSERT = "assert";
 
         public struct SpecialTypeProps
         {
@@ -438,13 +441,22 @@ namespace Cudafy.Translator
 
         static string TranslateToPrintF(MemberReferenceExpression mre, object data)
         {
-            // TODO: detect architecture
             if (ComputeCapability < new Version(2, 0))
                 return CommentMeOut(mre, data);
             UseOptionalHeader(csSTDIO);
             string dbugwrite = string.Empty;
             dbugwrite = mre.TranslateToPrintF(data);
             return dbugwrite;
+        }
+
+        static string TranslateAssert(MemberReferenceExpression mre, object data)
+        {
+            if (ComputeCapability < new Version(2, 0))
+                return CommentMeOut(mre, data);
+            UseOptionalHeader(csASSERT);
+            string assert = string.Empty;
+            assert = mre.TranslateAssert(data);
+            return assert;
         }
 
         static string GetMemberName(MemberReferenceExpression mre, object data)

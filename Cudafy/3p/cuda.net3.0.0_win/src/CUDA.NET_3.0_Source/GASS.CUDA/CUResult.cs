@@ -35,7 +35,17 @@ namespace GASS.CUDA
         NotMappedAsPointer = 0xd5,
         PointerIs64Bit = 800,
         SizeIs64Bit = 0x321,
-        Success = 0
+        Success = 0,
+        ErrorLaunchTimeOut = 702,
+        ErrorPeerAccessNotEnabled = 705,
+        ErrorPeerAccessAlreadyEnabled = 704,
+        ErrorPrimaryContextActive = 708,
+        ErrorContextIsDestroyed = 709,
+        ErrorAssert = 710,
+        ErrorTooManyPeers = 711,
+        ErrorHostMemoryAlreadyInitialized = 712,
+        ErrorHostMemoryNotRegistered = 713
+
     }
 }
 

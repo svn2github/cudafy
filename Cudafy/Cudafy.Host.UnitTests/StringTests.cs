@@ -51,7 +51,7 @@ namespace Cudafy.Host.UnitTests
             _gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
             if (_cm == null || !_cm.TryVerifyChecksums())
             {
-                _cm = CudafyTranslator.Cudafy(eArchitecture.sm_13);               
+                _cm = CudafyTranslator.Cudafy(eArchitecture.sm_12);               
                 _cm.TrySerialize();
             }
             _gpu.LoadModule(_cm);
@@ -83,6 +83,8 @@ namespace Cudafy.Host.UnitTests
         {
             c[0] = a;
             Console.WriteLine("hello from your gpu!");
+            Debug.Assert(c[0] == a);
+            Debug.Assert(c[0] == a, null, "%d == %d is not true!", c[0], a);
         }
 
         [Test]

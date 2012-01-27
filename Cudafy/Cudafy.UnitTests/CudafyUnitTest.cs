@@ -125,7 +125,7 @@ namespace Cudafy.UnitTests
                 }
                 catch (TargetInvocationException ex)
                 {
-                    if (ex.InnerException != null)
+                    if (ex.InnerException != null && expectedExceptionType != null)
                     {
                         if (expectedExceptionType.Name != ex.InnerException.GetType().Name)
                             throw new Exception(string.Format("Expected an exception of type '{0}', got '{1}'.", expectedExceptionType.Name, ex.InnerException.GetType().Name));

@@ -412,6 +412,93 @@ namespace Cudafy.Translator
             return output.ToString();
         }
 
+        public static string TranslateAssert(this MemberReferenceExpression mre, object data)
+        {
+            TextWriter output = new StringWriter();
+            CUDAOutputVisitor visitor = new CUDAOutputVisitor(new TextWriterOutputFormatter(output), new CSharpFormattingOptions());
+            var ex = data as InvocationExpression;
+            if (ex == null)
+                throw new ArgumentNullException("data as InvocationExpression");
+
+            bool isWriteLine = ((MemberReferenceExpression)ex.Target).MemberName == "WriteLine";
+            int i = 0;
+            List<Expression> arguments = ex.Arguments.ToList();
+            if (arguments.Count > 1)
+            {
+                // An If statement and Debug.WriteLine should go along with this assert
+                output.Write("if(!(");
+                arguments[0].AcceptVisitor(visitor, data);
+                output.Write(")) {");
+
+                bool shortMessageIsNull = arguments[1] is NullReferenceExpression;
+                // Argument #2 is a unformatted short message, print it out without any parameters
+                if (!(arguments[1] is PrimitiveExpression || shortMessageIsNull))
+                    throw new CudafyLanguageException("When using Debug.Assert() the second parameter must be a string literal");
+                string shortMessage = arguments[1].ToString();
+                if (!shortMessageIsNull && !shortMessage.StartsWith("\""))
+                    throw new CudafyLanguageException("When using Debug.Assert() the second parameter must be a string literal");
+
+                // Skip printing this first message if the value is NULL. 
+                // Why? Because I assume the user wants to print the message with parameters without the hassle of two messages
+                if (!shortMessageIsNull)
+                {
+                    // Insert a newline into the end of the message
+                    shortMessage = shortMessage.Insert(shortMessage.Length - 1, "\\n");
+                    // Since this message does not support parameters, escape any % to avoid ErrorUnknown
+                    shortMessage = shortMessage.Replace("%", "%%");
+
+                    output.Write("printf(" + shortMessage + ");");
+                }
+
+                if (arguments.Count > 2)
+                {
+                    // Argument #3 is an un/formated detailed message with or without parameters
+                    if (!(arguments[2] is PrimitiveExpression))
+                        throw new CudafyLanguageException("When using Debug.Assert() the third parameter must be a string literal");
+                    string detailedMessageFormat = arguments[2].ToString();
+                    if (!detailedMessageFormat.StartsWith("\""))
+                        throw new CudafyLanguageException("When using Debug.Assert() the third parameter must be a string literal");
+
+                    // Insert a newline into the end of the message
+                    detailedMessageFormat = detailedMessageFormat.Insert(detailedMessageFormat.Length - 1, "\\n");
+                    if (arguments.Count > 3)
+                    {
+                        output.Write("printf(" + detailedMessageFormat);
+                        if (arguments[3] is ArrayCreateExpression)
+                        {
+                            var arrayCreateExpression = arguments[3] as ArrayCreateExpression;
+                            foreach (var arrayArg in arrayCreateExpression.Initializer.Elements)
+                            {
+                                output.Write(',');
+                                arrayArg.AcceptVisitor(visitor, data);
+                            }
+                        }
+                        else
+                        {
+                            output.Write(',');
+                            arguments[3].AcceptVisitor(visitor, data);
+                        }
+                        output.Write(");");
+                    }
+                    else if (arguments.Count == 3)
+                    {
+                        // Since this message does not support parameters, escape any % to avoid ErrorUnknown
+                        detailedMessageFormat = detailedMessageFormat.Replace("%", "%%");
+                        output.Write("printf(" + detailedMessageFormat + ");");
+                    }
+                }
+                output.Write("assert(0);");
+                output.Write("}");
+            }
+            else
+            {
+                output.Write("assert(");
+                arguments[0].AcceptVisitor(visitor, data);
+                output.Write(")");
+            }
+            return output.ToString();
+        }
+
         public static bool IsSyncThreads(this MemberReferenceExpression mre)
         {
             return mre.MemberName == CL.csSyncThreads;
