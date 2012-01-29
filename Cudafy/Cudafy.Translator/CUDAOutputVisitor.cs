@@ -812,13 +812,14 @@ namespace Cudafy.Translator
 		{
 			StartNode(defaultValueExpression);
 			
-			WriteKeyword("default");
-			LPar();
-			Space(policy.SpacesWithinTypeOfParentheses);
+			//WriteKeyword("default");
+			//LPar();
+			//Space(policy.SpacesWithinTypeOfParentheses);
 			defaultValueExpression.Type.AcceptVisitor(this, data);
-			Space(policy.SpacesWithinTypeOfParentheses);
-			RPar();
-			
+			//Space(policy.SpacesWithinTypeOfParentheses);
+			//RPar();
+            LPar();
+            RPar();
 			return EndNode(defaultValueExpression);
 		}
 		

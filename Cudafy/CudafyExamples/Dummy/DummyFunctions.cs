@@ -33,6 +33,7 @@ namespace CudafyExamples.Dummy
     [CudafyDummy]
     public struct DummyComplexFloat
     {
+        
         public DummyComplexFloat(float r, float i)
         {
             Real = r;
@@ -45,6 +46,12 @@ namespace CudafyExamples.Dummy
             return new DummyComplexFloat(Real + c.Real, Imag + c.Imag);
         }
     }
+    //[CudafyDummy]
+    //public struct DummyDefaultStruct
+    //{
+    //    public int X;
+    //    public int Y;
+    //}
     
     public class DummyFunctions
     {        
@@ -142,6 +149,9 @@ namespace CudafyExamples.Dummy
         {
             int x = thread.blockIdx.x;
             result[x] = result[x].Add(result[x]);
+            DummyComplexFloat d = new DummyComplexFloat();
+
+            result[0] = d;
         }
 
         [CudafyDummy]
@@ -151,6 +161,7 @@ namespace CudafyExamples.Dummy
             {
                 result[i] = result[i].Add(result[i]);
             }
+
         }
     }
 }
