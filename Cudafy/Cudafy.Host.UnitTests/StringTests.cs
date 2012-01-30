@@ -51,7 +51,7 @@ namespace Cudafy.Host.UnitTests
             _gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
             if (_cm == null || !_cm.TryVerifyChecksums())
             {
-                _cm = CudafyTranslator.Cudafy(eArchitecture.sm_12);               
+                _cm = CudafyTranslator.Cudafy(eArchitecture.sm_20);
                 _cm.TrySerialize();
             }
             _gpu.LoadModule(_cm);
