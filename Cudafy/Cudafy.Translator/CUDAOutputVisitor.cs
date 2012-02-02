@@ -2711,7 +2711,11 @@ namespace Cudafy.Translator
 				Space();
 
             if (parameterDeclaration.ParameterModifier == ParameterModifier.Out || parameterDeclaration.ParameterModifier == ParameterModifier.Ref)
+            {
+                if (parameterDeclaration.Type.ToString().Contains("["))
+                    throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED, "Passing array by reference");
                 formatter.WriteKeyword("*");
+            }
             else if (parameterDeclaration.ParameterModifier != ParameterModifier.None)
                 throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED, parameterDeclaration.ParameterModifier);
 
