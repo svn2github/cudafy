@@ -42,8 +42,9 @@ namespace GASS.CUDA
 
         public CUDA(int ordinal, bool initialize) : this(initialize)
         {
-            this.CurrentContext = this.CreateContext(ordinal);
+            this.CurrentContext = this.CreateContext(ordinal);//, CUCtxFlags.MapHost);
         }
+
 
         private int _version = -1;
 

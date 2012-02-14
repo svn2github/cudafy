@@ -10,7 +10,7 @@ namespace GASS.CUDA
         private string name;
         private int ordinal;
         private DeviceProperties properties;
-        private uint totalMemory;
+        private ulong totalMemory;
 
         public Version ComputeCapability
         {
@@ -72,7 +72,7 @@ namespace GASS.CUDA
             }
         }
 
-        public uint TotalMemory
+        public ulong TotalMemory
         {
             get
             {

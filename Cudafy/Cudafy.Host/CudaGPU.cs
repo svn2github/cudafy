@@ -1105,7 +1105,7 @@ namespace Cudafy.Host
             IntPtr ptr = IntPtr.Zero;
             try
             {
-                ptr = _cuda.HostAllocate((uint)bytes, 0);
+                ptr = _cuda.HostAllocate((uint)bytes, CUDADriver.CU_MEMHOSTALLOC_PORTABLE);
             }
             catch (CUDAException ex)
             {

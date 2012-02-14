@@ -237,6 +237,14 @@ namespace Cudafy.Host.UnitTests
                     _gpu.CopyFromDeviceAsync(_gpuuintBufferOut, 0, _uintBufferOut, 0, N, i + 1, stagingPostOut[i]);
                 for (int i = 0; i < batchSize; i++)
                     _gpu.SynchronizeStream(i + 1);
+                //for (int i = 0; i < batchSize; i++)
+                //{
+                //    _gpu.CopyToDeviceAsync(stagingPostIn[i], 0, _gpuuintBufferIn, 0, N, i+1);
+                //    _gpu.LaunchAsync(N / 512, 512, i + 1, "DoubleAllValues", _gpuuintBufferIn, _gpuuintBufferOut);
+                //    _gpu.CopyFromDeviceAsync(_gpuuintBufferOut, 0, stagingPostOut[i], 0, N, i + 1);
+                //}
+                for (int i = 0; i < batchSize; i++)
+                    _gpu.SynchronizeStream(i + 1);
             }
 
             time = sw.ElapsedMilliseconds;

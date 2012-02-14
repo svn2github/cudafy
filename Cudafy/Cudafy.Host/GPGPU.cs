@@ -323,6 +323,23 @@ namespace Cudafy.Host
         }
 
         /// <summary>
+        /// Gets the device memory from IntPtr.
+        /// </summary>
+        /// <param name="ptr">The PTR.</param>
+        /// <returns></returns>
+        public object GetDeviceMemoryFromIntPtr(IntPtr ptr)
+        {
+            lock (_lock)
+            {
+                var kvps = _deviceMemory.Where(kvp => kvp.Value.Pointer == ptr);
+                if (kvps.Count() == 0)
+                    return null;
+                var k = kvps.FirstOrDefault();
+                return k.Key;                
+            }
+        }
+
+        /// <summary>
         /// Gets the device memory for key specified.
         /// </summary>
         /// <param name="devArray">The dev array.</param>
@@ -1248,7 +1265,6 @@ namespace Cudafy.Host
         {
             return (T[])DoCast<T,T>(0, devArray, n);
         }
-
 
         /// <summary>
         /// Casts the specified dev array.
