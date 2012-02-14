@@ -15,10 +15,12 @@ using Cudafy.Host;
 using Cudafy.Translator;
 using Cudafy.Maths.BLAS;
 using Cudafy.Maths.SPARSE;
-using Cudafy.Maths.SPARSE.Types;
 
 namespace Cudafy.Maths.LA
 {
+    /// <summary>
+    /// Linear solver class. (Not implemented. Do not use yet.)
+    /// </summary>
     public class Solver
     {
         GPGPU gpu;
@@ -151,12 +153,14 @@ namespace Cudafy.Maths.LA
         /// <param name="maxIterate">max iterate count of conjugate gradient solver.</param>
         /// <returns>if A has singulrarity or failure in max iterate count, returns false. return true otherwise.</returns>
         public SolveResult CG(
-            int n, float[] csrValA, int[] csrRowA, int[] csrColA,
+            int n, int nnz, float[] csrValA, int[] csrRowA, int[] csrColA,
             float[] dx, float[] db, float[] dp, float[] dAx, float tolerence = 0.00001f, int maxIterate = 300)
         {
             SolveResult result = new SolveResult();
             int k; // Iterate count.
             float a, b, r0, r1;
+            float zero = 0.0f;
+            float one = 1.0f;
 
             if (blas.DOT(db, db) == 0)
             {
@@ -166,7 +170,7 @@ namespace Cudafy.Maths.LA
                 return result;
             }
 
-            sparse.CSRMV(n, n, 1.0f, csrValA, csrRowA, csrColA, dx, 0.0f, dAx);
+            sparse.CSRMV(n, n, nnz, ref one, csrValA, csrRowA, csrColA, dx, ref zero, dAx);
             blas.AXPY(-1.0f, dAx, db);
 
             r1 = blas.DOT(db, db);
@@ -187,7 +191,7 @@ namespace Cudafy.Maths.LA
                     blas.COPY(db, dp);
                 }
 
-                sparse.CSRMV(n, n, 1.0f, csrValA, csrRowA, csrColA, dp, 0.0f, dAx);
+                sparse.CSRMV(n, n, nnz, ref one, csrValA, csrRowA, csrColA, dp, ref zero, dAx);
                 a = r1 / blas.DOT(dp, dAx);
                 blas.AXPY(a, dp, dx);
                 blas.AXPY(-a, dAx, db);
@@ -218,12 +222,14 @@ namespace Cudafy.Maths.LA
         }
 
         public SolveResult CG(
-            int n, double[] csrValA, int[] csrRowA, int[] csrColA,
+            int n, int nnz, double[] csrValA, int[] csrRowA, int[] csrColA,
             double[] dx, double[] db, double[] dp, double[] dAx, double tolerence = 0.00001f, int maxIterate = 300)
         {
             SolveResult result = new SolveResult();
             int k; // Iterate count.
             double a, b, r0, r1;
+            double zero = 0.0;
+            double one = 1.0;
 
             if (blas.DOT(db, db) == 0.0)
             {
@@ -233,7 +239,7 @@ namespace Cudafy.Maths.LA
                 return result;
             }
 
-            sparse.CSRMV(n, n, 1.0f, csrValA, csrRowA, csrColA, dx, 0.0f, dAx);
+            sparse.CSRMV(n, n, nnz, ref one, csrValA, csrRowA, csrColA, dx, ref zero, dAx);
             blas.AXPY(-1.0f, dAx, db);
 
             r1 = blas.DOT(db, db);
@@ -254,7 +260,7 @@ namespace Cudafy.Maths.LA
                     blas.COPY(db, dp);
                 }
 
-                sparse.CSRMV(n, n, 1.0f, csrValA, csrRowA, csrColA, dp, 0.0f, dAx);
+                sparse.CSRMV(n, n, nnz, ref one, csrValA, csrRowA, csrColA, dp, ref zero, dAx);
                 a = r1 / blas.DOT(dp, dAx);
                 blas.AXPY(a, dp, dx);
                 blas.AXPY(-a, dAx, db);
@@ -287,7 +293,7 @@ namespace Cudafy.Maths.LA
 
         #region Preconditioned conjugate gradient solver (Preconditioned CG) (Not inplemented yet)
         public SolveResult CGPreconditioned(
-            int n, float[] csrValA, int[] csrRowA, int[] csrColA, float[] dx, float[] db,
+            int n, int nnz, float[] csrValA, int[] csrRowA, int[] csrColA, float[] dx, float[] db,
             float[] csrValICP, int[] csrRowICP, int[] csrColICP,
             float[] dy, float[] dp, float[] domega, float[] zm1, float[] zm2, float[] rm2, float tolerence = 0.0001f, int maxIterate = 300)
         {
@@ -309,17 +315,20 @@ namespace Cudafy.Maths.LA
             cusparseSolveAnalysisInfo infoTrans = new cusparseSolveAnalysisInfo();
             sparse.CreateSolveAnalysisInfo(ref infoTrans);
 
-            sparse.CSRSV_ANALYSIS(n, csrValICP, csrRowICP, csrColICP, cusparseOperation.NonTranspose, info, descrM);
-            sparse.CSRSV_ANALYSIS(n, csrValICP, csrRowICP, csrColICP, cusparseOperation.Transpose, infoTrans, descrM);
+            sparse.CSRSV_ANALYSIS(n, nnz, csrValICP, csrRowICP, csrColICP, cusparseOperation.NonTranspose, info, descrM);
+            sparse.CSRSV_ANALYSIS(n, nnz, csrValICP, csrRowICP, csrColICP, cusparseOperation.Transpose, infoTrans, descrM);
 
             int k = 0;
             float r1 = blas.DOT(db, db);
             float alpha, beta;
 
+            float identityFloat = 1.0f;
+            float zeroFloat = 0.0f;
+
             while (true)
             {
-                sparse.CSRSV_SOLVE(n, 1.0f, csrValICP, csrRowICP, csrColICP, db, dy, cusparseOperation.NonTranspose, info, descrM);
-                sparse.CSRSV_SOLVE(n, 1.0f, csrValICP, csrRowICP, csrColICP, dy, zm1, cusparseOperation.Transpose, infoTrans, descrM);
+                sparse.CSRSV_SOLVE(n, ref identityFloat, csrValICP, csrRowICP, csrColICP, db, dy, cusparseOperation.NonTranspose, info, descrM);
+                sparse.CSRSV_SOLVE(n, ref identityFloat, csrValICP, csrRowICP, csrColICP, dy, zm1, cusparseOperation.Transpose, infoTrans, descrM);
 
                 k++;
 
@@ -334,7 +343,7 @@ namespace Cudafy.Maths.LA
                     blas.AXPY(1.0f, zm1, dp);
                 }
 
-                sparse.CSRMV(n, n, 1.0f, csrValA, csrRowA, csrColA, dp, 0.0f, domega);
+                sparse.CSRMV(n, n, nnz, ref identityFloat, csrValA, csrRowA, csrColA, dp, ref zeroFloat, domega);
                 alpha = blas.DOT(db, zm1) / blas.DOT(dp, domega);
 
                 blas.AXPY(alpha, dp, dx);
@@ -385,7 +394,7 @@ namespace Cudafy.Maths.LA
         /// <param name="threshold">iterate tolerence of BiCGSTAB solver.</param>
         /// <param name="maxIterate">max iterate count of BiCGSTAB solver.</param>
         /// <returns></returns>
-        public SolveResult BiCGSTAB(int n, double[] csrValA, int[] csrRowA, int[] csrColA, double[] x, double[] b, double[] ax, double[] r0, double[] r, double[] v, double[] p, double[] s, double[] t, double threshold = 1e-10, int maxIterate = 1000)
+        public SolveResult BiCGSTAB(int n, int nnz, double[] csrValA, int[] csrRowA, int[] csrColA, double[] x, double[] b, double[] ax, double[] r0, double[] r, double[] v, double[] p, double[] s, double[] t, double threshold = 1e-10, int maxIterate = 1000)
         {
             SolveResult result = new SolveResult();
             double l0 = 1.0, alpha = 1.0, w0 = 1.0;
@@ -393,8 +402,12 @@ namespace Cudafy.Maths.LA
             double bn = blas.NRM2(b);
             int k = 1;
 
+            double minusOne = -1.0;
+            double one = 1.0;
+            double zero = 0.0;
+
             blas.COPY(b, r0);
-            sparse.CSRMV(n, n, -1.0, csrValA, csrRowA, csrColA, x, 1.0, r0);
+            sparse.CSRMV(n, n, nnz, ref minusOne, csrValA, csrRowA, csrColA, x, ref one, r0);
             blas.COPY(r0, r);
 
             SetValue(n, v, 0.0);
@@ -412,13 +425,13 @@ namespace Cudafy.Maths.LA
                 blas.SCAL(beta, p);
                 blas.AXPY(1.0, r, p);
 
-                sparse.CSRMV(n, n, 1.0, csrValA, csrRowA, csrColA, p, 0.0, v);
+                sparse.CSRMV(n, n, nnz, ref one, csrValA, csrRowA, csrColA, p, ref zero, v);
 
                 // Update v
                 alpha = l1 / blas.DOT(r0, v);
                 blas.COPY(r, s);
                 blas.AXPY(-alpha, v, s);
-                sparse.CSRMV(n, n, 1.0, csrValA, csrRowA, csrColA, s, 0.0, t);
+                sparse.CSRMV(n, n, nnz, ref one, csrValA, csrRowA, csrColA, s, ref zero, t);
                 w1 = blas.DOT(t, s) / blas.DOT(t, t);
 
                 // Update x
@@ -455,7 +468,7 @@ namespace Cudafy.Maths.LA
             }
         }
 
-        public SolveResult BiCGSTAB(int n, float[] csrValA, int[] csrRowA, int[] csrColA, float[] x, float[] b, float[] ax, float[] r0, float[] r, float[] v, float[] p, float[] s, float[] t, float threshold = 0.000001f, int maxIterate = 1000)
+        public SolveResult BiCGSTAB(int n, int nnz, float[] csrValA, int[] csrRowA, int[] csrColA, float[] x, float[] b, float[] ax, float[] r0, float[] r, float[] v, float[] p, float[] s, float[] t, float threshold = 0.000001f, int maxIterate = 1000)
         {
             SolveResult result = new SolveResult();
             float l0 = 1.0f, alpha = 1.0f, w0 = 1.0f;
@@ -463,8 +476,12 @@ namespace Cudafy.Maths.LA
             float bn = blas.NRM2(b);
             int k = 1;
 
+            float minusOne = 1.0f;
+            float one = 1.0f;
+            float zero = 0.0f;
+
             blas.COPY(b, r0);
-            sparse.CSRMV(n, n, -1.0f, csrValA, csrRowA, csrColA, x, 1.0f, r0);
+            sparse.CSRMV(n, n, nnz, ref minusOne, csrValA, csrRowA, csrColA, x, ref one, r0);
             blas.COPY(r0, r);
 
             SetValue(n, v, 0.0f);
@@ -482,13 +499,13 @@ namespace Cudafy.Maths.LA
                 blas.SCAL(beta, p);
                 blas.AXPY(1.0f, r, p);
 
-                sparse.CSRMV(n, n, 1.0f, csrValA, csrRowA, csrColA, p, 0.0f, v);
+                sparse.CSRMV(n, n, nnz, ref one, csrValA, csrRowA, csrColA, p, ref zero, v);
 
                 // Update v
                 alpha = l1 / blas.DOT(r0, v);
                 blas.COPY(r, s);
                 blas.AXPY(-alpha, v, s);
-                sparse.CSRMV(n, n, 1.0f, csrValA, csrRowA, csrColA, s, 0.0f, t);
+                sparse.CSRMV(n, n, nnz, ref one, csrValA, csrRowA, csrColA, s, ref zero, t);
                 w1 = blas.DOT(t, s) / blas.DOT(t, t);
 
                 // Update x

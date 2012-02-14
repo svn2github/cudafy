@@ -132,12 +132,12 @@ namespace Cudafy.UnitTests
             Assert.Contains("constantSphereArray", _cm.Constants.Keys);
         }
 
-        [Test]
-        [ExpectedException(typeof(CudafyLanguageException))]
-        public void TestCudafyStructWithoutAttribute()
-        {
-            var mod = CudafyTranslator.Cudafy(typeof(UncudafiedStruct));
-        }
+        //[Test]
+        //[ExpectedException(typeof(CudafyLanguageException))]
+        //public void TestCudafyStructWithoutAttribute()
+        //{
+        //    var mod = CudafyTranslator.Cudafy(typeof(UncudafiedStruct));
+        //}
 
         [Test]
         public void TestStructDependencies()

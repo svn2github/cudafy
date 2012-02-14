@@ -97,7 +97,7 @@ namespace CudafyExamples.Misc
 
             float c = 0;
 
-            int loops = 100;
+            int loops = 20;
             int batches = 12;
 
             // allocate memory on the cpu side

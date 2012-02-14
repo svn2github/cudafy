@@ -1,6 +1,7 @@
 namespace GASS.CUDA
 {
     using GASS.CUDA.Types;
+    using GASS.Types;
     using System;
     using System.Collections.Generic;
     using System.Runtime.InteropServices;
@@ -510,16 +511,16 @@ namespace GASS.CUDA
         public CUdeviceptr GetGraphicsResourceMappedPointer(CUgraphicsResource resource, out uint size)
         {
             CUdeviceptr pDevPtr = new CUdeviceptr();
-            uint pSize = 0;
+            SizeT pSize = 0;
             this.LastError = CUDADriver.cuGraphicsResourceGetMappedPointer(ref pDevPtr, ref pSize, resource);
             size = pSize;
             return pDevPtr;
         }
 
-        public uint GetGraphicsResourceMappedPointerSize(CUgraphicsResource resource)
+        public ulong GetGraphicsResourceMappedPointerSize(CUgraphicsResource resource)
         {
             CUdeviceptr pDevPtr = new CUdeviceptr();
-            uint pSize = 0;
+            SizeT pSize = 0;
             this.LastError = CUDADriver.cuGraphicsResourceGetMappedPointer(ref pDevPtr, ref pSize, resource);
             return pSize;
         }
@@ -558,7 +559,7 @@ namespace GASS.CUDA
         public CUdeviceptr GetModuleGlobal(CUmodule mod, string globalName)
         {
             CUdeviceptr dptr = new CUdeviceptr();
-            uint bytes = 0;
+            SizeT bytes = 0;
             this.LastError = CUDADriver.cuModuleGetGlobal(ref dptr, ref bytes, mod, globalName);
             return dptr;
         }
@@ -571,7 +572,7 @@ namespace GASS.CUDA
         public uint GetModuleGlobalBytes(CUmodule mod, string globalName)
         {
             CUdeviceptr dptr = new CUdeviceptr();
-            uint bytes = 0;
+            SizeT bytes = 0;
             this.LastError = CUDADriver.cuModuleGetGlobal(ref dptr, ref bytes, mod, globalName);
             return bytes;
         }
@@ -924,7 +925,10 @@ namespace GASS.CUDA
 
         public void SetTextureAddress(CUtexref tex, CUDAArrayDescriptor desc, CUdeviceptr dptr, uint pitch)
         {
-            this.LastError = CUDADriver.cuTexRefSetAddress2D(tex, desc, dptr, pitch);
+            if (_version >= 4010)
+                this.LastError = CUDADriver.cuTexRefSetAddress2D_v3(tex, desc, dptr, pitch);
+            else
+                this.LastError = CUDADriver.cuTexRefSetAddress2D(tex, desc, dptr, pitch);
         }
 
         public void SetTextureAddressMode(CUtexref tex, int dimension, CUAddressMode addressMode)
@@ -1098,7 +1102,7 @@ namespace GASS.CUDA
                                 TotalConstantMemory = prop.totalConstantMemory
                             };
                             item.Properties = properties2;
-                            uint bytes = 0;
+                            SizeT bytes = 0;
                             this.LastError = CUDADriver.cuDeviceTotalMem(ref bytes, udevice);
                             item.TotalMemory = bytes;
                             this.devices.Add(item);
@@ -1109,12 +1113,12 @@ namespace GASS.CUDA
             }
         }
 
-        public uint FreeMemory
+        public ulong FreeMemory
         {
             get
             {
-                uint free = 0;
-                uint total = 0;
+                SizeT free = 0;
+                SizeT total = 0;
                 this.LastError = CUDADriver.cuMemGetInfo(ref free, ref total);
                 return free;
             }
@@ -1133,15 +1137,15 @@ namespace GASS.CUDA
                 {
                     throw new CUDAException(this.lastError);
                 }
-                }
+            }
         }
 
-        public uint TotalMemory
+        public ulong TotalMemory
         {
             get
             {
-                uint free = 0;
-                uint total = 0;
+                SizeT free = 0;
+                SizeT total = 0;
                 this.LastError = CUDADriver.cuMemGetInfo(ref free, ref total);
                 return total;
             }

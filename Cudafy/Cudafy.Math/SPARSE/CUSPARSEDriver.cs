@@ -6,8 +6,6 @@ namespace Cudafy.Maths.SPARSE
     using System;
     using System.Runtime.InteropServices;
 
-    using Cudafy.Maths.SPARSE.Types;
-
     public class CUSPARSEDriver64 : ICUSPARSEDriver
     {
         internal const string CUSPARSE_DLL_NAME = "cusparse64_41_28";//"cusparse64_40_17";//
@@ -26,7 +24,7 @@ namespace Cudafy.Maths.SPARSE
         private static extern CUSPARSEStatus cusparseGetVersion(cusparseHandle handle, ref int version);
 
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseSetKernelStream(cusparseHandle handle, cudaStream streamId);
+        private static extern CUSPARSEStatus cusparseSetStream(cusparseHandle handle, cudaStream streamId);
 
         [DllImport(CUSPARSE_DLL_NAME)]
         private static extern CUSPARSEStatus cusparseCreateMatDescr(ref cusparseMatDescr descrA);
@@ -103,9 +101,9 @@ namespace Cudafy.Maths.SPARSE
 
         #region CSR2CSC
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseScsr2csc(cusparseHandle handle, int m, int n, IntPtr csrVal, IntPtr csrRowPtr, IntPtr csrColInd, IntPtr cscVal, IntPtr cscRowInd, IntPtr cscColPtr, int copyvalues, int bs);
+        private static extern CUSPARSEStatus cusparseScsr2csc_v2(cusparseHandle handle, int m, int n, int nnz, IntPtr csrVal, IntPtr csrRowPtr, IntPtr csrColInd, IntPtr cscVal, IntPtr cscRowInd, IntPtr cscColPtr, cusparseAction copyvalues, cusparseIndexBase bs);
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseDcsr2csc(cusparseHandle handle, int m, int n, IntPtr csrVal, IntPtr csrRowPtr, IntPtr csrColInd, IntPtr cscVal, IntPtr cscRowInd, IntPtr cscColPtr, int copyvalues, int bs);
+        private static extern CUSPARSEStatus cusparseDcsr2csc_v2(cusparseHandle handle, int m, int n, int nnz, IntPtr csrVal, IntPtr csrRowPtr, IntPtr csrColInd, IntPtr cscVal, IntPtr cscRowInd, IntPtr cscColPtr, cusparseAction copyvalues, cusparseIndexBase bs);
         #endregion
 
         #region COO2CSR
@@ -122,9 +120,9 @@ namespace Cudafy.Maths.SPARSE
         #region Native Functions : SPARSE Level 1
         #region AXPY
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseSaxpyi(cusparseHandle handle, int nnz, float alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase);
+        private static extern CUSPARSEStatus cusparseSaxpyi_v2(cusparseHandle handle, int nnz, ref float alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase);
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseDaxpyi(cusparseHandle handle, int nnz, double alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase);
+        private static extern CUSPARSEStatus cusparseDaxpyi_v2(cusparseHandle handle, int nnz, ref double alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase);
         #endregion
 
         #region DOT
@@ -150,9 +148,9 @@ namespace Cudafy.Maths.SPARSE
 
         #region ROT
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseSroti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, float c, float s, cusparseIndexBase idxBase);
+        private static extern CUSPARSEStatus cusparseSroti_v2(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, ref float c, ref float s, cusparseIndexBase idxBase);
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseDroti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, double c, double s, cusparseIndexBase idxBase);
+        private static extern CUSPARSEStatus cusparseDroti_v2(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, ref double c, ref double s, cusparseIndexBase idxBase);
         #endregion
 
         #region SCTR
@@ -167,32 +165,32 @@ namespace Cudafy.Maths.SPARSE
         #region Native Functions : SPARSE Level 2
         #region CSRMV
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseScsrmv(cusparseHandle handle, cusparseOperation transA, int m, int n, float alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr x, float beta, IntPtr y);
+        private static extern CUSPARSEStatus cusparseScsrmv_v2(cusparseHandle handle, cusparseOperation transA, int m, int n, int nnz, ref float alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr x, ref float beta, IntPtr y);
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseDcsrmv(cusparseHandle handle, cusparseOperation transA, int m, int n, double alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr x, double beta, IntPtr y);
+        private static extern CUSPARSEStatus cusparseDcsrmv_v2(cusparseHandle handle, cusparseOperation transA, int m, int n, int nnz, ref double alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr x, ref double beta, IntPtr y);
         #endregion
 
         #region CSRSV_ANALYSIS
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseScsrsv_analysis(cusparseHandle handle, cusparseOperation transA, int m, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info);
+        private static extern CUSPARSEStatus cusparseScsrsv_analysis_v2(cusparseHandle handle, cusparseOperation transA, int m, int nnz, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info);
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseDcsrsv_analysis(cusparseHandle handle, cusparseOperation transA, int m, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info);
+        private static extern CUSPARSEStatus cusparseDcsrsv_analysis_v2(cusparseHandle handle, cusparseOperation transA, int m, int nnz, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info);
         #endregion
 
         #region CSRSV_SOLVE
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseScsrsv_solve(cusparseHandle handle, cusparseOperation transA, int m, float alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info, IntPtr x, IntPtr y);
+        private static extern CUSPARSEStatus cusparseScsrsv_solve_v2(cusparseHandle handle, cusparseOperation transA, int m,ref  float alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info, IntPtr x, IntPtr y);
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseDcsrsv_solve(cusparseHandle handle, cusparseOperation transA, int m, double alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info, IntPtr x, IntPtr y);
+        private static extern CUSPARSEStatus cusparseDcsrsv_solve_v2(cusparseHandle handle, cusparseOperation transA, int m, ref double alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info, IntPtr x, IntPtr y);
         #endregion
         #endregion
 
         #region Native Functions : SPARSE Level 3
         #region CSRMM
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseScsrmm(cusparseHandle handle, cusparseOperation transA, int m, int n, int k, float alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr B, int ldb, float beta, IntPtr C, int ldc);
+        private static extern CUSPARSEStatus cusparseScsrmm_v2(cusparseHandle handle, cusparseOperation transA, int m, int n, int k, int nnz, ref float alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr B, int ldb, ref float beta, IntPtr C, int ldc);
         [DllImport(CUSPARSE_DLL_NAME)]
-        private static extern CUSPARSEStatus cusparseDcsrmm(cusparseHandle handle, cusparseOperation transA, int m, int n, int k, double alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr B, int ldb, double beta, IntPtr C, int ldc);
+        private static extern CUSPARSEStatus cusparseDcsrmm_v2(cusparseHandle handle, cusparseOperation transA, int m, int n, int k, int nnz, ref double alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr B, int ldb, ref double beta, IntPtr C, int ldc);
         #endregion
         #endregion
 
@@ -217,9 +215,9 @@ namespace Cudafy.Maths.SPARSE
             return cusparseGetVersion(handle, ref version);
         }
 
-        public CUSPARSEStatus CusparseSetKernelStream(cusparseHandle handle, GASS.CUDA.cudaStream streamId)
+        public CUSPARSEStatus CusparseSetStream(cusparseHandle handle, GASS.CUDA.cudaStream streamId)
         {
-            return cusparseSetKernelStream(handle, streamId);
+            return cusparseSetStream(handle, streamId);
         }
 
         public CUSPARSEStatus CusparseCreateMatDescr(ref cusparseMatDescr descrA)
@@ -341,13 +339,13 @@ namespace Cudafy.Maths.SPARSE
         #endregion
 
         #region CSR2CSC
-        public CUSPARSEStatus CusparseScsr2csc(cusparseHandle handle, int m, int n, IntPtr csrVal, IntPtr csrRowPtr, IntPtr csrColInd, IntPtr cscVal, IntPtr cscRowInd, IntPtr cscColPtr, int copyvalues, int bs)
+        public CUSPARSEStatus CusparseScsr2csc(cusparseHandle handle, int m, int n, int nnz, IntPtr csrVal, IntPtr csrRowPtr, IntPtr csrColInd, IntPtr cscVal, IntPtr cscRowInd, IntPtr cscColPtr, cusparseAction copyvalues, cusparseIndexBase bs)
         {
-            return cusparseScsr2csc(handle, m, n, csrVal, csrRowPtr, csrColInd, cscVal, cscRowInd, cscColPtr, copyvalues, bs);
+            return cusparseScsr2csc_v2(handle, m, n, nnz, csrVal, csrRowPtr, csrColInd, cscVal, cscRowInd, cscColPtr, copyvalues, bs);
         }
-        public CUSPARSEStatus CusparseDcsr2csc(cusparseHandle handle, int m, int n, IntPtr csrVal, IntPtr csrRowPtr, IntPtr csrColInd, IntPtr cscVal, IntPtr cscRowInd, IntPtr cscColPtr, int copyvalues, int bs)
+        public CUSPARSEStatus CusparseDcsr2csc(cusparseHandle handle, int m, int n, int nnz, IntPtr csrVal, IntPtr csrRowPtr, IntPtr csrColInd, IntPtr cscVal, IntPtr cscRowInd, IntPtr cscColPtr, cusparseAction copyvalues, cusparseIndexBase bs)
         {
-            return cusparseDcsr2csc(handle, m, n, csrVal, csrRowPtr, csrColInd, cscVal, cscRowInd, cscColPtr, copyvalues, bs);
+            return cusparseDcsr2csc_v2(handle, m, n, nnz, csrVal, csrRowPtr, csrColInd, cscVal, cscRowInd, cscColPtr, copyvalues, bs);
         }
         #endregion
 
@@ -368,13 +366,13 @@ namespace Cudafy.Maths.SPARSE
 
         #region Wrapper Functions : SPARSE Level 1
         #region AXPY
-        public CUSPARSEStatus CusparseSaxpyi(cusparseHandle handle, int nnz, float alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase)
+        public CUSPARSEStatus CusparseSaxpyi(cusparseHandle handle, int nnz, ref float alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase)
         {
-            return cusparseSaxpyi(handle, nnz, alpha, xVal, xInd, y, idxBase);
+            return cusparseSaxpyi_v2(handle, nnz, ref alpha, xVal, xInd, y, idxBase);
         }
-        public CUSPARSEStatus CusparseDaxpyi(cusparseHandle handle, int nnz, double alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase)
+        public CUSPARSEStatus CusparseDaxpyi(cusparseHandle handle, int nnz, ref double alpha, IntPtr xVal, IntPtr xInd, IntPtr y, cusparseIndexBase idxBase)
         {
-            return cusparseDaxpyi(handle, nnz, alpha, xVal, xInd, y, idxBase);
+            return cusparseDaxpyi_v2(handle, nnz, ref alpha, xVal, xInd, y, idxBase);
         }
         #endregion
 
@@ -412,13 +410,13 @@ namespace Cudafy.Maths.SPARSE
         #endregion
 
         #region ROT
-        public CUSPARSEStatus CusparseSroti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, float c, float s, cusparseIndexBase idxBase)
+        public CUSPARSEStatus CusparseSroti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, ref float c, ref float s, cusparseIndexBase idxBase)
         {
-            return cusparseSroti(handle, nnz, xVal, xInd, y, c, s, idxBase);
+            return cusparseSroti_v2(handle, nnz, xVal, xInd, y, ref c, ref s, idxBase);
         }
-        public CUSPARSEStatus CusparseDroti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, double c, double s, cusparseIndexBase idxBase)
+        public CUSPARSEStatus CusparseDroti(cusparseHandle handle, int nnz, IntPtr xVal, IntPtr xInd, IntPtr y, ref double c, ref double s, cusparseIndexBase idxBase)
         {
-            return cusparseDroti(handle, nnz, xVal, xInd, y, c, s, idxBase);
+            return cusparseDroti_v2(handle, nnz, xVal, xInd, y, ref c, ref s, idxBase);
         }
         #endregion
 
@@ -437,48 +435,48 @@ namespace Cudafy.Maths.SPARSE
 
         #region Wrapper Functions : SPARSE Level 2
         #region CSRMV
-        public CUSPARSEStatus CusparseScsrmv(cusparseHandle handle, cusparseOperation transA, int m, int n, float alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr x, float beta, IntPtr y)
+        public CUSPARSEStatus CusparseScsrmv(cusparseHandle handle, cusparseOperation transA, int m, int n, int nnz, ref float alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr x, ref float beta, IntPtr y)
         {
-            return cusparseScsrmv(handle, transA, m, n, alpha, descrA, csrValA, csrRowPtrA ,csrColIndA, x, beta, y);
+            return cusparseScsrmv_v2(handle, transA, m, n, nnz, ref alpha, descrA, csrValA, csrRowPtrA ,csrColIndA, x, ref beta, y);
         }
-        public CUSPARSEStatus CusparseDcsrmv(cusparseHandle handle, cusparseOperation transA, int m, int n, double alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr x, double beta, IntPtr y)
+        public CUSPARSEStatus CusparseDcsrmv(cusparseHandle handle, cusparseOperation transA, int m, int n, int nnz, ref double alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr x, ref double beta, IntPtr y)
         {
-            return cusparseDcsrmv(handle, transA, m, n, alpha, descrA, csrValA, csrRowPtrA ,csrColIndA, x, beta, y);
+            return cusparseDcsrmv_v2(handle, transA, m, n, nnz, ref alpha, descrA, csrValA, csrRowPtrA, csrColIndA, x, ref beta, y);
         }
         #endregion
 
         #region CSRSV_ANALYSIS
-        public CUSPARSEStatus CusparseScsrsv_analysis(cusparseHandle handle, cusparseOperation transA, int m, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info)
+        public CUSPARSEStatus CusparseScsrsv_analysis(cusparseHandle handle, cusparseOperation transA, int m, int nnz, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info)
         {
-            return cusparseScsrsv_analysis(handle, transA, m, descrA, csrValA, csrRowPtrA, csrColIndA, info);
+            return cusparseScsrsv_analysis_v2(handle, transA, m, nnz, descrA, csrValA, csrRowPtrA, csrColIndA, info);
         }
-        public CUSPARSEStatus CusparseDcsrsv_analysis(cusparseHandle handle, cusparseOperation transA, int m, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info)
+        public CUSPARSEStatus CusparseDcsrsv_analysis(cusparseHandle handle, cusparseOperation transA, int m, int nnz, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info)
         {
-            return cusparseDcsrsv_analysis(handle, transA, m, descrA, csrValA, csrRowPtrA, csrColIndA, info); ;
+            return cusparseDcsrsv_analysis_v2(handle, transA, m, nnz, descrA, csrValA, csrRowPtrA, csrColIndA, info); ;
         }
         #endregion
 
         #region CSRSV_SOLVE
-        public CUSPARSEStatus CusparseScsrsv_solve(cusparseHandle handle, cusparseOperation transA, int m, float alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info, IntPtr x, IntPtr y)
+        public CUSPARSEStatus CusparseScsrsv_solve(cusparseHandle handle, cusparseOperation transA, int m, ref float alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info, IntPtr x, IntPtr y)
         {
-            return cusparseScsrsv_solve(handle, transA, m, alpha, descrA, csrValA, csrRowPtrA, csrColIndA, info, x, y);
+            return cusparseScsrsv_solve_v2(handle, transA, m, ref alpha, descrA, csrValA, csrRowPtrA, csrColIndA, info, x, y);
         }
-        public CUSPARSEStatus CusparseDcsrsv_solve(cusparseHandle handle, cusparseOperation transA, int m, double alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info, IntPtr x, IntPtr y)
+        public CUSPARSEStatus CusparseDcsrsv_solve(cusparseHandle handle, cusparseOperation transA, int m, ref double alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, cusparseSolveAnalysisInfo info, IntPtr x, IntPtr y)
         {
-            return cusparseDcsrsv_solve(handle, transA, m, alpha, descrA, csrValA, csrRowPtrA, csrColIndA, info, x, y);
+            return cusparseDcsrsv_solve_v2(handle, transA, m, ref alpha, descrA, csrValA, csrRowPtrA, csrColIndA, info, x, y);
         }
         #endregion
         #endregion
 
         #region Wrapper Functions : SPARSE Level 3
         #region CSRMM
-        public CUSPARSEStatus CusparseScsrmm(cusparseHandle handle, cusparseOperation transA, int m, int n, int k, float alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr B, int ldb, float beta, IntPtr C, int ldc)
+        public CUSPARSEStatus CusparseScsrmm(cusparseHandle handle, cusparseOperation transA, int m, int n, int k, int nnz, ref float alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr B, int ldb, ref float beta, IntPtr C, int ldc)
         {
-            return cusparseScsrmm(handle, transA, m, n, k, alpha, descrA, csrValA, csrRowPtrA, csrColIndA, B, ldb, beta, C, ldc);
+            return cusparseScsrmm_v2(handle, transA, m, n, k, nnz, ref alpha, descrA, csrValA, csrRowPtrA, csrColIndA, B, ldb, ref beta, C, ldc);
         }
-        public CUSPARSEStatus CusparseDcsrmm(cusparseHandle handle, cusparseOperation transA, int m, int n, int k, double alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr B, int ldb, double beta, IntPtr C, int ldc)
+        public CUSPARSEStatus CusparseDcsrmm(cusparseHandle handle, cusparseOperation transA, int m, int n, int k, int nnz, ref double alpha, cusparseMatDescr descrA, IntPtr csrValA, IntPtr csrRowPtrA, IntPtr csrColIndA, IntPtr B, int ldb, ref double beta, IntPtr C, int ldc)
         {
-            return cusparseDcsrmm(handle, transA, m, n, k, alpha, descrA, csrValA, csrRowPtrA, csrColIndA, B, ldb, beta, C, ldc);
+            return cusparseDcsrmm_v2(handle, transA, m, n, k, nnz, ref alpha, descrA, csrValA, csrRowPtrA, csrColIndA, B, ldb, ref beta, C, ldc);
         }
         #endregion
         #endregion

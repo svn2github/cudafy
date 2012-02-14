@@ -145,7 +145,7 @@ namespace Cudafy.Maths.UnitTests
             _gpu.CopyToDevice(_hiIndicesX, _diIndicesX);
             _gpu.CopyToDevice(_hiVectorY, _diVectorY);
 
-            _sparse.AXPY(alpha, _diValsX, _diIndicesX, _diVectorY);
+            _sparse.AXPY(ref alpha, _diValsX, _diIndicesX, _diVectorY);
 
             _gpu.CopyFromDevice(_diVectorY, _hoVectorY);
 
@@ -218,7 +218,7 @@ namespace Cudafy.Maths.UnitTests
             _gpu.CopyToDevice(_hiIndicesX, _diIndicesX);
             _gpu.CopyToDevice(_hiVectorY, _diVectorY);
 
-            _sparse.ROT(_diValsX, _diIndicesX, _diVectorY, C, S);
+            _sparse.ROT(_diValsX, _diIndicesX, _diVectorY, ref C, ref  S);
 
             _gpu.CopyFromDevice(_diValsX, _hoValsX);
             _gpu.CopyFromDevice(_diVectorY, _hoVectorY);

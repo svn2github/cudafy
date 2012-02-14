@@ -1,9 +1,12 @@
 ﻿/* Added by Kichang Kim (kkc0923@hotmail.com) */
-namespace Cudafy.Maths.SPARSE.Types
+namespace Cudafy.Maths.SPARSE
 {
     using System;
     using System.Runtime.InteropServices;
 
+    /// <summary>
+    /// The structure is used to describe the shape and properties of a matrix.
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct cusparseMatDescr
     {

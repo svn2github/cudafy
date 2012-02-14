@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Cudafy.Types;
 using Cudafy.Host;
-using Cudafy.Maths.SPARSE.Types;
 
 using GASS.CUDA.Types;
 using GASS.CUDA;
@@ -250,7 +249,7 @@ namespace Cudafy.Maths.SPARSE
         #endregion
 
         #region CSR2CSC
-        public override void CSR2CSC(int m, int n, float[] csrVal, int[] csrRow, int[] csrCol, float[] cscVal, int[] cscRow, int[] cscCol, int copyValues = 1, int bs = 0)
+        public override void CSR2CSC(int m, int n, int nnz, float[] csrVal, int[] csrRow, int[] csrCol, float[] cscVal, int[] cscRow, int[] cscCol, cusparseAction copyValues = cusparseAction.Numeric, cusparseIndexBase bs = cusparseIndexBase.Zero)
         {
             CUdeviceptr ptrcsrv = GetDeviceMemory(csrVal);
             CUdeviceptr ptrcsrr = GetDeviceMemory(csrRow);
@@ -260,10 +259,10 @@ namespace Cudafy.Maths.SPARSE
             CUdeviceptr ptrcscr = GetDeviceMemory(cscRow);
             CUdeviceptr ptrcscc = GetDeviceMemory(cscCol);
 
-            LastStatus = _driver.CusparseScsr2csc(_sparse, m, n, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, ptrcscv.Pointer, ptrcscr.Pointer, ptrcscc.Pointer, copyValues, bs);
+            LastStatus = _driver.CusparseScsr2csc(_sparse, m, n,nnz, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, ptrcscv.Pointer, ptrcscr.Pointer, ptrcscc.Pointer, copyValues, bs);
         }
 
-        public override void CSR2CSC(int m, int n, double[] csrVal, int[] csrRow, int[] csrCol, double[] cscVal, int[] cscRow, int[] cscCol, int copyValues = 1, int bs = 0)
+        public override void CSR2CSC(int m, int n, int nnz, double[] csrVal, int[] csrRow, int[] csrCol, double[] cscVal, int[] cscRow, int[] cscCol, cusparseAction copyValues = cusparseAction.Numeric, cusparseIndexBase bs = cusparseIndexBase.Zero)
         {
             CUdeviceptr ptrcsrv = GetDeviceMemory(csrVal);
             CUdeviceptr ptrcsrr = GetDeviceMemory(csrRow);
@@ -273,7 +272,7 @@ namespace Cudafy.Maths.SPARSE
             CUdeviceptr ptrcscr = GetDeviceMemory(cscRow);
             CUdeviceptr ptrcscc = GetDeviceMemory(cscCol);
 
-            LastStatus = _driver.CusparseDcsr2csc(_sparse, m, n, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, ptrcscv.Pointer, ptrcscr.Pointer, ptrcscc.Pointer, copyValues, bs);
+            LastStatus = _driver.CusparseDcsr2csc(_sparse, m, n, nnz, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, ptrcscv.Pointer, ptrcscr.Pointer, ptrcscc.Pointer, copyValues, bs);
         }
         #endregion
 
@@ -301,21 +300,21 @@ namespace Cudafy.Maths.SPARSE
         #region SPARSE Level 1
 
         #region AXPY
-        public override void AXPY(float alpha, float[] vectorx, int[] indexx, float[] vectory, int n = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero)
+        public override void AXPY(ref float alpha, float[] vectorx, int[] indexx, float[] vectory, int n = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero)
         {
             CUdeviceptr ptrx = GetDeviceMemory(vectorx, ref n);
             CUdeviceptr ptry = GetDeviceMemory(vectory);
             CUdeviceptr ptrix = GetDeviceMemory(indexx);
 
-            LastStatus = _driver.CusparseSaxpyi(_sparse, n, alpha, ptrx.Pointer, ptrix.Pointer, ptry.Pointer, ibase);
+            LastStatus = _driver.CusparseSaxpyi(_sparse, n, ref alpha, ptrx.Pointer, ptrix.Pointer, ptry.Pointer, ibase);
         }
-        public override void AXPY(double alpha, double[] vectorx, int[] indexx, double[] vectory, int n = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero)
+        public override void AXPY(ref double alpha, double[] vectorx, int[] indexx, double[] vectory, int n = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero)
         {
             CUdeviceptr ptrx = GetDeviceMemory(vectorx, ref n);
             CUdeviceptr ptry = GetDeviceMemory(vectory);
             CUdeviceptr ptrix = GetDeviceMemory(indexx);
 
-            LastStatus = _driver.CusparseDaxpyi(_sparse, n, alpha, ptrx.Pointer, ptrix.Pointer, ptry.Pointer, ibase);
+            LastStatus = _driver.CusparseDaxpyi(_sparse, n, ref alpha, ptrx.Pointer, ptrix.Pointer, ptry.Pointer, ibase);
         }
         #endregion
 
@@ -383,21 +382,21 @@ namespace Cudafy.Maths.SPARSE
         #endregion
 
         #region ROT
-        public override void ROT(float[] vectorx, int[] indexx, float[] vectory, float c, float s, int n = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero)
+        public override void ROT(float[] vectorx, int[] indexx, float[] vectory, ref float c, ref float s, int n = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero)
         {
             CUdeviceptr ptrx = GetDeviceMemory(vectorx, ref n);
             CUdeviceptr ptry = GetDeviceMemory(vectory);
             CUdeviceptr ptrix = GetDeviceMemory(indexx);
 
-            LastStatus = _driver.CusparseSroti(_sparse, n, ptrx.Pointer, ptrix.Pointer, ptry.Pointer, c, s, ibase);
+            LastStatus = _driver.CusparseSroti(_sparse, n, ptrx.Pointer, ptrix.Pointer, ptry.Pointer, ref c, ref s, ibase);
         }
-        public override void ROT(double[] vectorx, int[] indexx, double[] vectory, double c, double s, int n = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero)
+        public override void ROT(double[] vectorx, int[] indexx, double[] vectory, ref double c, ref double s, int n = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero)
         {
             CUdeviceptr ptrx = GetDeviceMemory(vectorx, ref n);
             CUdeviceptr ptry = GetDeviceMemory(vectory);
             CUdeviceptr ptrix = GetDeviceMemory(indexx);
 
-            LastStatus = _driver.CusparseDroti(_sparse, n, ptrx.Pointer, ptrix.Pointer, ptry.Pointer, c, s, ibase);
+            LastStatus = _driver.CusparseDroti(_sparse, n, ptrx.Pointer, ptrix.Pointer, ptry.Pointer, ref c, ref s, ibase);
         }
         #endregion
 
@@ -423,7 +422,7 @@ namespace Cudafy.Maths.SPARSE
 
         #region SPARSE Level 2
         #region CSRMV
-        public override void CSRMV(int m, int n, float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] x, float beta, float[] y, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose)
+        public override void CSRMV(int m, int n, int nnz, ref float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] x, ref float beta, float[] y, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose)
         {
             CUdeviceptr ptrcsrv = GetDeviceMemory(csrValA);
             CUdeviceptr ptrcsrr = GetDeviceMemory(csrRowA);
@@ -431,10 +430,10 @@ namespace Cudafy.Maths.SPARSE
             CUdeviceptr ptrx = GetDeviceMemory(x);
             CUdeviceptr ptry = GetDeviceMemory(y);
 
-            LastStatus = _driver.CusparseScsrmv(_sparse, op, m, n, alpha, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, ptrx.Pointer, beta, ptry.Pointer);
+            LastStatus = _driver.CusparseScsrmv(_sparse, op, m, n, nnz, ref alpha, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, ptrx.Pointer, ref beta, ptry.Pointer);
         }
 
-        public override void CSRMV(int m, int n, double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] x, double beta, double[] y, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose)
+        public override void CSRMV(int m, int n, int nnz, ref double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] x, ref double beta, double[] y, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose)
         {
             CUdeviceptr ptrcsrv = GetDeviceMemory(csrValA);
             CUdeviceptr ptrcsrr = GetDeviceMemory(csrRowA);
@@ -442,32 +441,32 @@ namespace Cudafy.Maths.SPARSE
             CUdeviceptr ptrx = GetDeviceMemory(x);
             CUdeviceptr ptry = GetDeviceMemory(y);
 
-            LastStatus = _driver.CusparseDcsrmv(_sparse, op, m, n, alpha, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, ptrx.Pointer, beta, ptry.Pointer);
+            LastStatus = _driver.CusparseDcsrmv(_sparse, op, m, n, nnz, ref alpha, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, ptrx.Pointer, ref beta, ptry.Pointer);
         }
         #endregion
 
         #region CSRSV_ANALYSIS
-        public override void CSRSV_ANALYSIS(int m, float[] csrValA, int[] csrRowA, int[] csrColA, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA)
+        public override void CSRSV_ANALYSIS(int m, int nnz, float[] csrValA, int[] csrRowA, int[] csrColA, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA)
         {
             CUdeviceptr ptrcsrv = GetDeviceMemory(csrValA);
             CUdeviceptr ptrcsrr = GetDeviceMemory(csrRowA);
             CUdeviceptr ptrcsrc = GetDeviceMemory(csrColA);
 
-            LastStatus = _driver.CusparseScsrsv_analysis(_sparse, op, m, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, info);
+            LastStatus = _driver.CusparseScsrsv_analysis(_sparse, op, m, nnz, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, info);
         }
 
-        public override void CSRSV_ANALYSIS(int m, double[] csrValA, int[] csrRowA, int[] csrColA, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA)
+        public override void CSRSV_ANALYSIS(int m, int nnz, double[] csrValA, int[] csrRowA, int[] csrColA, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA)
         {
             CUdeviceptr ptrcsrv = GetDeviceMemory(csrValA);
             CUdeviceptr ptrcsrr = GetDeviceMemory(csrRowA);
             CUdeviceptr ptrcsrc = GetDeviceMemory(csrColA);
 
-            LastStatus = _driver.CusparseDcsrsv_analysis(_sparse, op, m, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, info);
+            LastStatus = _driver.CusparseDcsrsv_analysis(_sparse, op, m, nnz, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, info);
         }
         #endregion
 
         #region CSRSV_SOLVE
-        public override void CSRSV_SOLVE(int m, float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] x, float[] y, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA)
+        public override void CSRSV_SOLVE(int m, ref float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] x, float[] y, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA)
         {
             CUdeviceptr ptrcsrv = GetDeviceMemory(csrValA);
             CUdeviceptr ptrcsrr = GetDeviceMemory(csrRowA);
@@ -475,10 +474,10 @@ namespace Cudafy.Maths.SPARSE
             CUdeviceptr ptrx = GetDeviceMemory(x);
             CUdeviceptr ptry = GetDeviceMemory(y);
 
-            LastStatus = _driver.CusparseScsrsv_solve(_sparse, op, m, alpha, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, info, ptrx.Pointer, ptry.Pointer);
+            LastStatus = _driver.CusparseScsrsv_solve(_sparse, op, m, ref alpha, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, info, ptrx.Pointer, ptry.Pointer);
         }
 
-        public override void CSRSV_SOLVE(int m, double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] x, double[] y, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA)
+        public override void CSRSV_SOLVE(int m, ref double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] x, double[] y, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA)
         {
             CUdeviceptr ptrcsrv = GetDeviceMemory(csrValA);
             CUdeviceptr ptrcsrr = GetDeviceMemory(csrRowA);
@@ -486,14 +485,14 @@ namespace Cudafy.Maths.SPARSE
             CUdeviceptr ptrx = GetDeviceMemory(x);
             CUdeviceptr ptry = GetDeviceMemory(y);
 
-            LastStatus = _driver.CusparseDcsrsv_solve(_sparse, op, m, alpha, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, info, ptrx.Pointer, ptry.Pointer);
+            LastStatus = _driver.CusparseDcsrsv_solve(_sparse, op, m, ref alpha, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, info, ptrx.Pointer, ptry.Pointer);
         }
         #endregion
         #endregion
 
         #region SPARSE Level 3
         #region CSRMM
-        public override void CSRMM(int m, int k, int n, float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] B, float beta, float[] C, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0)
+        public override void CSRMM(int m, int k, int n, int nnz, ref float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] B, ref float beta, float[] C, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0)
         {
             if (op == cusparseOperation.NonTranspose)
             {
@@ -513,10 +512,10 @@ namespace Cudafy.Maths.SPARSE
             CUdeviceptr ptrb = GetDeviceMemory(B);
             CUdeviceptr ptrc = GetDeviceMemory(C);
 
-            LastStatus = _driver.CusparseScsrmm(_sparse, op, m, n, k, alpha, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, ptrb.Pointer, ldb, beta, ptrc.Pointer, ldc); 
+            LastStatus = _driver.CusparseScsrmm(_sparse, op, m, n, k, nnz, ref alpha, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, ptrb.Pointer, ldb, ref beta, ptrc.Pointer, ldc); 
         }
 
-        public override void CSRMM(int m, int k, int n, double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] B, double beta, double[] C, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0)
+        public override void CSRMM(int m, int k, int n, int nnz, ref double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] B, ref double beta, double[] C, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0)
         {
             if (op == cusparseOperation.NonTranspose)
             {
@@ -536,7 +535,7 @@ namespace Cudafy.Maths.SPARSE
             CUdeviceptr ptrb = GetDeviceMemory(B);
             CUdeviceptr ptrc = GetDeviceMemory(C);
 
-            LastStatus = _driver.CusparseDcsrmm(_sparse, op, m, n, k, alpha, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, ptrb.Pointer, ldb, beta, ptrc.Pointer, ldc); 
+            LastStatus = _driver.CusparseDcsrmm(_sparse, op, m, n, k, nnz, ref alpha, descrA, ptrcsrv.Pointer, ptrcsrr.Pointer, ptrcsrc.Pointer, ptrb.Pointer, ldb, ref beta, ptrc.Pointer, ldc); 
         }
         #endregion
         #endregion

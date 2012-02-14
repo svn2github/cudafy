@@ -43,7 +43,7 @@ namespace Cudafy.Host.UnitTests
                 CudafyUnitTest.PerformAllTests(st);
 
                 BasicFunctionTests bft = new BasicFunctionTests();
-                CudafyUnitTest.PerformAllTests(bft);//, "Test_useForeachSByte");
+                CudafyUnitTest.PerformAllTests(bft);
 
                 GMathUnitTests gmu = new GMathUnitTests();
                 CudafyUnitTest.PerformAllTests(gmu);
@@ -60,7 +60,7 @@ namespace Cudafy.Host.UnitTests
                 if (CudafyHost.GetDeviceCount(CudafyModes.Target) > 1)
                 {
                     MultiGPUTests mgt = new MultiGPUTests();
-                    CudafyUnitTest.PerformAllTests(mgt);//, "Test_SingleThreadTwoGPU");
+                    CudafyUnitTest.PerformAllTests(mgt);
                 }
 
                 Console.WriteLine("Done");

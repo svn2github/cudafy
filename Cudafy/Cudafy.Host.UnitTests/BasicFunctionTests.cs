@@ -136,6 +136,13 @@ namespace Cudafy.Host.UnitTests
         }
 
         [Test]
+        public void Test_getTotalMemory()
+        {
+            ulong mem = _gpu.TotalMemory;
+            Assert.Greater(mem, 0);
+        }
+
+        [Test]
         public void Test_processStructure()
         {
 

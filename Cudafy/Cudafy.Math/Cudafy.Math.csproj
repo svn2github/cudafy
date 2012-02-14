@@ -130,6 +130,7 @@
     <Compile Include="SPARSE\CUSPARSEStatus.cs" />
     <Compile Include="SPARSE\GPGPUSPARSE.cs" />
     <Compile Include="SPARSE\ICUSPARSEDriver.cs" />
+    <Compile Include="SPARSE\Types\cusparseAction.cs" />
     <Compile Include="SPARSE\Types\cusparseDiagType.cs" />
     <Compile Include="SPARSE\Types\cusparseDirection.cs" />
     <Compile Include="SPARSE\Types\cusparseFillMode.cs" />
@@ -138,6 +139,7 @@
     <Compile Include="SPARSE\Types\cusparseMatDescr.cs" />
     <Compile Include="SPARSE\Types\cusparseMatrixType.cs" />
     <Compile Include="SPARSE\Types\cusparseOperation.cs" />
+    <Compile Include="SPARSE\Types\cusparsePointerMode.cs" />
     <Compile Include="SPARSE\Types\cusparseSolveAnalysisInfo.cs" />
   </ItemGroup>
   <ItemGroup>

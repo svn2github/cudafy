@@ -427,6 +427,17 @@ namespace Cudafy.Host
             get { return _cuda.FreeMemory; }
         }
 
+        /// <summary>
+        /// Gets the total memory.
+        /// </summary>
+        /// <value>
+        /// The total memory.
+        /// </value>
+        public override ulong TotalMemory
+        {
+            get { return _cuda.TotalMemory; }
+        }
+
         #region Launch
 
         private int AlignUp(int offset, int alignment)

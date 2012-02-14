@@ -457,6 +457,12 @@ namespace Cudafy.Host
         public abstract ulong FreeMemory { get; }
 
         /// <summary>
+        /// Gets the total memory.
+        /// </summary>
+        /// <value>The total memory.</value>
+        public abstract ulong TotalMemory { get; }
+
+        /// <summary>
         /// Gets the names of all global functions.
         /// </summary>
         /// <returns></returns>

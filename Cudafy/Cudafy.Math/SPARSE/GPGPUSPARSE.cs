@@ -7,7 +7,6 @@ using System.Diagnostics;
 
 using Cudafy.Host;
 using Cudafy.Types;
-using Cudafy.Maths.SPARSE.Types;
 
 namespace Cudafy.Maths.SPARSE
 {
@@ -426,15 +425,16 @@ namespace Cudafy.Maths.SPARSE
         /// </summary>
         /// <param name="m">number of rows of the matrix A; m must be at least zero.</param>
         /// <param name="n">number of columns of the matrix A; n must be at least zero.</param>
+        /// <param name="nnz">number of non-zero elements of matrix A.</param>
         /// <param name="csrVal">array of nnz elements, where nnz is the number of non-zero elements and can be obtained from csrRow[m] - csrRow[0].</param>
         /// <param name="csrRow">array of m+1 indices.</param>
         /// <param name="csrCol">array of nnz column indices.</param>
         /// <param name="cscVal">array of nnz elements, where nnz is the number of non-zero elements and can be obtained from csrCol[n] - csrCol[0]. if copyValues is non-zero, updated array.</param>
         /// <param name="cscRow">updated array of nnz row indices.</param>
         /// <param name="cscCol">updated array of n+1 index elements.</param>
-        /// <param name="copyValues">if zero, cscVal array is not filled.</param>
+        /// <param name="copyValues">if Symbloic, cscVal array is not filled.</param>
         /// <param name="bs">base index.</param>
-        public abstract void CSR2CSC(int m, int n, float[] csrVal, int[] csrRow, int[] csrCol, float[] cscVal, int[] cscRow, int[] cscCol, int copyValues = 1, int bs = 0);
+        public abstract void CSR2CSC(int m, int n, int nnz, float[] csrVal, int[] csrRow, int[] csrCol, float[] cscVal, int[] cscRow, int[] cscCol, cusparseAction copyValues = cusparseAction.Numeric, cusparseIndexBase bs = cusparseIndexBase.Zero);
 
         /// <summary>
         /// Converts the matrix in CSR format defined with the three arrays csrVal, csrRow and csrCol into matrix A in CSC format defined by array cscVal, cscRow, cscCol.
@@ -442,15 +442,16 @@ namespace Cudafy.Maths.SPARSE
         /// </summary>
         /// <param name="m">number of rows of the matrix A; m must be at least zero.</param>
         /// <param name="n">number of columns of the matrix A; n must be at least zero.</param>
+        /// <param name="nnz">number of non-zero elements of matrix A.</param>
         /// <param name="csrVal">array of nnz elements, where nnz is the number of non-zero elements and can be obtained from csrRow[m] - csrRow[0].</param>
         /// <param name="csrRow">array of m+1 indices.</param>
         /// <param name="csrCol">array of nnz column indices.</param>
         /// <param name="cscVal">array of nnz elements, where nnz is the number of non-zero elements and can be obtained from csrCol[n] - csrCol[0]. if copyValues is non-zero, updated array.</param>
         /// <param name="cscRow">updated array of nnz row indices.</param>
         /// <param name="cscCol">updated array of n+1 index elements.</param>
-        /// <param name="copyValues">if zero, cscVal array is not filled.</param>
+        /// <param name="copyValues">if Symbloic, cscVal array is not filled.</param>
         /// <param name="bs">base index.</param>
-        public abstract void CSR2CSC(int m, int n, double[] csrVal, int[] csrRow, int[] csrCol, double[] cscVal, int[] cscRow, int[] cscCol, int copyValues = 1, int bs = 0);
+        public abstract void CSR2CSC(int m, int n, int nnz, double[] csrVal, int[] csrRow, int[] csrCol, double[] cscVal, int[] cscRow, int[] cscCol, cusparseAction copyValues = cusparseAction.Numeric, cusparseIndexBase bs = cusparseIndexBase.Zero);
         #endregion
 
         #region COO2CSR
@@ -494,7 +495,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="vectory">initial vector in dense format.</param>
         /// <param name="nnz">number of elements of the vector x (set to 0 for all elements).</param>
         /// <param name="ibase">The index base.</param>
-        public abstract void AXPY(float alpha, float[] vectorx, int[] indexx, float[] vectory, int nnz = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero);
+        public abstract void AXPY(ref float alpha, float[] vectorx, int[] indexx, float[] vectory, int nnz = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero);
         /// <summary>
         /// Multiplies the vector x in sparse format by the constant alpha and adds
         /// the result to the vector y in dense format.
@@ -506,7 +507,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="vectory">initial vector in dense format.</param>
         /// <param name="nnz">number of elements of the vector x (set to 0 for all elements).</param>
         /// <param name="ibase">The index base.</param>
-        public abstract void AXPY(double alpha, double[] vectorx, int[] indexx, double[] vectory, int nnz = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero);
+        public abstract void AXPY(ref double alpha, double[] vectorx, int[] indexx, double[] vectory, int nnz = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero);
         #endregion
 
         #region DOT
@@ -597,7 +598,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="s">scalar</param>
         /// <param name="nnz">number of non-zero elements of the vector x (set to 0 for all non-zero elements).</param>
         /// <param name="ibase">The index base.</param>
-        public abstract void ROT(float[] vectorx, int[] indexx, float[] vectory, float c, float s, int nnz = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero);
+        public abstract void ROT(float[] vectorx, int[] indexx, float[] vectory, ref float c, ref float s, int nnz = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero);
         /// <summary>
         /// Applies givens rotation, defined by values c and s, to vectors x in sparse and y in dense format.
         /// x[i] = c * x[i] + s * y[i];
@@ -610,7 +611,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="s">scalar</param>
         /// <param name="nnz">number of non-zero elements of the vector x (set to 0 for all non-zero elements).</param>
         /// <param name="ibase">The index base.</param>
-        public abstract void ROT(double[] vectorx, int[] indexx, double[] vectory, double c, double s, int nnz = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero);
+        public abstract void ROT(double[] vectorx, int[] indexx, double[] vectory, ref double c, ref double s, int nnz = 0, cusparseIndexBase ibase = cusparseIndexBase.Zero);
         #endregion
 
         #region SCTR
@@ -650,6 +651,7 @@ namespace Cudafy.Maths.SPARSE
         /// </summary>
         /// <param name="m">specifies the number of rows of matrix A; m mmust be at least zero.</param>
         /// <param name="n">specifies the number of columns of matrix A; n mmust be at least zero.</param>
+        /// <param name="nnz">number of non-zero elements of matrix A.</param>
         /// <param name="alpha">scalar multiplier applied to op(A) * x.</param>
         /// <param name="csrValA">array of nnz elements, where nnz is the number of non-zero elements and can be ontained from csrRow[m] - csrRow[0].</param>
         /// <param name="csrRowA">array of m+1 index elements.</param>
@@ -659,7 +661,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="y">vector of m elements if op(A) = A, and n elements if op(A) = transpose(A).</param>
         /// <param name="descrA">descriptor of matrix A.</param>
         /// <param name="op">specifies op(A).</param>
-        public abstract void CSRMV(int m, int n, float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] x, float beta, float[] y, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose);
+        public abstract void CSRMV(int m, int n, int nnz, ref float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] x, ref float beta, float[] y, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose);
 
         /// <summary>
         /// Performs one of the matrix-vector operations.
@@ -667,6 +669,7 @@ namespace Cudafy.Maths.SPARSE
         /// </summary>
         /// <param name="m">specifies the number of rows of matrix A; m mmust be at least zero.</param>
         /// <param name="n">specifies the number of columns of matrix A; n mmust be at least zero.</param>
+        /// <param name="nnz">number of non-zero elements of matrix A.</param>
         /// <param name="alpha">scalar multiplier applied to op(A) * x.</param>
         /// <param name="csrValA">array of nnz elements, where nnz is the number of non-zero elements and can be ontained from csrRow[m] - csrRow[0].</param>
         /// <param name="csrRowA">array of m+1 index elements.</param>
@@ -675,9 +678,9 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="beta">scalar multiplier applied to y. If beta is zero, y does not have to be a valid input.</param>
         /// <param name="y">vector of m elements if op(A) = A, and n elements if op(A) = transpose(A).</param>
         /// <param name="op">specifies op(A).</param>
-        public void CSRMV(int m, int n, float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] x, float beta, float[] y, cusparseOperation op = cusparseOperation.NonTranspose)
+        public void CSRMV(int m, int n, int nnz, ref float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] x, ref float beta, float[] y, cusparseOperation op = cusparseOperation.NonTranspose)
         {
-            CSRMV(m, n, alpha, csrValA, csrRowA, csrColA, x, beta, y, defaultMatDescr, op);
+            CSRMV(m, n, nnz, ref alpha, csrValA, csrRowA, csrColA, x, ref beta, y, defaultMatDescr, op);
         }
 
         /// <summary>
@@ -686,6 +689,7 @@ namespace Cudafy.Maths.SPARSE
         /// </summary>
         /// <param name="m">specifies the number of rows of matrix A; m mmust be at least zero.</param>
         /// <param name="n">specifies the number of columns of matrix A; n mmust be at least zero.</param>
+        /// <param name="nnz">number of non-zero elements of matrix A.</param>
         /// <param name="alpha">scalar multiplier applied to op(A) * x.</param>
         /// <param name="csrValA">array of nnz elements, where nnz is the number of non-zero elements and can be ontained from csrRow[m] - csrRow[0].</param>
         /// <param name="csrRowA">array of m+1 index elements.</param>
@@ -695,7 +699,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="y">vector of m elements if op(A) = A, and n elements if op(A) = transpose(A).</param>
         /// <param name="descrA">descriptor of matrix A.</param>
         /// <param name="op">specifies op(A).</param>
-        public abstract void CSRMV(int m, int n, double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] x, double beta, double[] y, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose);
+        public abstract void CSRMV(int m, int n, int nnz, ref double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] x, ref double beta, double[] y, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose);
 
         /// <summary>
         /// Performs one of the matrix-vector operations.
@@ -703,6 +707,7 @@ namespace Cudafy.Maths.SPARSE
         /// </summary>
         /// <param name="m">specifies the number of rows of matrix A; m mmust be at least zero.</param>
         /// <param name="n">specifies the number of columns of matrix A; n mmust be at least zero.</param>
+        /// <param name="nnz">number of non-zero elements of matrix A.</param>
         /// <param name="alpha">scalar multiplier applied to op(A) * x.</param>
         /// <param name="csrValA">array of nnz elements, where nnz is the number of non-zero elements and can be ontained from csrRow[m] - csrRow[0].</param>
         /// <param name="csrRowA">array of m+1 index elements.</param>
@@ -711,9 +716,9 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="beta">scalar multiplier applied to y. If beta is zero, y does not have to be a valid input.</param>
         /// <param name="y">vector of m elements if op(A) = A, and n elements if op(A) = transpose(A).</param>
         /// <param name="op">specifies op(A).</param>
-        public void CSRMV(int m, int n, double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] x, double beta, double[] y, cusparseOperation op = cusparseOperation.NonTranspose)
+        public void CSRMV(int m, int n, int nnz, ref double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] x, ref double beta, double[] y, cusparseOperation op = cusparseOperation.NonTranspose)
         {
-            CSRMV(m, n, alpha, csrValA, csrRowA, csrColA, x, beta, y, defaultMatDescr, op);
+            CSRMV(m, n, nnz, ref alpha, csrValA, csrRowA, csrColA, x, ref beta, y, defaultMatDescr, op);
         }
        
         #endregion
@@ -724,26 +729,28 @@ namespace Cudafy.Maths.SPARSE
         /// op(A) * y = alpha * x
         /// </summary>
         /// <param name="m">specifies the number of rows and columns of matrix A; m must be at least zero.</param>
+        /// <param name="nnz">number of non-zero elements of matrix A.</param>
         /// <param name="csrValA">array of nnz elements, where nnz is the number of non-zero elements and can be obtained from csrRow[m] - csrRow[0].</param>
         /// <param name="csrRowA">array of m+1 index elements.</param>
         /// <param name="csrColA">array of nnz column indices.</param>
         /// <param name="op">specifies op(A).</param>
         /// <param name="info">structure that stores the information collected during the analysis phase. It should be passed to the solve phase unchanged.</param>
         /// <param name="descrA">descriptor of matrix A.</param>
-        public abstract void CSRSV_ANALYSIS(int m, float[] csrValA, int[] csrRowA, int[] csrColA, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA);
+        public abstract void CSRSV_ANALYSIS(int m, int nnz, float[] csrValA, int[] csrRowA, int[] csrColA, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA);
 
         /// <summary>
         /// Performs the analysis phase of the solution of a sparse triangular linear system.
         /// op(A) * y = alpha * x
         /// </summary>
         /// <param name="m">specifies the number of rows and columns of matrix A; m must be at least zero.</param>
+        /// <param name="nnz">number of non-zero elements of matrix A.</param>
         /// <param name="csrValA">array of nnz elements, where nnz is the number of non-zero elements and can be obtained from csrRow[m] - csrRow[0].</param>
         /// <param name="csrRowA">array of m+1 index elements.</param>
         /// <param name="csrColA">array of nnz column indices.</param>
         /// <param name="op">specifies op(A).</param>
         /// <param name="info">structure that stores the information collected during the analysis phase. It should be passed to the solve phase unchanged.</param>
         /// <param name="descrA">descriptor of matrix A.</param>
-        public abstract void CSRSV_ANALYSIS(int m, double[] csrValA, int[] csrRowA, int[] csrColA, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA);
+        public abstract void CSRSV_ANALYSIS(int m, int nnz, double[] csrValA, int[] csrRowA, int[] csrColA, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA);
         #endregion
 
         #region CSRSV_SOLVE
@@ -761,7 +768,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="op">specifies op(A).</param>
         /// <param name="info">structure that stores the information collected during the analysis phase. It should be passed to the solve phase unchanged.</param>
         /// <param name="descrA">descriptor of matrix A.</param>
-        public abstract void CSRSV_SOLVE(int m, float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] x, float[] y, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA);
+        public abstract void CSRSV_SOLVE(int m, ref float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] x, float[] y, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA);
 
         /// <summary>
         /// Performs the solve phase of the solution of a sparse triangular linear system.
@@ -777,7 +784,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="op">specifies op(A).</param>
         /// <param name="info">structure that stores the information collected during the analysis phase. It should be passed to the solve phase unchanged.</param>
         /// <param name="descrA">descriptor of matrix A.</param>
-        public abstract void CSRSV_SOLVE(int m, double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] x, double[] y, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA);
+        public abstract void CSRSV_SOLVE(int m, ref double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] x, double[] y, cusparseOperation op, cusparseSolveAnalysisInfo info, cusparseMatDescr descrA);
         #endregion
         #endregion
 
@@ -789,6 +796,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="m">number of rows of matrix A; m must be at least zero.</param>
         /// <param name="k">number of columns of matrix A; k must be at least zero.</param>
         /// <param name="n">number of columns of matrices B and C; n must be at least zero.</param>
+        /// <param name="nnz">number of non-zero elements of matrix A.</param>
         /// <param name="alpha">scalar multiplier applied to op(A) * B.</param>
         /// <param name="csrValA">array of nnz elements, where nnz is the number of non-zero elements and can be obtained from csrRowA[m] - csrRowA[0].</param>
         /// <param name="csrRowA">array of m+1 index elements.</param>
@@ -800,7 +808,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="op">specifies op(A).</param>
         /// <param name="ldb">leading dimension of B.</param>
         /// <param name="ldc">leading dimension of C.</param>
-        public abstract void CSRMM(int m, int k, int n, float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] B, float beta, float[] C, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0);
+        public abstract void CSRMM(int m, int k, int n, int nnz, ref float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] B, ref float beta, float[] C, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0);
 
         /// <summary>
         /// Performs matrix-matrix operations. A is CSR format matrix and B, C is dense format.
@@ -809,6 +817,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="m">number of rows of matrix A; m must be at least zero.</param>
         /// <param name="k">number of columns of matrix A; k must be at least zero.</param>
         /// <param name="n">number of columns of matrices B and C; n must be at least zero.</param>
+        /// <param name="nnz">number of non-zero elements of matrix A.</param>
         /// <param name="alpha">scalar multiplier applied to op(A) * B.</param>
         /// <param name="csrValA">array of nnz elements, where nnz is the number of non-zero elements and can be obtained from csrRowA[m] - csrRowA[0].</param>
         /// <param name="csrRowA">array of m+1 index elements.</param>
@@ -819,9 +828,9 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="op">specifies op(A).</param>
         /// <param name="ldb">leading dimension of B.</param>
         /// <param name="ldc">leading dimension of C.</param>
-        public void CSRMM(int m, int k, int n, float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] B, float beta, float[] C, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0)
+        public void CSRMM(int m, int k, int n, int nnz, ref float alpha, float[] csrValA, int[] csrRowA, int[] csrColA, float[] B, ref float beta, float[] C, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0)
         {
-            CSRMM(m, k, n, alpha, csrValA, csrRowA, csrColA, B, beta, C, defaultMatDescr, op, ldb, ldc);
+            CSRMM(m, k, n, nnz, ref alpha, csrValA, csrRowA, csrColA, B, ref beta, C, defaultMatDescr, op, ldb, ldc);
         }
 
         /// <summary>
@@ -831,6 +840,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="m">number of rows of matrix A; m must be at least zero.</param>
         /// <param name="k">number of columns of matrix A; k must be at least zero.</param>
         /// <param name="n">number of columns of matrices B and C; n must be at least zero.</param>
+        /// <param name="nnz">number of non-zero elements of matrix A.</param>
         /// <param name="alpha">scalar multiplier applied to op(A) * B.</param>
         /// <param name="csrValA">array of nnz elements, where nnz is the number of non-zero elements and can be obtained from csrRowA[m] - csrRowA[0].</param>
         /// <param name="csrRowA">array of m+1 index elements.</param>
@@ -842,7 +852,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="op">specifies op(A).</param>
         /// <param name="ldb">leading dimension of B.</param>
         /// <param name="ldc">leading dimension of C.</param>
-        public abstract void CSRMM(int m, int k, int n, double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] B, double beta, double[] C, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0);
+        public abstract void CSRMM(int m, int k, int n, int nnz, ref double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] B, ref double beta, double[] C, cusparseMatDescr descrA, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0);
 
         /// <summary>
         /// Performs matrix-matrix operations. A is CSR format matrix and B, C is dense format.
@@ -851,6 +861,7 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="m">number of rows of matrix A; m must be at least zero.</param>
         /// <param name="k">number of columns of matrix A; k must be at least zero.</param>
         /// <param name="n">number of columns of matrices B and C; n must be at least zero.</param>
+        /// <param name="nnz">number of non-zero elements of matrix A.</param>
         /// <param name="alpha">scalar multiplier applied to op(A) * B.</param>
         /// <param name="csrValA">array of nnz elements, where nnz is the number of non-zero elements and can be obtained from csrRowA[m] - csrRowA[0].</param>
         /// <param name="csrRowA">array of m+1 index elements.</param>
@@ -861,9 +872,9 @@ namespace Cudafy.Maths.SPARSE
         /// <param name="op">specifies op(A).</param>
         /// <param name="ldb">leading dimension of B.</param>
         /// <param name="ldc">leading dimension of C.</param>
-        public void CSRMM(int m, int k, int n, double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] B, double beta, double[] C, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0)
+        public void CSRMM(int m, int k, int n, int nnz, ref double alpha, double[] csrValA, int[] csrRowA, int[] csrColA, double[] B, ref double beta, double[] C, cusparseOperation op = cusparseOperation.NonTranspose, int ldb = 0, int ldc = 0)
         {
-            CSRMM(m, k, n, alpha, csrValA, csrRowA, csrColA, B, beta, C, defaultMatDescr, op, ldb, ldc);
+            CSRMM(m, k, n, nnz, ref alpha, csrValA, csrRowA, csrColA, B, ref beta, C, defaultMatDescr, op, ldb, ldc);
         }
         #endregion
     }

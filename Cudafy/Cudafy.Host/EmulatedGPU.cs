@@ -157,6 +157,17 @@ namespace Cudafy.Host
         }
 
         /// <summary>
+        /// Gets the total memory.
+        /// </summary>
+        /// <value>
+        /// The total memory.
+        /// </value>
+        public override ulong TotalMemory
+        {
+            get { return new Computer().Info.TotalPhysicalMemory; }
+        }
+
+        /// <summary>
         /// Does the launch.
         /// </summary>
         /// <param name="gridSize">Size of the grid.</param>

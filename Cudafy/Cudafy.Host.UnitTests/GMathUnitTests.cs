@@ -43,7 +43,6 @@ namespace Cudafy.Host.UnitTests
             _cm = CudafyTranslator.Cudafy(this);
             _gpu = CudafyHost.GetDevice(CudafyModes.Target);
             _gpu.LoadModule(_cm);
-            //Console.WriteLine(_cm.CompilerOutput);
         }
 
         [TestFixtureTearDown]
@@ -75,7 +74,7 @@ namespace Cudafy.Host.UnitTests
         public void Test_Math()
         {
             double[] data = new double[N];
-            double[] dev_data = _gpu.Allocate<double>(data);
+            double[] dev_data = _gpu.CopyToDevice(data); 
 #if !NET35
             _gpu.Launch().mathtest(dev_data);
 #else
@@ -92,7 +91,7 @@ namespace Cudafy.Host.UnitTests
         public void Test_GMath()
         {
             float[] data = new float[N];
-            float[] dev_data = _gpu.Allocate<float>(data);
+            float[] dev_data = _gpu.CopyToDevice(data);
 #if !NET35
             _gpu.Launch().gmathtest(dev_data);
 #else

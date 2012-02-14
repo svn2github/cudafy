@@ -28,8 +28,8 @@ namespace Cudafy.Maths.UnitTests
         const int NNZRATIO = 10; // non-zero elements ratio. %
         const int RandomMax = 255; // all of elements are 1 <= value <= RandomMax + 1
 
-        const double Alpha = 3.0;
-        const double Beta = 4.0;
+        double Alpha = 3.0;
+        double Beta = 4.0;
 
         // CPU Buffers
         double[] hiMatrixMN;
@@ -183,7 +183,7 @@ namespace Cudafy.Maths.UnitTests
 
             _sparse.Dense2CSR(M, N, diMatrixA, diNNZRows, diVals, diRows, diCols);
 
-            _sparse.CSRMV(M, N, Alpha, diVals, diRows, diCols, diVectorXN, Beta, diVectorYM);
+            _sparse.CSRMV(M, N, nnz, ref Alpha, diVals, diRows, diCols, diVectorXN, ref Beta, diVectorYM);
 
             _gpu.CopyFromDevice(diVectorYM, gpuResultM);
 
@@ -223,7 +223,7 @@ namespace Cudafy.Maths.UnitTests
 
             _sparse.Dense2CSR(M, N, diMatrixA, diNNZRows, diVals, diRows, diCols);
 
-            _sparse.CSRMV(M, N, Alpha, diVals, diRows, diCols, diVectorXM, Beta, diVectorYN, SPARSE.Types.cusparseOperation.Transpose);
+            _sparse.CSRMV(M, N, nnz, ref Alpha, diVals, diRows, diCols, diVectorXM, ref Beta, diVectorYN, SPARSE.cusparseOperation.Transpose);
 
             _gpu.CopyFromDevice(diVectorYN, gpuResultN);
 
@@ -243,117 +243,119 @@ namespace Cudafy.Maths.UnitTests
             _gpu.FreeAll();
         }
 
-        [Test]
-        public void Test_SPARSE2_CSRSV()
-        {
-            int nnz;
-            double maxError;
+        //[Test]
+        //public void Test_SPARSE2_CSRSV()
+        //{
+        //    int nnz;
+        //    double maxError;
 
-            SPARSE.Types.cusparseSolveAnalysisInfo info = new SPARSE.Types.cusparseSolveAnalysisInfo();
-            _sparse.CreateSolveAnalysisInfo(ref info);
-            SPARSE.Types.cusparseMatDescr desc = new SPARSE.Types.cusparseMatDescr();
-            desc.MatrixType = SPARSE.Types.cusparseMatrixType.Triangular;
+        //    cusparseSolveAnalysisInfo info = new cusparseSolveAnalysisInfo();
+        //    cusparseSolveAnalysisInfo infoTrans = new cusparseSolveAnalysisInfo();
+        //    _sparse.CreateSolveAnalysisInfo(ref info);
+        //    _sparse.CreateSolveAnalysisInfo(ref infoTrans);
+        //    cusparseMatDescr desc = new cusparseMatDescr();
+        //    desc.MatrixType = cusparseMatrixType.Triangular;
 
-            // No transpose
-            //ClearBuffer(hiMatrixNN);
-            //ClearBuffer(hiVectorXN);
-            //ClearBuffer(hiVectorYN);
+        //    // No transpose
+        //    ClearBuffer(hiMatrixNN);
+        //    ClearBuffer(hiVectorXN);
+        //    ClearBuffer(hiVectorYN);
 
-            //CreateMainDiagonalOnlyMatrix(hiMatrixNN, N);
-            //FillBuffer(hiVectorXN);
-            //FillBuffer(hiVectorYN);
+        //    CreateMainDiagonalOnlyMatrix(hiMatrixNN, N);
+        //    FillBuffer(hiVectorXN);
+        //    FillBuffer(hiVectorYN);
 
-            //diMatrixA = _gpu.CopyToDevice(hiMatrixNN);
-            //diVectorXN = _gpu.CopyToDevice(hiVectorXN);
-            //diVectorYN = _gpu.CopyToDevice(hiVectorYN);
+        //    diMatrixA = _gpu.CopyToDevice(hiMatrixNN);
+        //    diVectorXN = _gpu.CopyToDevice(hiVectorXN);
+        //    diVectorYN = _gpu.CopyToDevice(hiVectorYN);
 
-            //diNNZRows = _gpu.Allocate<int>(N);
-            //nnz = _sparse.NNZ(N, N, diMatrixA, diNNZRows);
-            //diVals = _gpu.Allocate<double>(nnz);
-            //diRows = _gpu.Allocate<int>(N + 1);
-            //diCols = _gpu.Allocate<int>(nnz);
+        //    diNNZRows = _gpu.Allocate<int>(N);
+        //    nnz = _sparse.NNZ(N, N, diMatrixA, diNNZRows);
+        //    diVals = _gpu.Allocate<double>(nnz);
+        //    diRows = _gpu.Allocate<int>(N + 1);
+        //    diCols = _gpu.Allocate<int>(nnz);
 
-            //_sparse.Dense2CSR(N, N, diMatrixA, diNNZRows, diVals, diRows, diCols);
+        //    _sparse.Dense2CSR(N, N, diMatrixA, diNNZRows, diVals, diRows, diCols);
 
-            //_sparse.CSRSV_ANALYSIS(N, diVals, diRows, diCols, SPARSE.Types.cusparseOperation.NonTranspose, info, desc);
+        //    _sparse.CSRSV_ANALYSIS(N, nnz, diVals, diRows, diCols, cusparseOperation.NonTranspose, info, desc);
 
-            //_sparse.CSRSV_SOLVE(N, Alpha, diVals, diRows, diCols, diVectorXN, diVectorYN, SPARSE.Types.cusparseOperation.NonTranspose, info, desc);
+        //    _sparse.CSRSV_SOLVE(N, ref Alpha, diVals, diRows, diCols, diVectorXN, diVectorYN, cusparseOperation.NonTranspose, info, desc);
 
-            //_gpu.CopyFromDevice(diVectorYN, gpuResultN);
+        //    _gpu.CopyFromDevice(diVectorYN, gpuResultN);
 
-            //maxError = 0.0;
+        //    maxError = 0.0;
 
-            //for (int i = 0; i < N; i++)
-            //{
-            //    double cpuResult = 0.0;
+        //    for (int i = 0; i < N; i++)
+        //    {
+        //        double cpuResult = 0.0;
 
-            //    for (int j = 0; j < N; j++)
-            //    {
-            //        cpuResult += hiMatrixNN[GetIndexColumnMajor(i, j, N)] * gpuResultN[j];
-            //    }
+        //        for (int j = 0; j < N; j++)
+        //        {
+        //            cpuResult += hiMatrixNN[GetIndexColumnMajor(i, j, N)] * gpuResultN[j];
+        //        }
 
-            //    double error = Math.Abs(cpuResult - Alpha * hiVectorXN[i]);
+        //        double error = Math.Abs(cpuResult - Alpha * hiVectorXN[i]);
 
-            //    if (maxError < error)
-            //    {
-            //        maxError = error;
-            //    }
-            //}
+        //        if (maxError < error)
+        //        {
+        //            maxError = error;
+        //        }
+        //    }
 
-            //Console.WriteLine("max error : {0} (No transpose)", maxError);
+        //    Console.WriteLine("max error : {0} (No transpose)", maxError);
 
-            //_gpu.FreeAll();
+        //    _gpu.FreeAll();
 
-            // Transpose
-            ClearBuffer(hiMatrixNN);
-            ClearBuffer(hiVectorXN);
-            ClearBuffer(hiVectorYN);
+        //    // Transpose
+        //    ClearBuffer(hiMatrixNN);
+        //    ClearBuffer(hiVectorXN);
+        //    ClearBuffer(hiVectorYN);
 
-            CreateMainDiagonalOnlyMatrix(hiMatrixNN, N);
-            FillBuffer(hiVectorXN);
-            FillBuffer(hiVectorYN);
+        //    CreateMainDiagonalOnlyMatrix(hiMatrixNN, N);
+        //    FillBuffer(hiVectorXN);
+        //    FillBuffer(hiVectorYN);
 
-            diMatrixA = _gpu.CopyToDevice(hiMatrixNN);
-            diVectorXN = _gpu.CopyToDevice(hiVectorXN);
-            diVectorYN = _gpu.CopyToDevice(hiVectorYN);
+        //    diMatrixA = _gpu.CopyToDevice(hiMatrixNN);
+        //    diVectorXN = _gpu.CopyToDevice(hiVectorXN);
+        //    diVectorYN = _gpu.CopyToDevice(hiVectorYN);
 
-            diNNZRows = _gpu.Allocate<int>(N);
-            nnz = _sparse.NNZ(N, N, diMatrixA, diNNZRows);
-            diVals = _gpu.Allocate<double>(nnz);
-            diRows = _gpu.Allocate<int>(N + 1);
-            diCols = _gpu.Allocate<int>(nnz);
+        //    diNNZRows = _gpu.Allocate<int>(N);
+        //    nnz = _sparse.NNZ(N, N, diMatrixA, diNNZRows);
+        //    diVals = _gpu.Allocate<double>(nnz);
+        //    diRows = _gpu.Allocate<int>(N + 1);
+        //    diCols = _gpu.Allocate<int>(nnz);
 
-            _sparse.Dense2CSR(N, N, diMatrixA, diNNZRows, diVals, diRows, diCols);
+        //    _sparse.Dense2CSR(N, N, diMatrixA, diNNZRows, diVals, diRows, diCols);
 
-            _sparse.CSRSV_ANALYSIS(N, diVals, diRows, diCols, SPARSE.Types.cusparseOperation.Transpose, info, desc);
+        //    _sparse.CSRSV_ANALYSIS(N, nnz, diVals, diRows, diCols, cusparseOperation.Transpose, infoTrans, desc);
 
-            _sparse.CSRSV_SOLVE(N, Alpha, diVals, diRows, diCols, diVectorXN, diVectorYN, SPARSE.Types.cusparseOperation.Transpose, info, desc);
+        //    _sparse.CSRSV_SOLVE(N, ref Alpha, diVals, diRows, diCols, diVectorXN, diVectorYN, cusparseOperation.Transpose, infoTrans, desc);
 
-            _gpu.CopyFromDevice(diVectorYN, gpuResultN);
+        //    _gpu.CopyFromDevice(diVectorYN, gpuResultN);
 
-            maxError = 0.0;
+        //    maxError = 0.0;
 
-            for (int i = 0; i < N; i++)
-            {
-                double cpuResult = 0.0;
+        //    for (int i = 0; i < N; i++)
+        //    {
+        //        double cpuResult = 0.0;
 
-                for (int j = 0; j < N; j++)
-                {
-                    cpuResult += hiMatrixNN[GetIndexColumnMajor(j, i, N)] * gpuResultN[j];
-                }
+        //        for (int j = 0; j < N; j++)
+        //        {
+        //            cpuResult += hiMatrixNN[GetIndexColumnMajor(j, i, N)] * gpuResultN[j];
+        //        }
 
-                double error = Math.Abs(cpuResult - Alpha * hiVectorXN[i]);
+        //        double error = Math.Abs(cpuResult - Alpha * hiVectorXN[i]);
 
-                if (maxError < error)
-                {
-                    maxError = error;
-                }
-            }
+        //        if (maxError < error)
+        //        {
+        //            maxError = error;
+        //        }
+        //    }
 
-            Console.WriteLine("max error : {0} (Transpose)", maxError);
+        //    Console.WriteLine("max error : {0} (Transpose)", maxError);
 
-            _gpu.FreeAll();
-        }
+        //    _gpu.FreeAll();
+        //}
 
         [Test]
         public void Test_SPARSE3_CSRMM()
@@ -381,7 +383,7 @@ namespace Cudafy.Maths.UnitTests
 
             _sparse.Dense2CSR(M, K, diMatrixA, diNNZRows, diVals, diRows, diCols);
 
-            _sparse.CSRMM(M, K, N, Alpha, diVals, diRows, diCols, diMatrixB, Beta, diMatrixC);
+            _sparse.CSRMM(M, K, N, nnz, ref Alpha, diVals, diRows, diCols, diMatrixB, ref Beta, diMatrixC);
 
             _gpu.CopyFromDevice(diMatrixC, gpuResultMN);
 
@@ -425,7 +427,7 @@ namespace Cudafy.Maths.UnitTests
 
             _sparse.Dense2CSR(K, M, diMatrixA, diNNZRows, diVals, diRows, diCols);
 
-            _sparse.CSRMM(K, M, N, Alpha, diVals, diRows, diCols, diMatrixB, Beta, diMatrixC, SPARSE.Types.cusparseOperation.Transpose);
+            _sparse.CSRMM(K, M, N, nnz, ref Alpha, diVals, diRows, diCols, diMatrixB, ref Beta, diMatrixC, cusparseOperation.Transpose);
 
             _gpu.CopyFromDevice(diMatrixC, gpuResultMN);
 

@@ -8,7 +8,6 @@ using System.Reflection;
 using Cudafy.Types;
 using Cudafy.Host;
 using Cudafy.Maths.SPARSE;
-using Cudafy.Maths.SPARSE.Types;
 using Cudafy.UnitTests;
 using NUnit.Framework;
 
@@ -478,7 +477,7 @@ namespace Cudafy.Maths.UnitTests
             // Get CSR and convert to CSC
             _sparse.Dense2CSR(M, N, _diMatrixMN, _diPerVector, _diVals, _diCSRRows, _diCSRCols);
 
-            _sparse.CSR2CSC(M, N, _diVals, _diCSRRows, _diCSRCols, _diVals2, _diCSCRows, _diCSCCols);
+            _sparse.CSR2CSC(M, N, nnz, _diVals, _diCSRRows, _diCSRCols, _diVals2, _diCSCRows, _diCSCCols);
 
             _gpu.CopyFromDevice(_diVals2, _hoVals2_r);
             _gpu.CopyFromDevice(_diCSCRows, _hoCSCRows_r);

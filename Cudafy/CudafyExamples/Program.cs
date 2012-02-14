@@ -58,8 +58,8 @@ namespace CudafyExamples
                 Voting.SyncThreadCount.Execute();
                 Console.WriteLine("\r\nFinanceTest");
                 FinanceTest.Execute();
-                //Console.WriteLine("\r\nPinnedAsyncIO");
-                //PinnedAsyncIO.Execute();
+                Console.WriteLine("\r\nPinnedAsyncIO");
+                PinnedAsyncIO.Execute();
 
                 Console.WriteLine("Done!");
             }

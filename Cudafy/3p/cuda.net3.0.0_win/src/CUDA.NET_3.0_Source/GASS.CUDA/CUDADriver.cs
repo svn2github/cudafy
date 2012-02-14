@@ -22,7 +22,7 @@ namespace GASS.CUDA
 
 
         [DllImport("nvcuda")]
-        public static extern CUResult cuMemHostRegister(IntPtr hostPtr, int bytes, uint flags);
+        public static extern CUResult cuMemHostRegister(IntPtr hostPtr, SizeT bytes, uint flags);
         [DllImport("nvcuda")]
         public static extern CUResult cuMemHostUnregister(IntPtr hostPtr);
 
@@ -76,7 +76,7 @@ namespace GASS.CUDA
         [DllImport("nvcuda")]
         public static extern CUResult cuDeviceGetProperties(ref CUDeviceProperties prop, CUdevice dev);
         [DllImport("nvcuda", EntryPoint="cuDeviceTotalMem_v2")]
-        public static extern CUResult cuDeviceTotalMem(ref uint bytes, CUdevice dev);
+        public static extern CUResult cuDeviceTotalMem(ref SizeT bytes, CUdevice dev);
         [DllImport("nvcuda")]
         public static extern CUResult cuDriverGetVersion(ref int driverVersion);
         [DllImport("nvcuda")]
@@ -106,7 +106,7 @@ namespace GASS.CUDA
         [DllImport("nvcuda")]
         public static extern CUResult cuGraphicsMapResources(uint count, [In] CUgraphicsResource[] resources, CUstream hStream);
         [DllImport("nvcuda", EntryPoint="cuGraphicsResourceGetMappedPointer_v2")]
-        public static extern CUResult cuGraphicsResourceGetMappedPointer(ref CUdeviceptr pDevPtr, ref uint pSize, CUgraphicsResource resource);
+        public static extern CUResult cuGraphicsResourceGetMappedPointer(ref CUdeviceptr pDevPtr, ref SizeT pSize, CUgraphicsResource resource);
         [DllImport("nvcuda")]
         public static extern CUResult cuGraphicsResourceSetMapFlags(CUgraphicsResource resource, uint flags);
         [DllImport("nvcuda")]
@@ -124,497 +124,497 @@ namespace GASS.CUDA
         [DllImport("nvcuda")]
         public static extern CUResult cuLaunchGridAsync(CUfunction f, int grid_width, int grid_height, CUstream hStream);
         [DllImport("nvcuda", EntryPoint = "cuMemAlloc_v2")]
-        public static extern CUResult cuMemAlloc(ref CUdeviceptr dptr, uint bytesize);
+        public static extern CUResult cuMemAlloc(ref CUdeviceptr dptr, SizeT bytesize);
         [DllImport("nvcuda", EntryPoint="cuMemAllocHost_v2")]
-        public static extern CUResult cuMemAllocHost(ref IntPtr pp, uint bytesize);
+        public static extern CUResult cuMemAllocHost(ref IntPtr pp, SizeT bytesize);
         [DllImport("nvcuda", EntryPoint="cuMemAllocPitch_v2")]
-        public static extern CUResult cuMemAllocPitch(ref CUdeviceptr dptr, ref uint pPitch, uint WidthInBytes, uint Height, uint ElementSizeBytes);
-        [DllImport("nvcuda")]
+        public static extern CUResult cuMemAllocPitch(ref CUdeviceptr dptr, ref SizeT pPitch, SizeT WidthInBytes, SizeT Height, uint ElementSizeBytes);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpy2D_v2")]
         public static extern CUResult cuMemcpy2D(ref CUDAMemCpy2D pCopy);
-        [DllImport("nvcuda")]
+        [DllImport("nvcuda", EntryPoint = "cuMemcpy2DAsync_v2")]
         public static extern CUResult cuMemcpy2DAsync(ref CUDAMemCpy2D pCopy, CUstream hStream);
-        [DllImport("nvcuda")]
+        [DllImport("nvcuda", EntryPoint = "cuMemcpy2DUnaligned_v2")]
         public static extern CUResult cuMemcpy2DUnaligned(ref CUDAMemCpy2D pCopy);
-        [DllImport("nvcuda")]
+        [DllImport("nvcuda", EntryPoint = "cuMemcpy3D_v2")]
         public static extern CUResult cuMemcpy3D(ref CUDAMemCpy3D pCopy);
-        [DllImport("nvcuda")]
+        [DllImport("nvcuda", EntryPoint = "cuMemcpy3DAsync_v2")]
         public static extern CUResult cuMemcpy3DAsync(ref CUDAMemCpy3D pCopy, CUstream hStream);
         [DllImport("nvcuda", EntryPoint="cuMemcpyAtoA_v2")]
-        public static extern CUResult cuMemcpyAtoA(CUarray dstArray, uint dstIndex, CUarray srcArray, uint srcIndex, uint ByteCount);
+        public static extern CUResult cuMemcpyAtoA(CUarray dstArray, SizeT dstIndex, CUarray srcArray, SizeT srcIndex, SizeT ByteCount);
         [DllImport("nvcuda", EntryPoint="cuMemcpyAtoD_v2")]
-        public static extern CUResult cuMemcpyAtoD(CUdeviceptr dstDevice, CUarray hSrc, uint SrcIndex, uint ByteCount);
+        public static extern CUResult cuMemcpyAtoD(CUdeviceptr dstDevice, CUarray hSrc, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Char1[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Char2[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Char3[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Char4[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] cuDoubleComplex[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] cuDoubleReal[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] cuFloatComplex[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] cuFloatReal[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Double1[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Double2[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Float1[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Float2[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Float3[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Float4[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Int1[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Int2[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Int3[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Int4[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Long1[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Long2[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Long3[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Long4[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Short1[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Short2[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Short3[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] Short4[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] UChar1[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] UChar2[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] UChar3[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] UChar4[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] UInt1[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] UInt2[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] UInt3[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] UInt4[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] ULong1[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] ULong2[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] ULong3[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] ULong4[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] UShort1[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] UShort2[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] UShort3[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] UShort4[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] byte[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] double[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] short[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
         [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Char1[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Char2[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Char3[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Char4[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] cuDoubleComplex[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] cuDoubleReal[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] cuFloatComplex[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] cuFloatReal[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Double1[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Double2[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Float1[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Float2[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Float3[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Float4[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Int1[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Int2[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Int3[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Int4[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Long1[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Long2[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Long3[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Long4[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Short1[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Short2[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Short3[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] Short4[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] UChar1[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] UChar2[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] UChar3[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] UChar4[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] UInt1[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] UInt2[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] UInt3[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] UInt4[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] ULong1[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] ULong2[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] ULong3[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] ULong4[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] UShort1[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] UShort2[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] UShort3[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] UShort4[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] byte[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] double[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] short[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] int[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
+        public static extern CUResult cuMemcpyAtoH([Out] int[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
         [DllImport("nvcuda", EntryPoint="cuMemcpyAtoH_v2")]
-        public static extern CUResult cuMemcpyAtoH(IntPtr dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] long[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] sbyte[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] float[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] ushort[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] uint[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyAtoH([Out] ulong[] dstHost, CUarray srcArray, uint srcIndex, uint ByteCount);
+        public static extern CUResult cuMemcpyAtoH(IntPtr dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] long[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] sbyte[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] float[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] ushort[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] uint[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyAtoH_v2")]
+        public static extern CUResult cuMemcpyAtoH([Out] ulong[] dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount);
         [DllImport("nvcuda", EntryPoint="cuMemcpyAtoHAsync_v2")]
-        public static extern CUResult cuMemcpyAtoHAsync(IntPtr dstHost, CUarray srcArray, uint srcIndex, uint ByteCount, CUstream hStream);
+        public static extern CUResult cuMemcpyAtoHAsync(IntPtr dstHost, CUarray srcArray, SizeT SrcIndex, SizeT ByteCount, CUstream hStream);
         [DllImport("nvcuda", EntryPoint="cuMemcpyDtoA_v2")]
-        public static extern CUResult cuMemcpyDtoA(CUarray dstArray, uint dstIndex, CUdeviceptr srcDevice, uint ByteCount);
+        public static extern CUResult cuMemcpyDtoA(CUarray dstArray, SizeT dstIndex, CUdeviceptr srcDevice, SizeT ByteCount);
         [DllImport("nvcuda", EntryPoint="cuMemcpyDtoD_v2")]
-        public static extern CUResult cuMemcpyDtoD(CUdeviceptr dstDevice, CUdeviceptr srcDevice, uint ByteCount);
+        public static extern CUResult cuMemcpyDtoD(CUdeviceptr dstDevice, CUdeviceptr srcDevice, SizeT ByteCount);
         [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoDAsync_v2")]
-        public static extern CUResult cuMemcpyDtoDAsync(CUdeviceptr dstDevice, CUdeviceptr srcDevice, uint ByteCount, CUstream hStream);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Char1[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Char2[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Char3[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Char4[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] cuDoubleComplex[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] cuDoubleReal[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] cuFloatComplex[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] cuFloatReal[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Double1[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Double2[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Float1[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Float2[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Float3[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Float4[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Int1[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Int2[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Int3[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Int4[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Long1[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Long2[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Long3[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Long4[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Short1[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Short2[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Short3[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] Short4[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] UChar1[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] UChar2[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] UChar3[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] UChar4[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] UInt1[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] UInt2[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] UInt3[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] UInt4[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] ULong1[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] ULong2[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] ULong3[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] ULong4[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] UShort1[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] UShort2[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
+        public static extern CUResult cuMemcpyDtoDAsync(CUdeviceptr dstDevice, CUdeviceptr srcDevice, SizeT ByteCount, CUstream hStream);
         [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
-        public static extern CUResult cuMemcpyDtoH(IntPtr dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] UShort3[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] UShort4[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] byte[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] double[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] short[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] int[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] long[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] sbyte[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] float[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] ushort[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] uint[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyDtoH([Out] ulong[] dstHost, CUdeviceptr srcDevice, uint ByteCount);
+        public static extern CUResult cuMemcpyDtoH([Out] Char1[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Char2[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Char3[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Char4[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] cuDoubleComplex[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] cuDoubleReal[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] cuFloatComplex[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] cuFloatReal[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Double1[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Double2[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Float1[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Float2[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Float3[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Float4[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Int1[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Int2[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Int3[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Int4[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Long1[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Long2[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Long3[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Long4[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Short1[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Short2[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Short3[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] Short4[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] UChar1[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] UChar2[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] UChar3[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] UChar4[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] UInt1[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] UInt2[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] UInt3[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] UInt4[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] ULong1[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] ULong2[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] ULong3[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] ULong4[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] UShort1[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] UShort2[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH(IntPtr dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] UShort3[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] UShort4[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] byte[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] double[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] short[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] int[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] long[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] sbyte[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] float[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] ushort[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] uint[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyDtoH_v2")]
+        public static extern CUResult cuMemcpyDtoH([Out] ulong[] dstHost, CUdeviceptr srcDevice, SizeT ByteCount);
         [DllImport("nvcuda", EntryPoint="cuMemcpyDtoHAsync_v2")]
-        public static extern CUResult cuMemcpyDtoHAsync(IntPtr dstHost, CUdeviceptr srcDevice, uint ByteCount, CUstream hStream);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Char1[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Char2[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Char3[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Char4[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] cuDoubleComplex[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] cuDoubleReal[] pSrc, uint ByteCount);
+        public static extern CUResult cuMemcpyDtoHAsync(IntPtr dstHost, CUdeviceptr srcDevice, SizeT ByteCount, CUstream hStream);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Char1[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Char2[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Char3[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Char4[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] cuDoubleComplex[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] cuDoubleReal[] pSrc, SizeT ByteCount);
         [DllImport("nvcuda", EntryPoint="cuMemcpyHtoA_v2")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, IntPtr pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] cuFloatComplex[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] cuFloatReal[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Double1[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Double2[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Float1[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Float2[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Float3[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Float4[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Int1[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Int2[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Int3[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Int4[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Long1[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Long2[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Long3[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Long4[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Short1[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Short2[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Short3[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] Short4[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] UChar1[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] UChar2[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] UChar3[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] UChar4[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] UInt1[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] UInt2[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] UInt3[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] UInt4[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] ULong1[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] ULong2[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] ULong3[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] ULong4[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] UShort1[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] UShort2[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] UShort3[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] UShort4[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] byte[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] double[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] short[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] int[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] long[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] sbyte[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] float[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] ushort[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] uint[] pSrc, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, uint dstIndex, [In] ulong[] pSrc, uint ByteCount);
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, IntPtr pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] cuFloatComplex[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] cuFloatReal[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Double1[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Double2[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Float1[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Float2[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Float3[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Float4[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Int1[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Int2[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Int3[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Int4[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Long1[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Long2[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Long3[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Long4[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Short1[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Short2[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Short3[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] Short4[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] UChar1[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] UChar2[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] UChar3[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] UChar4[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] UInt1[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] UInt2[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] UInt3[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] UInt4[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] ULong1[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] ULong2[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] ULong3[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] ULong4[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] UShort1[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] UShort2[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] UShort3[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] UShort4[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] byte[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] double[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] short[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] int[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] long[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] sbyte[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] float[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] ushort[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] uint[] pSrc, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoA_v2")]
+        public static extern CUResult cuMemcpyHtoA(CUarray dstArray, SizeT dstIndex, [In] ulong[] pSrc, SizeT ByteCount);
         [DllImport("nvcuda", EntryPoint="cuMemcpyHtoAAsync_v2")]
-        public static extern CUResult cuMemcpyHtoAAsync(CUarray dstArray, uint dstIndex, IntPtr pSrc, uint ByteCount, CUstream hStream);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Char1[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Char2[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Char3[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Char4[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] cuDoubleComplex[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] cuDoubleReal[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] cuFloatComplex[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] cuFloatReal[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Double1[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Double2[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Float1[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Float2[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Float3[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Float4[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Int1[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Int2[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Int3[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Int4[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Long1[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Long2[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Long3[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Long4[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Short1[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Short2[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Short3[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Short4[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UChar1[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UChar2[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UChar3[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UChar4[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UInt1[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UInt2[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UInt3[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UInt4[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] ULong1[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] ULong2[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] ULong3[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] ULong4[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UShort1[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UShort2[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UShort3[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UShort4[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] byte[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] double[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] short[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] int[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] long[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] sbyte[] srcHost, uint ByteCount);//)
+        public static extern CUResult cuMemcpyHtoAAsync(CUarray dstArray, SizeT dstIndex, IntPtr pSrc, SizeT ByteCount, CUstream hStream);
         [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, IntPtr srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] float[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] ushort[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] uint[] srcHost, uint ByteCount);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] ulong[] srcHost, uint ByteCount);
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Char1[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Char2[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Char3[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Char4[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] cuDoubleComplex[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] cuDoubleReal[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] cuFloatComplex[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] cuFloatReal[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Double1[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Double2[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Float1[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Float2[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Float3[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Float4[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Int1[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Int2[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Int3[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Int4[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Long1[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Long2[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Long3[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Long4[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Short1[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Short2[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Short3[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] Short4[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UChar1[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UChar2[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UChar3[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UChar4[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UInt1[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UInt2[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UInt3[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UInt4[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] ULong1[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] ULong2[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] ULong3[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] ULong4[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UShort1[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UShort2[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UShort3[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] UShort4[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] byte[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] double[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] short[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] int[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] long[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] sbyte[] srcHost, SizeT ByteCount);//)
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, IntPtr srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] float[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] ushort[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] uint[] srcHost, SizeT ByteCount);
+        [DllImport("nvcuda", EntryPoint = "cuMemcpyHtoD_v2")]
+        public static extern CUResult cuMemcpyHtoD(CUdeviceptr dstDevice, [In] ulong[] srcHost, SizeT ByteCount);
         [DllImport("nvcuda", EntryPoint="cuMemcpyHtoDAsync_v2")]
-        public static extern CUResult cuMemcpyHtoDAsync(CUdeviceptr dstDevice, IntPtr srcHost, uint ByteCount, CUstream hStream);
+        public static extern CUResult cuMemcpyHtoDAsync(CUdeviceptr dstDevice, IntPtr srcHost, SizeT ByteCount, CUstream hStream);
         [DllImport("nvcuda", EntryPoint = "cuMemFree_v2")]
         public static extern CUResult cuMemFree(CUdeviceptr dptr);
         [DllImport("nvcuda")]
         public static extern CUResult cuMemFreeHost(IntPtr p);
         [DllImport("nvcuda", EntryPoint="cuMemGetAddressRange_v2")]
-        public static extern CUResult cuMemGetAddressRange(ref CUdeviceptr pbase, ref uint psize, CUdeviceptr dptr);
+        public static extern CUResult cuMemGetAddressRange(ref CUdeviceptr pbase, ref SizeT psize, CUdeviceptr dptr);
         [DllImport("nvcuda", EntryPoint="cuMemGetInfo_v2")]
-        public static extern CUResult cuMemGetInfo(ref uint free, ref uint total);
+        public static extern CUResult cuMemGetInfo(ref SizeT free, ref SizeT total);
         [DllImport("nvcuda")]
         public static extern CUResult cuMemHostAlloc(ref IntPtr pp, SizeT bytesize, uint Flags);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemHostAlloc(ref IntPtr pp, uint bytesize, uint Flags);
-        [DllImport("nvcuda")]
-        public static extern CUResult cuMemHostAlloc(ref IntPtr pp, ulong bytesize, uint Flags);
+        //[DllImport("nvcuda")]
+        //public static extern CUResult cuMemHostAlloc(ref IntPtr pp, uint bytesize, uint Flags);
+        //[DllImport("nvcuda")]
+        //public static extern CUResult cuMemHostAlloc(ref IntPtr pp, ulong bytesize, uint Flags);
         [DllImport("nvcuda", EntryPoint="cuMemHostGetDevicePointer_v2")]
         public static extern CUResult cuMemHostGetDevicePointer(ref CUdeviceptr pdptr, IntPtr p, uint Flags);
         [DllImport("nvcuda")]
         public static extern CUResult cuMemHostGetFlags(ref uint pFlags, ref IntPtr p);
         [DllImport("nvcuda", EntryPoint = "cuMemsetD16_v2")]
-        public static extern CUResult cuMemsetD16(CUdeviceptr dstDevice, ushort us, uint N);
+        public static extern CUResult cuMemsetD16(CUdeviceptr dstDevice, ushort us, SizeT N);
         [DllImport("nvcuda", EntryPoint = "cuMemsetD2D16_v2")]
-        public static extern CUResult cuMemsetD2D16(CUdeviceptr dstDevice, uint dstPitch, ushort us, uint Width, uint Height);
+        public static extern CUResult cuMemsetD2D16(CUdeviceptr dstDevice, uint dstPitch, ushort us, SizeT Width, SizeT Height);
         [DllImport("nvcuda", EntryPoint = "cuMemsetD2D32_v2")]
-        public static extern CUResult cuMemsetD2D32(CUdeviceptr dstDevice, uint dstPitch, uint ui, uint Width, uint Height);
+        public static extern CUResult cuMemsetD2D32(CUdeviceptr dstDevice, uint dstPitch, uint ui, SizeT Width, SizeT Height);
         [DllImport("nvcuda", EntryPoint = "cuMemsetD2D8_v2")]
-        public static extern CUResult cuMemsetD2D8(CUdeviceptr dstDevice, uint dstPitch, byte uc, uint Width, uint Height);
+        public static extern CUResult cuMemsetD2D8(CUdeviceptr dstDevice, uint dstPitch, byte uc, SizeT Width, SizeT Height);
         [DllImport("nvcuda", EntryPoint = "cuMemsetD32_v2")]
-        public static extern CUResult cuMemsetD32(CUdeviceptr dstDevice, uint ui, uint N);
+        public static extern CUResult cuMemsetD32(CUdeviceptr dstDevice, uint ui, SizeT N);
         [DllImport("nvcuda", EntryPoint="cuMemsetD8_v2")]
-        public static extern CUResult cuMemsetD8(CUdeviceptr dstDevice, byte uc, uint N);
+        public static extern CUResult cuMemsetD8(CUdeviceptr dstDevice, byte uc, SizeT N);
         [DllImport("nvcuda")]
         public static extern CUResult cuModuleGetFunction(ref CUfunction hfunc, CUmodule hmod, string name);
         [DllImport("nvcuda", EntryPoint="cuModuleGetGlobal_v2")]
-        public static extern CUResult cuModuleGetGlobal(ref CUdeviceptr dptr, ref uint bytes, CUmodule hmod, string name);
+        public static extern CUResult cuModuleGetGlobal(ref CUdeviceptr dptr, ref SizeT bytes, CUmodule hmod, string name);
         [DllImport("nvcuda")]
         public static extern CUResult cuModuleGetTexRef(ref CUtexref pTexRef, CUmodule hmod, string name);
         [DllImport("nvcuda")]
@@ -840,9 +840,11 @@ namespace GASS.CUDA
         [DllImport("nvcuda")]
         public static extern CUResult cuTexRefGetFormat(ref CUArrayFormat pFormat, ref int pNumChannels, CUtexref hTexRef);
         [DllImport("nvcuda", EntryPoint="cuTexRefSetAddress_v2")]
-        public static extern CUResult cuTexRefSetAddress(ref uint ByteOffset, CUtexref hTexRef, CUdeviceptr dptr, uint bytes);
+        public static extern CUResult cuTexRefSetAddress(ref uint ByteOffset, CUtexref hTexRef, CUdeviceptr dptr, SizeT bytes);
         [DllImport("nvcuda", EntryPoint="cuTexRefSetAddress2D_v2")]
-        public static extern CUResult cuTexRefSetAddress2D(CUtexref hTexRef, CUDAArrayDescriptor desc, CUdeviceptr dptr, uint Pitch);
+        public static extern CUResult cuTexRefSetAddress2D(CUtexref hTexRef, CUDAArrayDescriptor desc, CUdeviceptr dptr, SizeT Pitch);
+        [DllImport("nvcuda")]
+        public static extern CUResult cuTexRefSetAddress2D_v3(CUtexref hTexRef, CUDAArrayDescriptor desc, CUdeviceptr dptr, SizeT Pitch);
         [DllImport("nvcuda")]
         public static extern CUResult cuTexRefSetAddressMode(CUtexref hTexRef, int dim, CUAddressMode am);
         [DllImport("nvcuda")]
@@ -860,7 +862,7 @@ namespace GASS.CUDA
         {
             get
             {
-                return new System.Version(3, 0);
+                return new System.Version(4, 1);
             }
         }
     }
