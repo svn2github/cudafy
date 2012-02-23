@@ -954,8 +954,14 @@ namespace Cudafy.Host
 
         protected override void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId)
         {
-            CUDevicePtrEx ptrEx = (CUDevicePtrEx)GetDeviceMemory(devArray);
-            CUdeviceptr ptr = ptrEx.DevPtr;
+            DevicePtrEx ptrEx = (CUDevicePtrEx)GetDeviceMemory(devArray);
+            DoCopyToDeviceAsync<T>(hostArray, hostOffset, ptrEx, devOffset, count, streamId);
+        }
+
+        protected override void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, DevicePtrEx ptrEx, int devOffset, int count, int streamId)
+        {
+            
+            CUdeviceptr ptr = (ptrEx as CUDevicePtrEx).DevPtr;
             Type type = typeof(T);
             CUstream cuStr = new CUstream();
             cuStr.Pointer = IntPtr.Zero;
@@ -977,7 +983,7 @@ namespace Cudafy.Host
             }
             unsafe
             {
-                int size = MSizeOf(typeof(T));
+                int size = MSizeOf(type);
                 IntPtr hostPtr = hostArray;
                 IntPtr hostOffsetPtr = new IntPtr(hostPtr.ToInt64() + hostOffset * size);
                 CUdeviceptr devOffsetPtr = ptr + (long)(devOffset * size);
@@ -1001,8 +1007,14 @@ namespace Cudafy.Host
 
         protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId)
         {
-            CUDevicePtrEx ptrEx = (CUDevicePtrEx)GetDeviceMemory(devArray);
-            CUdeviceptr ptr = ptrEx.DevPtr;
+            DevicePtrEx ptrEx = (CUDevicePtrEx)GetDeviceMemory(devArray);
+            DoCopyFromDeviceAsync<T>(ptrEx, devOffset, hostArray, hostOffset, count, streamId);
+        }
+
+        protected override void DoCopyFromDeviceAsync<T>(DevicePtrEx devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId)
+        {
+
+            CUdeviceptr ptr = (devArray as CUDevicePtrEx).DevPtr;
             Type type = typeof(T);
             CUstream cuStr = new CUstream();
             cuStr.Pointer = IntPtr.Zero;
@@ -1024,7 +1036,7 @@ namespace Cudafy.Host
             }
             unsafe
             {
-                int size = MSizeOf(typeof(T));
+                int size = MSizeOf(type);
                 IntPtr hostPtr = hostArray;
                 IntPtr hostOffsetPtr = new IntPtr(hostPtr.ToInt64() + hostOffset * size);
                 CUdeviceptr devOffsetPtr = ptr + (long)(devOffset * size);

@@ -905,6 +905,18 @@ namespace Cudafy.Host
         /// <param name="devOffset">The dev offset.</param>
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
+        protected abstract void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, DevicePtrEx devArray, int devOffset, int count, int streamId);
+
+        /// <summary>
+        /// Does the copy to device async.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="devArray">The dev array.</param>
+        /// <param name="devOffset">The dev offset.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="streamId">The stream id.</param>
         /// <param name="stagingPost">The staging post.</param>
         protected abstract void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost);
 
@@ -920,6 +932,18 @@ namespace Cudafy.Host
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
         protected abstract void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId);
+
+        /// <summary>
+        /// Performs an asynchronous data transfer.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="devArray">The dev array.</param>
+        /// <param name="devOffset">The dev offset.</param>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="streamId">The stream id.</param>
+        protected abstract void DoCopyFromDeviceAsync<T>(DevicePtrEx devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId);
 
         /// <summary>
         /// Performs an asynchronous data transfer.
@@ -1036,6 +1060,21 @@ namespace Cudafy.Host
         /// <param name="devOffset">The device offset.</param>
         /// <param name="count">The number of elements.</param>
         /// <param name="streamId">The stream id.</param>
+        public void CopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, DevicePtrEx devArray, int devOffset, int count, int streamId = 0)
+        {
+            DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId);
+        }
+
+        /// <summary>
+        /// Copies asynchronously to preallocated array on device.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="devArray">The device array.</param>
+        /// <param name="devOffset">The device offset.</param>
+        /// <param name="count">The number of elements.</param>
+        /// <param name="streamId">The stream id.</param>
         public void CopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, T[,] devArray, int devOffset, int count, int streamId = 0)
         {
             DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId);
@@ -1097,6 +1136,21 @@ namespace Cudafy.Host
         /// <param name="count">The number of elements.</param>
         /// <param name="streamId">The stream id.</param>
         public void CopyFromDeviceAsync<T>(T[] devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId = 0)
+        {
+            DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, streamId);
+        }
+
+        /// <summary>
+        /// Copies from device asynchronously.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="devArray">The dev array.</param>
+        /// <param name="devOffset">The device offset.</param>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="count">The number of elements.</param>
+        /// <param name="streamId">The stream id.</param>
+        public void CopyFromDeviceAsync<T>(DevicePtrEx devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId = 0)
         {
             DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, streamId);
         }

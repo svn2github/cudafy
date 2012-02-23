@@ -555,6 +555,14 @@ namespace Cudafy.Host
             //Array.Copy(devArray, devOffset, hostArray, hostOffset, count);
         }
 
+        protected override void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId)
+        {
+            if (streamId >= 0 && !_streams.ContainsKey(streamId))
+                _streams.Add(streamId, streamId);
+            var ptrEx = GetDeviceMemory(devArray) as EmuDevicePtrEx;
+            DoCopyToDeviceAsync<T>(hostArray, hostOffset, ptrEx, devOffset, count, streamId);
+        }
+
         /// <summary>
         /// Does the copy to device async.
         /// </summary>
@@ -565,11 +573,9 @@ namespace Cudafy.Host
         /// <param name="devOffset">The dev offset.</param>
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
-        protected override void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId)
+        protected override void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, DevicePtrEx devArray, int devOffset, int count, int streamId)
         {
-            if (streamId >= 0 && !_streams.ContainsKey(streamId))
-                _streams.Add(streamId, streamId);
-            var ptrEx = GetDeviceMemory(devArray) as EmuDevicePtrEx;
+            var ptrEx = devArray as EmuDevicePtrEx;
             int size = MSizeOf(typeof(T));
             if (!_hostHandles.ContainsKey(hostArray))
                 throw new CudafyHostException(CudafyHostException.csDATA_IS_NOT_HOST_ALLOCATED);
@@ -597,6 +603,15 @@ namespace Cudafy.Host
             DoCopyOnHost<T>(hostArray, hostOffset, stagingPost, 0, count);
             DoCopyToDeviceAsync<T>(stagingPost, 0, devArray, devOffset, count, streamId);
         }
+
+        protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId)
+        {
+            if (streamId >= 0 && !_streams.ContainsKey(streamId))
+                _streams.Add(streamId, streamId);
+            VerifyOnGPU(devArray);
+            var ptrEx = GetDeviceMemory(devArray) as EmuDevicePtrEx;
+            DoCopyFromDeviceAsync<T>(ptrEx, devOffset, hostArray, hostOffset, count, streamId);
+        }
         
 
         /// <summary>
@@ -609,15 +624,12 @@ namespace Cudafy.Host
         /// <param name="hostOffset">The host offset.</param>
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
-        protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId)
+        protected override void DoCopyFromDeviceAsync<T>(DevicePtrEx devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId)
         {
-            if (streamId >= 0 && !_streams.ContainsKey(streamId))
-                _streams.Add(streamId, streamId);
-            VerifyOnGPU(devArray);
-            var ptrEx = GetDeviceMemory(devArray) as EmuDevicePtrEx;
+            var ptrEx = devArray as EmuDevicePtrEx;
             int size = MSizeOf(typeof(T));
-            if (!_hostHandles.ContainsKey(hostArray))
-                throw new CudafyHostException(CudafyHostException.csDATA_IS_NOT_HOST_ALLOCATED);
+            //if (!_hostHandles.ContainsKey(hostArray))
+            //    throw new CudafyHostException(CudafyHostException.csDATA_IS_NOT_HOST_ALLOCATED);
             GCHandle handle = _hostHandles[hostArray];
             IntPtr hostArrayPtr = handle.AddrOfPinnedObject();
             IntPtr devOffsetPtr = new IntPtr(ptrEx.Pointer.ToInt64() + devOffset * size);
