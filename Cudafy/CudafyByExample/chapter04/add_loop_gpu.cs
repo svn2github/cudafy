@@ -19,7 +19,7 @@ namespace CudafyByExample
 
         public static void Execute()
         {
-            CudafyModule km = CudafyTranslator.Cudafy();//ePlatform.Auto, eArchitecture.sm_11, new Version(4,0), true, typeof(add_loop_gpu));
+            CudafyModule km = CudafyTranslator.Cudafy();
 
             GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target);
             gpu.LoadModule(km);

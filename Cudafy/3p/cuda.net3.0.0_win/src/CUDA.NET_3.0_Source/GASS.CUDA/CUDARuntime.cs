@@ -12,7 +12,7 @@ namespace GASS.CUDA
 
     public class CUDARuntime64 : ICUDARuntime
     {
-        public const string DLL_NAME = "cudart64_40_17";
+        public const string DLL_NAME = "cudart64_42_9";//cudart64_40_17
 
         [DllImport(DLL_NAME)]
         public static extern cudaError cudaGetDeviceProperties(ref cudaDeviceProp prop, int device);
@@ -25,7 +25,7 @@ namespace GASS.CUDA
 
     public class CUDARuntime32 : ICUDARuntime
     {
-        public const string DLL_NAME = "cudart32_40_17";
+        public const string DLL_NAME = "cudart32_42_9";//cudart32_40_17
 
         [DllImport(DLL_NAME)]
         public static extern cudaError cudaGetDeviceProperties(ref cudaDeviceProp prop, int device);
@@ -50,7 +50,7 @@ namespace GASS.CUDA
         public const int cudaHostAllocMapped = 2;
         public const int cudaHostAllocPortable = 1;
         public const int cudaHostAllocWriteCombined = 4;
-        internal const string CUDART_DLL_NAME = "cudart64_40_17";
+        internal const string CUDART_DLL_NAME = "cudart64_42_9";//cudart64_40_17
 
         [DllImport(CUDART_DLL_NAME)]
         public static extern cudaError cudaBindTexture(ref SizeT offset, ref textureReference texref, CUdeviceptr devPtr, ref cudaChannelFormatDesc desc, SizeT size);

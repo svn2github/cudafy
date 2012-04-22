@@ -115,6 +115,10 @@ namespace Cudafy.Compilers
                 co.AddOption("-arch=sm_13");
             else if (arch == eArchitecture.sm_20)
                 co.AddOption("-arch=sm_20");
+            else if (arch == eArchitecture.sm_21)
+                co.AddOption("-arch=sm_21");
+            else if (arch == eArchitecture.sm_30)
+                co.AddOption("-arch=sm_30");
             else
                 throw new NotImplementedException(arch.ToString());
         }

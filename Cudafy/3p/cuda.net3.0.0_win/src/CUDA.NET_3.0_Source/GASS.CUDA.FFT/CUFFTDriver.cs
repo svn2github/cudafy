@@ -8,7 +8,7 @@ namespace GASS.CUDA.FFT
 
     public class CUFFTDriver32 : ICUFFTDriver
     {
-        internal const string CUFFT_DLL_NAME = "cufft32_41_28";//"cufft32_40_17";
+        internal const string CUFFT_DLL_NAME = "cufft32_42_9";//"cufft32_41_28";
 
         [DllImport(CUFFT_DLL_NAME, EntryPoint = "cufftDestroy")]
         private static extern CUFFTResult cufftDestroy_ext(cufftHandle plan);
@@ -124,7 +124,7 @@ namespace GASS.CUDA.FFT
 
     public class CUFFTDriver64 : ICUFFTDriver
     {
-        internal const string CUFFT_DLL_NAME = "cufft64_41_28";//"cufft64_40_17";
+        internal const string CUFFT_DLL_NAME = "cufft64_42_9";//"cufft64_41_28";
 
         [DllImport(CUFFT_DLL_NAME, EntryPoint = "cufftDestroy")]
         private static extern CUFFTResult cufftDestroy_ext(cufftHandle plan);

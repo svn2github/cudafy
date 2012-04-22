@@ -37,14 +37,14 @@ namespace cudafycl
         static string cGUID = "63D6AC4F-CEC9-4E81-8DE7-7668EC9A3A0C";
         
         /// <summary>
-        /// Usage: cudafycl.exe myassembly.dll [-arch=sm_11|sm_12|sm_13|sm_20]
+        /// Usage: cudafycl.exe myassembly.dll [-arch=sm_11|sm_12|sm_13|sm_20|sm_21|sm_30]
         /// </summary>
         /// <param name="args"></param>
         static int Main(string[] args)
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("Usage: cudafycl.exe myassembly.dll [-arch=sm_11|sm_12|sm_13|sm_20] [-cdfy]");
+                Console.WriteLine("Usage: cudafycl.exe myassembly.dll [-arch=sm_11|sm_12|sm_13|sm_20|sm_21|sm_30] [-cdfy]");
                 Console.WriteLine("\t-arch: CUDA architecture. Optional. Default is sm_12.");
                 Console.WriteLine("\t-cdfy: cudafy the assembly and create the *.cdfy output file where * is assembly name. Optional.");
                 return -1;
