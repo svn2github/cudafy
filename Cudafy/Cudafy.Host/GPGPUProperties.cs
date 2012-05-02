@@ -154,7 +154,12 @@ namespace Cudafy.Host
         /// <summary>
         /// Gets the multi processor count. UseAdvanced must be set to true.
         /// </summary>
-        public int MultiProcessorCount { get; internal set; }     
+        public int MultiProcessorCount { get; internal set; }
+
+        /// <summary>
+        /// Gets the max number of threads per multi processor. UseAdvanced must be set to true.
+        /// </summary>
+        public int MaxThreadsPerMultiProcessor { get; internal set; } 
 
         internal string Message { get; set; }
 

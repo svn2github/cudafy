@@ -257,6 +257,7 @@ namespace Cudafy.Host
                     if (rc == cudaError.cudaSuccess)
                     {
                         props.MultiProcessorCount = devProps.multiProcessorCount;
+                        props.MaxThreadsPerMultiProcessor = devProps.maxThreadsPerMultiProcessor;
                         props.CanMapHostMemory = devProps.canMapHostMemory == 0 ? false : true;
                         props.ConcurrentKernels = devProps.concurrentKernels;
                         props.ComputeMode = devProps.computeMode;
