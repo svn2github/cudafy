@@ -35,7 +35,7 @@ namespace Cudafy.Host
     /// <summary>
     /// Represents an emulated Cuda GPU.
     /// </summary>
-    public sealed class EmulatedGPU : GPGPU 
+    public sealed class EmulatedGPU : GPGPU
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EmulatedGPU"/> class.
@@ -74,7 +74,7 @@ namespace Cudafy.Host
             int i1K = 1024;
             int i64K = 64 * i1K;
             int i32K = 32 * i1K;
-            
+
             Computer comp = new Computer();
             GPGPUProperties props = new GPGPUProperties();
             props.UseAdvanced = useAdvanced;
@@ -233,7 +233,7 @@ namespace Cudafy.Host
                     Thread[] threads = new Thread[totalSize];
                     GBlock blk2lnch = new GBlock(grid, blockSize, x, y);
                     int tCtr = 0;
-                    
+
                     int pListLen = pList.Length;
                     for (int tx = 0; tx < blockSize.x; tx++)
                     {
@@ -254,14 +254,14 @@ namespace Cudafy.Host
                             });
 
                             threads[tCtr].Name = string.Format("Grid_{0}_{1}_Thread_{2}_{3}", x, y, tx, ty);
-                            threads[tCtr].Start();                            
+                            threads[tCtr].Start();
                             //if (ctr % 16 == 0)
                             //    Console.WriteLine("Ctr=" + ctr.ToString());
                             //ctr++;
                             tCtr++;
                         }
                     }
- 
+
                     for (int i = 0; i < totalSize; i++)
                     {
                         threads[i].Join();
@@ -285,7 +285,7 @@ namespace Cudafy.Host
                     if (!(o is GThread))
                     {
                         if (o.GetType().IsArray)
-                        {                            
+                        {
                             if (dic.ContainsKey(o as Array))
                             {
                                 EmuDevicePtrEx ptrEx = dic[o as Array];
@@ -299,87 +299,87 @@ namespace Cudafy.Host
             }
         }
 
-//        protected override void DoLaunch(dim3 gridSize, dim3 blockSize, int streamId, KernelMethodInfo gpuMethodInfo, params object[] arguments)
-//        {
-//            if (streamId > -1 && !_streams.ContainsKey(streamId))
-//                _streams.Add(streamId, streamId);
+        //        protected override void DoLaunch(dim3 gridSize, dim3 blockSize, int streamId, KernelMethodInfo gpuMethodInfo, params object[] arguments)
+        //        {
+        //            if (streamId > -1 && !_streams.ContainsKey(streamId))
+        //                _streams.Add(streamId, streamId);
 
-            
-//            MethodInfo mi = gpuMethodInfo.Method;
-//            if (mi == null)
-//                throw new CudafyHostException(CudafyHostException.csX_NOT_SET, gpuMethodInfo.Name);
-//            bool isStatic = mi.IsStatic;
-//            object instance = isStatic ? null : Activator.CreateInstance(mi.DeclaringType);
-//            if (gpuMethodInfo.IsDummy)
-//            {
-//                mi.Invoke(instance, arguments);
-//                return;
-//            }
-//            //List<Type> paramTypes = new List<Type>();
-//            //mi.Parameters().ToList().ForEach(p => paramTypes.Add(p.ParameterType));
-//            MethodInvoker imi = null;
-//            //mi.DeclaringType.DelegateForCallMethod(mi.Name,
-//                //typeof(GThread), typeof(byte[]), typeof(long), typeof(uint[]));   //mi.DelegateForCallMethod();
-//            StaticMethodInvoker smi = null;
-//            if(isStatic)
-//                smi = mi.DelegateForCallStaticMethod();
-//            else
-//                imi = mi.DelegateForCallMethod();
 
-//            GGrid grid = new GGrid(gridSize);
-//            for (int x = 0; x < gridSize.x; x++)
-//            {
-//                for (int y = 0; y < gridSize.y; y++)
-//                {
-//                    int totalSize = blockSize.x * blockSize.y * blockSize.z;
-//                    Thread[] threads = new Thread[totalSize];
-//                    IAsyncResult[] ars = new IAsyncResult[totalSize]; 
-//                    GBlock blk2lnch = new GBlock(grid, blockSize, x, y);
-//                    int tCtr = 0;
-//                    for (int tx = 0; tx < blockSize.x; tx++)
-//                    {
-//                        for (int ty = 0; ty < blockSize.y; ty++)
-//                        {
-//                            GThread ht = new GThread(tx, ty, blk2lnch);
-//                            object[] pList = BuildParameterList(mi, ht, arguments);
+        //            MethodInfo mi = gpuMethodInfo.Method;
+        //            if (mi == null)
+        //                throw new CudafyHostException(CudafyHostException.csX_NOT_SET, gpuMethodInfo.Name);
+        //            bool isStatic = mi.IsStatic;
+        //            object instance = isStatic ? null : Activator.CreateInstance(mi.DeclaringType);
+        //            if (gpuMethodInfo.IsDummy)
+        //            {
+        //                mi.Invoke(instance, arguments);
+        //                return;
+        //            }
+        //            //List<Type> paramTypes = new List<Type>();
+        //            //mi.Parameters().ToList().ForEach(p => paramTypes.Add(p.ParameterType));
+        //            MethodInvoker imi = null;
+        //            //mi.DeclaringType.DelegateForCallMethod(mi.Name,
+        //                //typeof(GThread), typeof(byte[]), typeof(long), typeof(uint[]));   //mi.DelegateForCallMethod();
+        //            StaticMethodInvoker smi = null;
+        //            if(isStatic)
+        //                smi = mi.DelegateForCallStaticMethod();
+        //            else
+        //                imi = mi.DelegateForCallMethod();
 
-//#warning OPTIMIZATION if there is no synchronize then start and join threads in multiple of processor count - check this in disassembly and put flag in gpuMethodInfo
-//                            //threads[tCtr] = new Thread(() =>
-//                            //{
-//                            IAsyncResult ar = null;    
-//                            if(isStatic)
-//                                ar = smi.BeginInvoke(pList, null, null);
-//                            else
-//                                ar = imi.BeginInvoke(instance, pList, null, null);
-//                                //if (mi.IsStatic)
-//                                //    mi.Call(pList);
-//                                //else
-//                                //    mi.Call(instance, pList);
-//                           // });
+        //            GGrid grid = new GGrid(gridSize);
+        //            for (int x = 0; x < gridSize.x; x++)
+        //            {
+        //                for (int y = 0; y < gridSize.y; y++)
+        //                {
+        //                    int totalSize = blockSize.x * blockSize.y * blockSize.z;
+        //                    Thread[] threads = new Thread[totalSize];
+        //                    IAsyncResult[] ars = new IAsyncResult[totalSize]; 
+        //                    GBlock blk2lnch = new GBlock(grid, blockSize, x, y);
+        //                    int tCtr = 0;
+        //                    for (int tx = 0; tx < blockSize.x; tx++)
+        //                    {
+        //                        for (int ty = 0; ty < blockSize.y; ty++)
+        //                        {
+        //                            GThread ht = new GThread(tx, ty, blk2lnch);
+        //                            object[] pList = BuildParameterList(mi, ht, arguments);
 
-//                            //mi.Call(instance, pList);
-//                            //threads[tCtr].Name = string.Format("Grid_{0}_{1}_Thread_{2}_{3}", x, y, tx, ty);
-//                            //threads[tCtr].Start();
-//                            //if (ctr % 16 == 0)
-//                            //    Console.WriteLine("Ctr=" + ctr.ToString());
-//                            //ctr++;
-//                            ars[tCtr] = ar;
-//                            tCtr++;
-//                        }
-//                    }
+        //#warning OPTIMIZATION if there is no synchronize then start and join threads in multiple of processor count - check this in disassembly and put flag in gpuMethodInfo
+        //                            //threads[tCtr] = new Thread(() =>
+        //                            //{
+        //                            IAsyncResult ar = null;    
+        //                            if(isStatic)
+        //                                ar = smi.BeginInvoke(pList, null, null);
+        //                            else
+        //                                ar = imi.BeginInvoke(instance, pList, null, null);
+        //                                //if (mi.IsStatic)
+        //                                //    mi.Call(pList);
+        //                                //else
+        //                                //    mi.Call(instance, pList);
+        //                           // });
 
-//                    for (int i = 0; i < totalSize; i++)
-//                    {
-//                        //threads[i].Join();
-//                        //Console.WriteLine("Thread {0} exited.", threads[i].Name);
-//                        if (isStatic)
-//                            smi.EndInvoke(ars[i]);
-//                        else
-//                            imi.EndInvoke(ars[i]);
-//                    }
-//                }
-//            }
-//        }
+        //                            //mi.Call(instance, pList);
+        //                            //threads[tCtr].Name = string.Format("Grid_{0}_{1}_Thread_{2}_{3}", x, y, tx, ty);
+        //                            //threads[tCtr].Start();
+        //                            //if (ctr % 16 == 0)
+        //                            //    Console.WriteLine("Ctr=" + ctr.ToString());
+        //                            //ctr++;
+        //                            ars[tCtr] = ar;
+        //                            tCtr++;
+        //                        }
+        //                    }
+
+        //                    for (int i = 0; i < totalSize; i++)
+        //                    {
+        //                        //threads[i].Join();
+        //                        //Console.WriteLine("Thread {0} exited.", threads[i].Name);
+        //                        if (isStatic)
+        //                            smi.EndInvoke(ars[i]);
+        //                        else
+        //                            imi.EndInvoke(ars[i]);
+        //                    }
+        //                }
+        //            }
+        //        }
 
         private object[] BuildParameterList2(MethodInfo mi, object[] userArgs, out Dictionary<Array, EmuDevicePtrEx> dic)
         {
@@ -483,7 +483,7 @@ namespace Cudafy.Host
         //    return prms.ToArray();
         //}
 
-        protected override Array DoCast<T,U>(int offset, Array devArray, int n)
+        protected override Array DoCast<T, U>(int offset, Array devArray, int n)
         {
             if (typeof(T) != typeof(U))
                 throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, "Casting between types on Emulator");
@@ -494,7 +494,7 @@ namespace Cudafy.Host
             return devMemPtr;
         }
 
-        protected override Array DoCast<T,U>(int offset, Array devArray, int x, int y)
+        protected override Array DoCast<T, U>(int offset, Array devArray, int x, int y)
         {
             if (typeof(T) != typeof(U))
                 throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, "Casting between types on Emulator");
@@ -505,11 +505,11 @@ namespace Cudafy.Host
             return devMemPtr;
         }
 
-        protected override Array DoCast<T,U>(int offset, Array devArray, int x, int y, int z)
+        protected override Array DoCast<T, U>(int offset, Array devArray, int x, int y, int z)
         {
             if (typeof(T) != typeof(U))
-                throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, "Casting between types on Emulator");            
-            T[,,] devMemPtr = new T[0, 0, 0];
+                throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, "Casting between types on Emulator");
+            T[, ,] devMemPtr = new T[0, 0, 0];
             EmuDevicePtrEx ptrEx = (EmuDevicePtrEx)GetDeviceMemory(devArray);
             ptrEx = new EmuDevicePtrEx(offset, ptrEx.DevPtr, x, y, z);
             AddToDeviceMemory(devMemPtr, ptrEx);
@@ -620,7 +620,28 @@ namespace Cudafy.Host
             var ptrEx = GetDeviceMemory(devArray) as EmuDevicePtrEx;
             DoCopyFromDeviceAsync<T>(ptrEx, devOffset, hostArray, hostOffset, count, streamId);
         }
-        
+
+        public override void CreateStream(int streamId)
+        {
+            if (streamId > -1 && !_streams.ContainsKey(streamId))
+                _streams.Add(streamId, streamId);
+        }
+
+        protected override void DoCopyOnDevice<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffet, int count)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void DoCopyOnDeviceAsync<T>(Array srcDevArray, int srcOffset, Array dstDevArray, int dstOffet, int count, int streamId)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void DoCopyOnDeviceAsync<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffet, int count, int streamId)
+        {
+            throw new NotImplementedException();
+        }
+
 
         /// <summary>
         /// Does the copy from device async.
@@ -673,7 +694,7 @@ namespace Cudafy.Host
         /// <returns>The device array.</returns>
         public override T[] CopyToDevice<T>(T[] hostArray)
         {
-            T[] devMemPtr = Allocate<T>(hostArray);            
+            T[] devMemPtr = Allocate<T>(hostArray);
             //EmuDevicePtrEx devMem = (EmuDevicePtrEx)GetDeviceMemory(devMemPtr);
             DoCopyToDevice<T>(hostArray, 0, devMemPtr, 0, hostArray.Length);
             return devMemPtr;
@@ -699,9 +720,9 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray"></param>
         /// <returns>The device array.</returns>
-        public override T[,,] CopyToDevice<T>(T[,,] hostArray)
+        public override T[, ,] CopyToDevice<T>(T[, ,] hostArray)
         {
-            T[,,] devMemPtr = Allocate<T>(hostArray);
+            T[, ,] devMemPtr = Allocate<T>(hostArray);
             //EmuDevicePtrEx devMem = (EmuDevicePtrEx)GetDeviceMemory(devMemPtr);
             DoCopyToDevice<T>(hostArray, 0, devMemPtr, 0, hostArray.Length);
             return devMemPtr;
@@ -745,7 +766,7 @@ namespace Cudafy.Host
         public override T[,] Allocate<T>(int x, int y)
         {
             T[] devMem = new T[x * y];
-            T[,] devMemPtr = new T[0,0];
+            T[,] devMemPtr = new T[0, 0];
             AddToDeviceMemory(devMemPtr, new EmuDevicePtrEx(0, devMem, x, y));
             return devMemPtr;
         }
@@ -758,10 +779,10 @@ namespace Cudafy.Host
         /// <param name="y">The y dimension.</param>
         /// <param name="z">The z dimension.</param>
         /// <returns>3D device array.</returns>
-        public override T[,,] Allocate<T>(int x, int y, int z)
+        public override T[, ,] Allocate<T>(int x, int y, int z)
         {
             T[] devMem = new T[x * y * z];
-            T[,,] devMemPtr = new T[0,0,0];
+            T[, ,] devMemPtr = new T[0, 0, 0];
             AddToDeviceMemory(devMemPtr, new EmuDevicePtrEx(0, devMem, x, y, z));
             return devMemPtr;
         }
@@ -794,7 +815,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray">The host array.</param>
         /// <returns>3D device array.</returns>
-        public override T[,,] Allocate<T>(T[,,] hostArray)
+        public override T[, ,] Allocate<T>(T[, ,] hostArray)
         {
             return Allocate<T>(hostArray.GetLength(0), hostArray.GetLength(1), hostArray.GetLength(2));
         }
@@ -810,7 +831,7 @@ namespace Cudafy.Host
         {
             VerifyOnGPU(devArray);
             EmuDevicePtrEx ptrEx = (EmuDevicePtrEx)GetDeviceMemory(devArray);
-            if (count == 0)          
+            if (count == 0)
                 count = ptrEx.TotalSize;
             Array.Clear(ptrEx.DevPtr, ptrEx.Offset + offset, count);
         }
@@ -836,7 +857,7 @@ namespace Cudafy.Host
                 UnloadModules();
             else
                 CheckForDuplicateMembers(module);
-            _module = module;  
+            _module = module;
             _modules.Add(module);
         }
 
@@ -906,7 +927,7 @@ namespace Cudafy.Host
         /// <param name="streamId">The stream id.</param>
         public override void DestroyStream(int streamId)
         {
-            if(!_streams.Remove(streamId))
+            if (!_streams.Remove(streamId))
             {
                 Debug.WriteLine(string.Format("Warning: DestroyStream(int streamId) streamId {0} does not exist"));
             }
@@ -932,7 +953,7 @@ namespace Cudafy.Host
         {
             int bytes = MSizeOf(typeof(T)) * x;
             byte[] buffer = new byte[bytes];
-            GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);          
+            GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
             IntPtr intPtr = handle.AddrOfPinnedObject();
             _hostHandles.Add(intPtr, handle);
             return intPtr;
@@ -982,6 +1003,8 @@ namespace Cudafy.Host
             }
         }
 #pragma warning restore 1591
+
+
 
 
 
@@ -1058,7 +1081,7 @@ namespace Cudafy.Host
         /// </summary>
         public void FreeHandle()
         {
-            if(_devPtrHandle.IsAllocated)
+            if (_devPtrHandle.IsAllocated)
                 _devPtrHandle.Free();
         }
     }

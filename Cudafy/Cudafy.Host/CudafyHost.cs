@@ -29,7 +29,8 @@ using System.Threading;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
-
+using GASS.CUDA;
+using GASS.CUDA.Types;
 namespace Cudafy.Host
 {
     /// <summary>
@@ -59,24 +60,26 @@ namespace Cudafy.Host
             }
             else if (type == eGPUType.Cuda)
             {
+                // Store the current context
+                CUcontext ctx = CUDA.GetCurrentContext();
+                GPGPU currentGPU = null;
                 int devCnt = CudaGPU.GetDeviceCount();
                 for (int i = 0; i < devCnt; i++)
                 {
-                    GPGPU gpu = null;
+                    CudaGPU gpu = null;
                     GPGPUProperties props;
-                    if (DeviceCreated(type, i))
-                    {
-                        gpu = GetDevice(eGPUType.Cuda, i);
-                        props = gpu.GetDeviceProperties(useAdvanced);
-                    }
-                    else
-                    {
-                        gpu = GetDevice(eGPUType.Cuda, i);
-                        props = gpu.GetDeviceProperties(useAdvanced);
-                        //RemoveDevice(gpu);
-                    }
+
+                    gpu = (CudaGPU)GetDevice(eGPUType.Cuda, i);
+                    if (gpu == null)
+                        throw new CudafyHostException(CudafyHostException.csDEVICE_X_NOT_FOUND, string.Format("{0}{1}", eGPUType.Cuda.ToString(), i));
+                    props = gpu.GetDeviceProperties(useAdvanced);
+                    if (gpu.GetDeviceContext().Pointer == ctx.Pointer)
+                        currentGPU = gpu;
                     yield return props;
                 }
+                // Reset context to current GPU
+                if (currentGPU != null)
+                    currentGPU.SetCurrentContext();
             }
             else
                 throw new CudafyHostException(CudafyHostException.csX_NOT_CURRENTLY_SUPPORTED, type);

@@ -153,6 +153,7 @@ namespace Cudafy
 #pragma warning disable 1591
         //public const string csCONSTANT_MEMORY_NOT_FOUND = "Constant memory not found.";
         //public const string csHOST_AND_DEVICE_ARRAYS_ARE_OF_DIFFERENT_SIZES = "Host and device arrays are of different sizes.";
+        public const string csDEVICE_X_NOT_FOUND = "Device '{0}' not found.";
         public const string csSETTING_X_NOT_FOUND = "Setting '{0}' not found.";
         public const string csMETHOD_X_ALREADY_ADDED_TO_THIS_MODULE = "Method with name '{0}' already added to this module.";
         public const string csCONSTANT_X_ALREADY_ADDED_TO_THIS_MODULE = "Constant with name '{0}' already added to this module.";
@@ -187,7 +188,7 @@ namespace Cudafy
         public const string csVERSION_MISMATCH_EXPECTED_X_GOT_X = "Version mismatch. Expected {0} got {1}.";
 
         //public const string csFAILED_TO_GET_PROPERIES_X = "Failed to get properties: {0}";
-
+        public const string csCONTEXT_IS_NOT_CURRENT = "Context is not current to the device. Use SetCurrentContext().";
         
 
         protected virtual void CheckParamsAreNoExceptions(object[] args)

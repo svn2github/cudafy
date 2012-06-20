@@ -88,7 +88,7 @@ namespace Cudafy.Host.UnitTests
             _gpu.FreeAll();
         }
 
-        //[Test]
+        [Test]
         public void Test_SingleThreadCopy()
         {
             _gpuuintBufferIn1 = _gpu.CopyToDevice(_uintBufferIn1);

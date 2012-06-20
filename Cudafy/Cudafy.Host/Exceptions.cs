@@ -73,6 +73,7 @@ namespace Cudafy.Host
         public const string csFAILED_TO_GET_PROPERIES_X = "Failed to get properties: {0}";
         public const string csDATA_IS_NOT_ON_GPU = "Data is not on the device.";
         public const string csDATA_IS_NOT_HOST_ALLOCATED = "Data is not host allocated.";
+        public const string csSTREAM_X_ALREADY_SET = "Stream {0} is already set.";
         public const string csSTREAM_X_NOT_SET = "Stream {0} is not set.";
         public const string csPOINTER_NOT_FOUND = "Pointer not found.";
         public const string csDEVICE_ID_OUT_OF_RANGE = "Device ID out of range.";

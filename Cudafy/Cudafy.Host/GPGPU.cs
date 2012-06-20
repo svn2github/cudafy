@@ -305,6 +305,33 @@ namespace Cudafy.Host
 
         private bool _isMultithreadedEnabled = false;
 
+        /// <summary>
+        /// Sets the current context to the context associated with this device when it was created.
+        /// </summary>
+        public virtual void SetCurrentContext()
+        {
+
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is current context. You must ensure this is true before 
+        /// attempting communication with device.
+        /// </summary>
+        /// <value>
+        /// 	<c>true</c> if this instance is current context; otherwise, <c>false</c>.
+        /// </value>
+        public virtual bool IsCurrentContext
+        {
+            get { return true; }
+        }
+
+
+        /// <summary>
+        /// Explicitly creates a stream.
+        /// </summary>
+        /// <param name="streamId">The stream id.</param>
+        public abstract void CreateStream(int streamId);
+
         #region Dynamic
 #if !NET35
         /// <summary>
@@ -2147,6 +2174,50 @@ namespace Cudafy.Host
         /// <param name="dstDevArray">The destination device array.</param>
         /// <param name="dstOffset">The destination offet.</param>
         /// <param name="count">The number of element.</param>
+        public void CopyOnDevice<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffset, int count)
+        {
+            DoCopyOnDevice<T>(srcDevArray, srcOffset, dstDevArray, dstOffset, count);
+        }
+
+        /// <summary>
+        /// Copies between preallocated arrays on device.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="srcDevArray">The source device array.</param>
+        /// <param name="srcOffset">The source offset.</param>
+        /// <param name="dstDevArray">The destination device array.</param>
+        /// <param name="dstOffset">The destination offet.</param>
+        /// <param name="count">The number of element.</param>
+        /// <param name="streamId">Stream id.</param>
+        public void CopyOnDeviceAsync<T>(T[] srcDevArray, int srcOffset, T[] dstDevArray, int dstOffset, int count, int streamId)
+        {
+            DoCopyOnDeviceAsync<T>(srcDevArray, srcOffset, dstDevArray, dstOffset, count, streamId);
+        }
+
+        /// <summary>
+        /// Copies between preallocated arrays on device.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="srcDevArray">The source device array.</param>
+        /// <param name="srcOffset">The source offset.</param>
+        /// <param name="dstDevArray">The destination device array.</param>
+        /// <param name="dstOffset">The destination offet.</param>
+        /// <param name="count">The number of element.</param>
+        /// <param name="streamId">Stream id.</param>
+        public void CopyOnDeviceAsync<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffset, int count, int streamId)
+        {
+            DoCopyOnDeviceAsync<T>(srcDevArray, srcOffset, dstDevArray, dstOffset, count, streamId);
+        }
+
+        /// <summary>
+        /// Copies between preallocated arrays on device.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="srcDevArray">The source device array.</param>
+        /// <param name="srcOffset">The source offset.</param>
+        /// <param name="dstDevArray">The destination device array.</param>
+        /// <param name="dstOffset">The destination offet.</param>
+        /// <param name="count">The number of element.</param>
         public void CopyOnDevice<T>(T[,] srcDevArray, int srcOffset, T[,] dstDevArray, int dstOffset, int count)
         {
             DoCopyOnDevice<T>(srcDevArray, srcOffset, dstDevArray, dstOffset, count);
@@ -2166,6 +2237,11 @@ namespace Cudafy.Host
             DoCopyOnDevice<T>(srcDevArray, srcOffset, dstDevArray, dstOffset, count);
         }
 
+        public void CopyOnDeviceAsync<T>(T[, ,] srcDevArray, int srcOffset, T[, ,] dstDevArray, int dstOffset, int count, int streamId)
+        {
+            DoCopyOnDeviceAsync<T>(srcDevArray, srcOffset, dstDevArray, dstOffset, count, streamId);
+        }
+
         /// <summary>
         /// Copies between preallocated arrays on device.
         /// </summary>
@@ -2176,8 +2252,12 @@ namespace Cudafy.Host
         /// <param name="dstOffet">The destination offet.</param>
         /// <param name="count">The number of element.</param>
         protected abstract void DoCopyOnDevice<T>(Array srcDevArray, int srcOffset, Array dstDevArray, int dstOffet, int count);
-        //public abstract void CopyOnDevice<T>(T[] srcDevArray, int srcOffset, T[] dstDevArray, int dstOffet, int count);
 
+        protected abstract void DoCopyOnDevice<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffet, int count);
+
+        protected abstract void DoCopyOnDeviceAsync<T>(Array srcDevArray, int srcOffset, Array dstDevArray, int dstOffet, int count, int streamId);
+
+        protected abstract void DoCopyOnDeviceAsync<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffet, int count, int streamId);
 
         internal SmartStage[] _smartInputStages = new SmartStage[0];
 

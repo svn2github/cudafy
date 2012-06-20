@@ -18,6 +18,14 @@ namespace GASS.CUDA
             this.error = error;
         }
 
+        public override string Message
+        {
+            get
+            {
+                return CUDAError.ToString();
+            }
+        }
+
         public override string ToString()
         {
             return this.CUDAError.ToString();

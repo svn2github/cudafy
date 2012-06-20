@@ -79,8 +79,10 @@ namespace Cudafy.Host
         /// <param name="peer">Peer to access. This is a one-way relationship.</param>
         public override void EnablePeerAccess(GPGPU peer)
         {
-            throw new NotImplementedException();
-            _cuda.EnablePeerAccess(new CUcontext(), 0);
+            if (!(peer is CudaGPU))
+                throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, peer.GetType());
+            CudaGPU cudaPeer = peer as CudaGPU;
+            _cuda.EnablePeerAccess(cudaPeer.GetDeviceContext(), 0);
         }
 
 
@@ -90,8 +92,10 @@ namespace Cudafy.Host
         /// <param name="peer">Accessible peer to disable access to.</param>
         public override void DisablePeerAccess(GPGPU peer)
         {
-            throw new NotImplementedException();
-            _cuda.DisablePeerAccess(new CUcontext());
+            if (!(peer is CudaGPU))
+                throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, peer.GetType());
+            CudaGPU cudaPeer = peer as CudaGPU;
+            _cuda.DisablePeerAccess(cudaPeer.GetDeviceContext());
         }
 
         /// <summary>
@@ -155,7 +159,9 @@ namespace Cudafy.Host
             try
             {
                 //Debug.WriteLine("Locking");
-                _ccs.Lock();
+                //var curCtx = _cuda.GetCurrentContext();
+                //if (curCtx.Pointer != IntPtr.Zero && _cuda.DeviceContext.Pointer != curCtx.Pointer)
+                    _ccs.Lock();
             }
             catch (CUDAException ex)
             {
@@ -174,7 +180,8 @@ namespace Cudafy.Host
             try
             {
                 //Debug.WriteLine("Unlocking");
-                _ccs.Unlock();
+                if(_ccs.IsLocked)
+                    _ccs.Unlock();
             }
             catch (CUDAException ex)
             {
@@ -206,7 +213,8 @@ namespace Cudafy.Host
         {
             if (_ccs == null)
             {
-                _ccs = new CUDAContextSynchronizer(_cuda.CurrentContext);
+                //_ccs = new CUDAContextSynchronizer(_cuda.CurrentContext);
+                _ccs = new CUDAContextSynchronizer(_cuda.DeviceContext);
                 try
                 {
                     _cc = _ccs.MakeFloating();
@@ -251,6 +259,38 @@ namespace Cudafy.Host
         private CUcontext _cc;
 
         /// <summary>
+        /// Sets the current context to the context associated with this device when it was created.
+        /// Use of this method is vitally important when working with multiple GPUs.
+        /// </summary>
+        public override void SetCurrentContext()
+        {
+            _cuda.SetCurrentContext(_cuda.DeviceContext);
+        }
+
+        internal CUcontext GetDeviceContext()
+        {
+            return _cuda.DeviceContext;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is current context. You must ensure this is true before
+        /// attempting communication with device.
+        /// </summary>
+        /// <value>
+        /// 	<c>true</c> if this instance is current context; otherwise, <c>false</c>.
+        /// </value>
+        public override bool IsCurrentContext
+        {
+            get
+            {
+                CUcontext curCtx = CUDA.GetCurrentContext();
+                CUcontext devCtx = GetDeviceContext();
+                bool res = curCtx.Pointer == devCtx.Pointer;
+                return res;
+            }
+        }
+
+        /// <summary>
         /// Gets the CUDA.NET handle. You can cast this to CUDA in the GASS.CUDA namespace.
         /// See http://www.hoopoe-cloud.com/Solutions/CUDA.NET/Default.aspx
         /// </summary>
@@ -268,7 +308,7 @@ namespace Cudafy.Host
         /// <exception cref="DllNotFoundException">Library named cudart.dll is needed for advanced properties and was not found.</exception>
         public override GPGPUProperties GetDeviceProperties(bool useAdvanced = true)
         {
-            Device dev = _cuda.CurrentDevice;
+            Device dev = _cuda.Devices[DeviceId];//CurrentDevice;
             
             GPGPUProperties props = new GPGPUProperties();
             props.UseAdvanced = useAdvanced;
@@ -422,6 +462,8 @@ namespace Cudafy.Host
                 throw new CudafyHostException(CudafyHostException.csCUDA_EXCEPTION_X_X, ex.CUDAError.ToString(), addInfo);
         }
 
+
+
         /// <summary>
         /// Starts the timer.
         /// </summary>
@@ -465,7 +507,12 @@ namespace Cudafy.Host
         /// <value>The free memory.</value>
         public override ulong FreeMemory
         {
-            get { return _cuda.FreeMemory; }
+            get 
+            {
+                if (!IsCurrentContext)
+                    return 0;
+                return _cuda.FreeMemory; 
+            }
         }
 
         /// <summary>
@@ -476,7 +523,28 @@ namespace Cudafy.Host
         /// </value>
         public override ulong TotalMemory
         {
-            get { return _cuda.TotalMemory; }
+            get 
+            {
+                if (!IsCurrentContext)
+                    return 0;
+                return _cuda.TotalMemory; 
+            }
+        }
+
+        /// <summary>
+        /// Explicitly creates a stream.
+        /// </summary>
+        /// <param name="streamId">The stream id.</param>
+        public override void CreateStream(int streamId)
+        {
+            if (streamId < 0)
+                throw new ArgumentOutOfRangeException("streamId must be greater than or equal to zero");
+            if (_streams.ContainsKey(streamId))
+                throw new CudafyHostException(CudafyHostException.csSTREAM_X_ALREADY_SET, streamId);
+
+            var cuStr = _cuda.CreateStream();
+            _streams.Add(streamId, cuStr);
+
         }
 
         #region Launch
@@ -882,7 +950,11 @@ namespace Cudafy.Host
             CUstream cuStr = new CUstream();
             cuStr.Pointer = IntPtr.Zero;
             if (streamId > 0)
+            {
+                if(!_streams.ContainsKey(streamId))
+                    throw new CudafyHostException(CudafyHostException.csSTREAM_X_NOT_SET, streamId);
                 cuStr = (CUstream)_streams[streamId];
+            }
             else
                 cuStr.Pointer = IntPtr.Zero;
             try
@@ -1004,24 +1076,7 @@ namespace Cudafy.Host
             
             CUdeviceptr ptr = (ptrEx as CUDevicePtrEx).DevPtr;
             Type type = typeof(T);
-            CUstream cuStr = new CUstream();
-            cuStr.Pointer = IntPtr.Zero;
-            if (streamId > 0 && !_streams.ContainsKey(streamId))
-            {
-                try
-                {
-                    cuStr = _cuda.CreateStream();
-                }
-                catch (CUDAException ex)
-                {
-                    HandleCUDAException(ex);
-                }
-                _streams.Add(streamId, cuStr);
-            }
-            else if(streamId > 0)
-            {
-                cuStr = (CUstream)_streams[streamId];
-            }
+            CUstream cuStr = GetCUstream(streamId);
             unsafe
             {
                 int size = MSizeOf(type);
@@ -1044,6 +1099,29 @@ namespace Cudafy.Host
                     HandleCUDAException(ex);
                 }
             }
+        }
+
+        private CUstream GetCUstream(int streamId)
+        {
+            CUstream cuStr = new CUstream();
+            cuStr.Pointer = IntPtr.Zero;
+            if (streamId > 0 && !_streams.ContainsKey(streamId))
+            {
+                try
+                {
+                    cuStr = _cuda.CreateStream();
+                }
+                catch (CUDAException ex)
+                {
+                    HandleCUDAException(ex);
+                }
+                _streams.Add(streamId, cuStr);
+            }
+            else if (streamId > 0)
+            {
+                cuStr = (CUstream)_streams[streamId];
+            }
+            return cuStr;
         }
 
         protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId)
@@ -1316,11 +1394,10 @@ namespace Cudafy.Host
         //    DoCopyOnDevice<T>(
         //}
 
-
-        protected override void DoCopyOnDevice<T>(Array srcDevArray, int srcOffset, Array dstDevArray, int dstOffet, int count)
+        protected override void DoCopyOnDevice<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffet, int count)
         {
-            CUDevicePtrEx ptrSrcEx = (CUDevicePtrEx)GetDeviceMemory(srcDevArray);
-            CUDevicePtrEx ptrDstEx = (CUDevicePtrEx)GetDeviceMemory(dstDevArray);
+            CUDevicePtrEx ptrSrcEx = ((CUDevicePtrEx)srcDevArray);
+            CUDevicePtrEx ptrDstEx = ((CUDevicePtrEx)dstDevArray);
             int size = MSizeOf(typeof(T));
             CUdeviceptr ptrSrcOffset = ptrSrcEx.DevPtr + (long)(srcOffset * size);
             CUdeviceptr ptrDstOffset = ptrDstEx.DevPtr + (long)(dstOffet * size);
@@ -1337,9 +1414,7 @@ namespace Cudafy.Host
         }
 
         protected override void DoCopyDeviceToDevice<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count)
-        {
-            throw new NotImplementedException();
-            
+        {          
             CUDevicePtrEx ptrSrcEx = (CUDevicePtrEx)GetDeviceMemory(srcDevArray);
             CUDevicePtrEx ptrDstEx = (CUDevicePtrEx)peer.GetDeviceMemory(dstDevArray);
             int size = MSizeOf(typeof(T));
@@ -1349,7 +1424,7 @@ namespace Cudafy.Host
             uint bytes = (uint)count * (uint)size;
             try
             {
-                _cuda.CopyPeerToPeer(ptrDstOffset, _cuda.GetCurrentContext(), ptrSrcOffset, new CUcontext()/*peer.Context*/, count);
+                _cuda.CopyPeerToPeer(ptrDstOffset, (peer as CudaGPU).GetDeviceContext(), ptrSrcOffset, _cuda.CurrentContext, count * size);
             }
             catch (CUDAException ex)
             {
@@ -1359,8 +1434,6 @@ namespace Cudafy.Host
 
         protected override void DoCopyDeviceToDeviceAsync<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count, int streamId)
         {
-            throw new NotImplementedException();
-
             CUDevicePtrEx ptrSrcEx = (CUDevicePtrEx)GetDeviceMemory(srcDevArray);
             CUDevicePtrEx ptrDstEx = (CUDevicePtrEx)peer.GetDeviceMemory(dstDevArray);
             int size = MSizeOf(typeof(T));
@@ -1370,12 +1443,47 @@ namespace Cudafy.Host
             uint bytes = (uint)count * (uint)size;
             try
             {
-                _cuda.CopyPeerToPeerAsync(ptrDstOffset, _cuda.GetCurrentContext(), ptrSrcOffset, new CUcontext()/*peer.Context*/, count, stream);
+                _cuda.CopyPeerToPeerAsync(ptrDstOffset, GetDeviceContext(), ptrSrcOffset, (peer as CudaGPU).GetDeviceContext(), count, stream);
             }
             catch (CUDAException ex)
             {
                 HandleCUDAException(ex);
             }
+        }
+
+
+        protected override void DoCopyOnDevice<T>(Array srcDevArray, int srcOffset, Array dstDevArray, int dstOffet, int count)
+        {
+            DevicePtrEx ptrSrcEx = (CUDevicePtrEx)GetDeviceMemory(srcDevArray);
+            DevicePtrEx ptrDstEx = (CUDevicePtrEx)GetDeviceMemory(dstDevArray);
+            DoCopyOnDevice<T>(ptrSrcEx, srcOffset, ptrDstEx, dstOffet, count);
+        }
+
+        protected override void DoCopyOnDeviceAsync<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffet, int count, int streamId)
+        {
+            CUDevicePtrEx ptrSrcEx = ((CUDevicePtrEx)srcDevArray);
+            CUDevicePtrEx ptrDstEx = ((CUDevicePtrEx)dstDevArray);
+            int size = MSizeOf(typeof(T));
+            CUdeviceptr ptrSrcOffset = ptrSrcEx.DevPtr + (long)(srcOffset * size);
+            CUdeviceptr ptrDstOffset = ptrDstEx.DevPtr + (long)(dstOffet * size);
+            CUstream cuStr = GetCUstream(streamId);
+            uint bytes = (uint)count * (uint)size;
+            try
+            {
+                _cuda.CopyDeviceToDeviceAsync(ptrSrcOffset, ptrDstOffset, bytes, cuStr);
+            }
+            catch (CUDAException ex)
+            {
+                HandleCUDAException(ex);
+            }
+        }
+
+
+        protected override void DoCopyOnDeviceAsync<T>(Array srcDevArray, int srcOffset, Array dstDevArray, int dstOffet, int count, int streamId)
+        {
+            DevicePtrEx ptrSrcEx = (CUDevicePtrEx)GetDeviceMemory(srcDevArray);
+            DevicePtrEx ptrDstEx = (CUDevicePtrEx)GetDeviceMemory(dstDevArray);
+            DoCopyOnDevice<T>(ptrSrcEx, srcOffset, ptrDstEx, dstOffet, count);
         }
 
         /// <summary>
@@ -1550,7 +1658,7 @@ namespace Cudafy.Host
             {
                 if (!ptrEx.CreatedFromCast && DeviceMemoryValueExists(ptrEx))
                 {
-                    var curCtx = _cuda.GetCurrentContext();
+                    var curCtx = _cuda.GetCurrentContextV1();
                     if (ptrEx.Context.Value.Pointer != curCtx.Pointer)
                     {
                         _cuda.SetCurrentContext(ptrEx.Context.Value);
@@ -1588,8 +1696,14 @@ namespace Cudafy.Host
                     {
                         if (!ptrEx.CreatedFromCast && _cuda != null && !ptrEx.Disposed)
                         {
-                            var curCtx = _cuda.GetCurrentContext();
+                            var curCtx = _cuda.DeviceContext;//_cuda.GetCurrentContext();
                             if (ptrEx.Context.Value.Pointer != curCtx.Pointer)
+                            {
+                                _cuda.SetCurrentContext(ptrEx.Context.Value);
+                                _cuda.Free(ptrEx.DevPtr);
+                                _cuda.SetCurrentContext(curCtx);
+                            }
+                            else if (ptrEx.Context.Value.Pointer != _cuda.GetCurrentContextV1().Pointer)
                             {
                                 _cuda.SetCurrentContext(ptrEx.Context.Value);
                                 _cuda.Free(ptrEx.DevPtr);
@@ -1619,6 +1733,8 @@ namespace Cudafy.Host
 
         public override void LoadModule(CudafyModule module, bool unload)
         {
+            if (!IsCurrentContext)
+                throw new CudafyHostException(CudafyHostException.csCONTEXT_IS_NOT_CURRENT);
             if (unload)
                 UnloadModules();
             else

@@ -42,7 +42,14 @@ namespace GASS.CUDA
 
         public CUDA(int ordinal, bool initialize) : this(initialize)
         {
-            this.CurrentContext = this.CreateContext(ordinal);//, CUCtxFlags.MapHost);
+            //this.CurrentContext = this.CreateContext(ordinal);//, CUCtxFlags.MapHost);
+            curCtx = this.CreateContext(ordinal);
+            SetCurrentContext(curCtx);
+        }
+
+        public CUcontext DeviceContext
+        {
+            get { return curCtx;  }
         }
 
 
@@ -129,6 +136,11 @@ namespace GASS.CUDA
         public void CopyDeviceToDevice(CUdeviceptr src, CUdeviceptr dst, uint bytes)
         {
             this.LastError = CUDADriver.cuMemcpyDtoD(dst, src, bytes);
+        }
+
+        public void CopyDeviceToDeviceAsync(CUdeviceptr src, CUdeviceptr dst, uint bytes, CUstream stream)
+        {
+            this.LastError = CUDADriver.cuMemcpyDtoDAsync(dst, src, bytes, stream);
         }
 
         public void CopyPeerToPeer(CUdeviceptr dstDevice, CUcontext dstContext, CUdeviceptr srcDevice, CUcontext srcContext, SizeT ByteCount)
@@ -831,10 +843,19 @@ namespace GASS.CUDA
             this.LastError = CUDADriver.cuCtxSetCurrent(ctx);
         }
 
-        public CUcontext GetCurrentContext()
+        public CUcontext GetCurrentContextV1()
         {
             CUcontext ctx = new CUcontext();
             this.LastError = CUDADriver.cuCtxGetCurrent(ref ctx);
+            return ctx;
+        }
+
+        public static CUcontext GetCurrentContext()
+        {
+            CUcontext ctx = new CUcontext();
+            CUResult res = CUDADriver.cuCtxGetCurrent(ref ctx);
+            if(res != CUResult.Success)
+                throw new CUDAException(res);
             return ctx;
         }
 
@@ -1014,25 +1035,25 @@ namespace GASS.CUDA
 
         public CUcontext CurrentContext
         {
-            //get
-            //{
-            //    return this.curCtx;
-            //}
-            //internal set
-            //{
-            //    this.curCtx = value;
-            //}
             get
             {
-                var ctx = new CUcontext();
-                this.LastError = CUDADriver.cuCtxGetCurrent(ref ctx);
-                return ctx;
+                return this.curCtx;
             }
             internal set
             {
-                //this.curCtx = value;
-                this.LastError = CUDADriver.cuCtxSetCurrent(value);
+                this.curCtx = value;
             }
+            //get
+            //{
+            //    var ctx = new CUcontext();
+            //    this.LastError = CUDADriver.cuCtxGetCurrent(ref ctx);
+            //    return ctx;
+            //}
+            //internal set
+            //{
+            //    //this.curCtx = value;
+            //    this.LastError = CUDADriver.cuCtxSetCurrent(value);
+            //}
         }
 
         public Device CurrentDevice
