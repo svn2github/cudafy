@@ -25,6 +25,21 @@ namespace GASS.CUDA
         public static extern CUResult cuMemHostRegister(IntPtr hostPtr, SizeT bytes, uint flags);
         [DllImport("nvcuda")]
         public static extern CUResult cuMemHostUnregister(IntPtr hostPtr);
+        
+        [DllImport("nvcuda")]
+        public static extern CUResult cuDeviceCanAccessPeer(ref int canAccessPeer, CUdevice dev, CUdevice peerDev);
+
+        [DllImport("nvcuda")]
+        public static extern CUResult cuCtxEnablePeerAccess(CUcontext peerContext, uint Flags);
+
+        [DllImport("nvcuda")]
+        public static extern CUResult cuCtxDisablePeerAccess(CUcontext peerContext);
+
+        [DllImport("nvcuda")]
+        public static extern CUResult cuMemcpyPeer (CUdeviceptr dstDevice, CUcontext dstContext, CUdeviceptr srcDevice, CUcontext srcContext, SizeT ByteCount);
+        [DllImport("nvcuda")]
+        public static extern CUResult cuMemcpyPeerAsync(CUdeviceptr dstDevice, CUcontext dstContext, CUdeviceptr srcDevice, CUcontext srcContext, SizeT ByteCount, CUstream hStream);
+
 
 
         [DllImport("nvcuda", EntryPoint="cuArray3DCreate_v2")]

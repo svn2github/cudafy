@@ -131,6 +131,16 @@ namespace GASS.CUDA
             this.LastError = CUDADriver.cuMemcpyDtoD(dst, src, bytes);
         }
 
+        public void CopyPeerToPeer(CUdeviceptr dstDevice, CUcontext dstContext, CUdeviceptr srcDevice, CUcontext srcContext, SizeT ByteCount)
+        {
+            this.LastError = CUDADriver.cuMemcpyPeer(dstDevice, dstContext, srcDevice, srcContext, ByteCount);
+        }
+
+        public void CopyPeerToPeerAsync(CUdeviceptr dstDevice, CUcontext dstContext, CUdeviceptr srcDevice, CUcontext srcContext, SizeT ByteCount, CUstream stream)
+        {
+            this.LastError = CUDADriver.cuMemcpyPeerAsync(dstDevice, dstContext, srcDevice, srcContext, ByteCount, stream);
+        }
+
         public void CopyDeviceToHost<T>(CUdeviceptr devPtr, T[] data)
         {
             GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
@@ -1188,6 +1198,23 @@ namespace GASS.CUDA
         public void HostUnregister(IntPtr buffer)
         {
             CUDADriver.cuMemHostUnregister(buffer);
+        }
+
+        public bool DeviceCanAccessPeer(CUdevice device, CUdevice peerDevice)
+        {
+            int res = 0;
+            this.LastError = CUDADriver.cuDeviceCanAccessPeer(ref res, device, peerDevice);
+            return res != 0;
+        }
+
+        public void EnablePeerAccess(CUcontext peerContext, uint flags)
+        {
+            this.LastError = CUDADriver.cuCtxEnablePeerAccess(peerContext, flags);
+        }
+
+        public void DisablePeerAccess(CUcontext peerContext)
+        {
+            this.LastError = CUDADriver.cuCtxDisablePeerAccess(peerContext);
         }
     }
 }
