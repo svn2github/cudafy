@@ -74,6 +74,46 @@ namespace Cudafy.Host
         private CUDAContextSynchronizer _ccs;
 
         /// <summary>
+        /// Enables peer access from within a kernel. Only supported on Tesla devices and Linux or Windows TCC.
+        /// </summary>
+        /// <param name="peer">Peer to access. This is a one-way relationship.</param>
+        public override void EnablePeerAccess(GPGPU peer)
+        {
+            throw new NotImplementedException();
+            _cuda.EnablePeerAccess(new CUcontext(), 0);
+        }
+
+
+        /// <summary>
+        /// Disables peer access.
+        /// </summary>
+        /// <param name="peer">Accessible peer to disable access to.</param>
+        public override void DisablePeerAccess(GPGPU peer)
+        {
+            throw new NotImplementedException();
+            _cuda.DisablePeerAccess(new CUcontext());
+        }
+
+        /// <summary>
+        /// Use this to check if device supports direct access from kernel to another device.
+        /// Only supported on Tesla devices and Linux or Windows TCC.
+        /// </summary>
+        /// <param name="peer">Peer to access.</param>
+        /// <returns>
+        /// True if access is possible, else false.
+        /// </returns>
+        public override bool CanAccessPeer(GPGPU peer)
+        {
+            if(!(peer is CudaGPU))
+                return false;
+            CUDA dstCUDA = (CUDA)(peer as CudaGPU).CudaDotNet;
+            CUdevice srcDevice = _cuda.GetDevice(this.DeviceId);
+            CUdevice peerDevice = dstCUDA.GetDevice(peer.DeviceId);
+            bool res = _cuda.DeviceCanAccessPeer(srcDevice, peerDevice);
+            return res;
+        }
+
+        /// <summary>
         /// Gets the CUstream object identified by streamId.
         /// </summary>
         /// <param name="streamId">The stream id.</param>
@@ -1296,6 +1336,48 @@ namespace Cudafy.Host
             }
         }
 
+        protected override void DoCopyDeviceToDevice<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count)
+        {
+            throw new NotImplementedException();
+            
+            CUDevicePtrEx ptrSrcEx = (CUDevicePtrEx)GetDeviceMemory(srcDevArray);
+            CUDevicePtrEx ptrDstEx = (CUDevicePtrEx)peer.GetDeviceMemory(dstDevArray);
+            int size = MSizeOf(typeof(T));
+            CUdeviceptr ptrSrcOffset = ptrSrcEx.DevPtr + (long)(srcOffset * size);
+            CUdeviceptr ptrDstOffset = ptrDstEx.DevPtr + (long)(dstOffet * size);
+
+            uint bytes = (uint)count * (uint)size;
+            try
+            {
+                _cuda.CopyPeerToPeer(ptrDstOffset, _cuda.GetCurrentContext(), ptrSrcOffset, new CUcontext()/*peer.Context*/, count);
+            }
+            catch (CUDAException ex)
+            {
+                HandleCUDAException(ex);
+            }
+        }
+
+        protected override void DoCopyDeviceToDeviceAsync<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count, int streamId)
+        {
+            throw new NotImplementedException();
+
+            CUDevicePtrEx ptrSrcEx = (CUDevicePtrEx)GetDeviceMemory(srcDevArray);
+            CUDevicePtrEx ptrDstEx = (CUDevicePtrEx)peer.GetDeviceMemory(dstDevArray);
+            int size = MSizeOf(typeof(T));
+            CUdeviceptr ptrSrcOffset = ptrSrcEx.DevPtr + (long)(srcOffset * size);
+            CUdeviceptr ptrDstOffset = ptrDstEx.DevPtr + (long)(dstOffet * size);
+            CUstream stream = (CUstream)GetStream(streamId);
+            uint bytes = (uint)count * (uint)size;
+            try
+            {
+                _cuda.CopyPeerToPeerAsync(ptrDstOffset, _cuda.GetCurrentContext(), ptrSrcOffset, new CUcontext()/*peer.Context*/, count, stream);
+            }
+            catch (CUDAException ex)
+            {
+                HandleCUDAException(ex);
+            }
+        }
+
         /// <summary>
         /// Allocates on device.
         /// </summary>
@@ -1637,6 +1719,8 @@ namespace Cudafy.Host
 
 
 #pragma warning restore 1591
+
+
 
     }
 

@@ -83,6 +83,9 @@ namespace Cudafy.Host
         public const string csCUDA_EXCEPTION_X = "CUDA.NET exception: {0}.";
         public const string csCUDA_EXCEPTION_X_X = "CUDA.NET exception: {0} ({1}).";
         public const string csDUPLICATE_X_NAME = "Module already loaded containing a duplicate {0} name.";
+        public const string csPEER_ACCESS_ALREADY_ENABLED = "Peer access already enabled";
+        public const string csPEER_ACCESS_WAS_NOT_ENABLED = "Peer access was not enabled";
+        public const string csPEER_ACCESS_TO_SELF_NOT_ALLOWED = "Peer access cannot be granted to self.";
         protected CudafyHostException(
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context)

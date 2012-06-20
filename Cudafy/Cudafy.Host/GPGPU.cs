@@ -195,6 +195,103 @@ namespace Cudafy.Host
             _isMultithreadedEnabled = false;
         }
 
+        protected object _peerAccessLock = new object();
+
+        protected List<GPGPU> _peerAccessList = new List<GPGPU>();
+
+        /// <summary>
+        /// Enables peer access from within a kernel. 
+        /// </summary>
+        /// <param name="peer">Peer to access. This is a one-way relationship.</param>
+        public virtual void EnablePeerAccess(GPGPU peer)
+        {
+            lock (_peerAccessLock)
+            {
+                if (_peerAccessList.Contains(peer))
+                    throw new CudafyHostException(CudafyHostException.csPEER_ACCESS_ALREADY_ENABLED);
+                if (this == peer)
+                    throw new CudafyHostException(CudafyHostException.csPEER_ACCESS_TO_SELF_NOT_ALLOWED);
+                _peerAccessList.Add(peer);
+            }
+        }
+
+        /// <summary>
+        /// Disables peer access.
+        /// </summary>
+        /// <param name="peer">Accessible peer to disable access to.</param>
+        public virtual void DisablePeerAccess(GPGPU peer)
+        {
+            lock (_peerAccessLock)
+            {
+                if (!_peerAccessList.Contains(peer))
+                    throw new CudafyHostException(CudafyHostException.csPEER_ACCESS_WAS_NOT_ENABLED);
+                _peerAccessList.Remove(peer);
+            }
+        }
+
+        /// <summary>
+        /// Use this to check if device supports direct access from kernel to another device.
+        /// </summary>
+        /// <param name="peer">Peer to access.</param>
+        /// <returns>True if access is possible, else false.</returns>
+        public abstract bool CanAccessPeer(GPGPU peer);
+
+        /// <summary>
+        /// Copies from one device to another device. Depending on whether RDMA is supported the transfer may or may not be via CPU and system memory.
+        /// </summary>
+        /// <typeparam name="T">Data </typeparam>
+        /// <param name="src"></param>
+        /// <param name="srcOffset"></param>
+        /// <param name="peer"></param>
+        /// <param name="dst"></param>
+        /// <param name="dstOffset"></param>
+        /// <param name="count"></param>
+        public virtual void CopyDeviceToDevice<T>(T[] src, int srcOffset, GPGPU peer, T[] dst, int dstOffset, int count)
+        {
+            DoCopyDeviceToDevice<T>(src, srcOffset, peer, dst, dstOffset, count);
+        }
+
+        /// <summary>
+        /// Copies from one device to another device. Depending on whether RDMA is supported the transfer may or may not be via CPU and system memory.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="src">Source data.</param>
+        /// <param name="srcOffset">Source array.</param>
+        /// <param name="peer">Target device.</param>
+        /// <param name="dst">Destination array.</param>
+        /// <param name="dstOffset">Destination offset.</param>
+        /// <param name="count">Number of samples.</param>
+        public virtual void CopyDeviceToDeviceAsync<T>(T[] src, int srcOffset, GPGPU peer, T[] dst, int dstOffset, int count, int stream)
+        {
+            DoCopyDeviceToDeviceAsync<T>(src, srcOffset, peer, dst, dstOffset, count, stream);
+        }
+
+
+        /// <summary>
+        /// Does copy to peer asynchronously.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="srcDevArray">The SRC dev array.</param>
+        /// <param name="srcOffset">The SRC offset.</param>
+        /// <param name="peer">The peer.</param>
+        /// <param name="dstDevArray">The DST dev array.</param>
+        /// <param name="dstOffet">The DST offet.</param>
+        /// <param name="count">The count.</param>
+        protected abstract void DoCopyDeviceToDevice<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count);
+
+        /// <summary>
+        /// Does copy to peer asynchronously.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="srcDevArray">The SRC dev array.</param>
+        /// <param name="srcOffset">The SRC offset.</param>
+        /// <param name="peer">The peer.</param>
+        /// <param name="dstDevArray">The DST dev array.</param>
+        /// <param name="dstOffet">The DST offet.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="stream">Stream id.</param>
+        protected abstract void DoCopyDeviceToDeviceAsync<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count, int stream);
+
         /// <summary>
         /// Gets a value indicating whether this instance has multithreading enabled.
         /// </summary>

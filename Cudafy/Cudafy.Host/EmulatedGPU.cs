@@ -167,6 +167,14 @@ namespace Cudafy.Host
             get { return new Computer().Info.TotalPhysicalMemory; }
         }
 
+        public override bool CanAccessPeer(GPGPU peer)
+        {
+            lock (_peerAccessLock)
+            {
+                return peer != this && peer is EmulatedGPU;
+            }
+        }
+
         /// <summary>
         /// Does the launch.
         /// </summary>
@@ -870,6 +878,18 @@ namespace Cudafy.Host
             Array.Copy(srcPtrEx.DevPtr, srcPtrEx.Offset + srcOffset, dstPtrEx.DevPtr, dstPtrEx.Offset + dstOffet, count);
         }
 
+        protected override void DoCopyDeviceToDevice<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count)
+        {
+            EmuDevicePtrEx srcPtrEx = (EmuDevicePtrEx)GetDeviceMemory(srcDevArray);
+            EmuDevicePtrEx dstPtrEx = (EmuDevicePtrEx)peer.GetDeviceMemory(dstDevArray);
+            Array.Copy(srcPtrEx.DevPtr, srcPtrEx.Offset + srcOffset, dstPtrEx.DevPtr, dstPtrEx.Offset + dstOffet, count);
+        }
+
+        protected override void DoCopyDeviceToDeviceAsync<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count, int stream)
+        {
+            DoCopyDeviceToDevice<T>(srcDevArray, srcOffset, peer, dstDevArray, dstOffet, count);
+        }
+
         /// <summary>
         /// Synchronizes the stream.
         /// </summary>
@@ -962,6 +982,8 @@ namespace Cudafy.Host
             }
         }
 #pragma warning restore 1591
+
+
 
     }
 
