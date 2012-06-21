@@ -116,7 +116,7 @@ namespace Cudafy.Host.UnitTests
                 //_cm.TrySerialize();
             }
 
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
             _gpu.LoadModule(_cm);
             Console.WriteLine(_cm.CompilerOutput);
            

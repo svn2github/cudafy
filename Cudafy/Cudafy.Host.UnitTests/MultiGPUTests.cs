@@ -253,14 +253,14 @@ namespace Cudafy.Host.UnitTests
             _gpuuintBufferIn1 = _gpu1.CopyToDevice(_uintBufferIn1);
             
             _gpu0.SetCurrentContext();
-            int loops = 100;
+            long loops = 500;
             Stopwatch sw = Stopwatch.StartNew();
 
             for (int i = 0; i < loops; i++)
                 _gpu0.CopyDeviceToDevice(_gpuuintBufferIn0, 0, _gpu1, _gpuuintBufferIn1, 0, _uintBufferIn0.Length);
             sw.Stop();
 
-            float mbps = (float)(_uintBufferIn0.Length * sizeof(int) * loops) / (float)(sw.ElapsedMilliseconds * 1000);
+            float mbps = (float)((long)_uintBufferIn0.Length * sizeof(int) * loops) / (float)(sw.ElapsedMilliseconds * 1000);
             Console.WriteLine(mbps);
             _gpu1.SetCurrentContext();
             _gpu1.CopyFromDevice(_gpuuintBufferIn1, _uintBufferOut1);
@@ -274,10 +274,13 @@ namespace Cudafy.Host.UnitTests
         public void Test_CanAccessPeer()
         {
             _gpu0.SetCurrentContext();
-           
-            //_gpu0.EnablePeerAccess(_gpu1);
+                       
             bool rc = _gpu0.CanAccessPeer(_gpu1);
-            Assert.IsFalse(rc);
+            if (rc)
+            {
+                _gpu0.EnablePeerAccess(_gpu1);
+                _gpu0.DisablePeerAccess(_gpu1);
+            }
         }
 
         //[Test]

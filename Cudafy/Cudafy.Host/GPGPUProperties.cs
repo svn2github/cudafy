@@ -38,6 +38,7 @@ namespace Cudafy.Host
             Message = string.Empty;
             UseAdvanced = useAdvanced;
             MultiProcessorCount = 0;
+            HighPerformanceDriver = false;
             if (simulate)
             {
                 Capability = new Version(0, 0);
@@ -217,5 +218,12 @@ namespace Cudafy.Host
         /// </summary>
         /// <value>The total global memory.</value>
         public long TotalGlobalMem { get; internal set; }
+        /// <summary>
+        /// Gets a value indicating whether device is using HighPerformanceDriver driver (tcc in Windows).
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if performance driver; otherwise, <c>false</c>.
+        /// </value>
+        public bool HighPerformanceDriver { get; internal set; }
     }
 }

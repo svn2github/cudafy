@@ -111,6 +111,7 @@ namespace Cudafy.Host
 
         /// <summary>
         /// Gets device of type specified from the cache. Creates one if it does not already exist.
+        /// Sets the current context to the returned device.
         /// </summary>
         /// <param name="type">The target type.</param>
         /// <param name="deviceId">The device id.</param>
@@ -131,7 +132,7 @@ namespace Cudafy.Host
                     gpu = CreateDevice(type, deviceId);
                 }
             }
-               
+            gpu.SetCurrentContext();   
             return gpu;
         }
 

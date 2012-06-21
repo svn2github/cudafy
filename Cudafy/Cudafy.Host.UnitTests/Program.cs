@@ -56,11 +56,11 @@ namespace Cudafy.Host.UnitTests
 
                 GPGPUTests gput = new GPGPUTests();
                 CudafyUnitTest.PerformAllTests(gput);
-                //for (int x = 0; x < 5; x++ )
+                
                 if (CudafyHost.GetDeviceCount(CudafyModes.Target) > 1)
                 {
                     MultiGPUTests mgt = new MultiGPUTests();
-                    CudafyUnitTest.PerformAllTests(mgt);//, "Test_TwoThreadTwoGPUVer2");
+                    CudafyUnitTest.PerformAllTests(mgt);
                 }
 
                 Console.WriteLine("Done");

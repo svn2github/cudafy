@@ -348,6 +348,12 @@ namespace Cudafy.Host
                         props.PciBusID = devProps.pciBusID;
                         props.PciDeviceID = devProps.pciDeviceID;
                         props.TotalGlobalMem = devProps.totalGlobalMem;
+#if LINUX 
+                        props.HighPerformanceDriver = true;
+#else
+                        props.HighPerformanceDriver = devProps.tccDriver == 1;
+#endif
+                        
                     }
                     else
                         throw new CudafyHostException(CudafyHostException.csFAILED_TO_GET_PROPERIES_X, rc);

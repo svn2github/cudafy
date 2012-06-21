@@ -110,7 +110,7 @@ namespace Cudafy.Host.UnitTests
         [TestFixtureSetUp]
         public void SetUp()
         {
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
 
             _byteBufferIn = new byte[N];
             _byteBufferOut = new byte[N];            

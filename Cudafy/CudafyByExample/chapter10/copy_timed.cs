@@ -103,6 +103,10 @@ namespace CudafyByExample
             float MB = (float)100*SIZE*sizeof(int)/1024/1024;
 
             _gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
+            var props = _gpu.GetDeviceProperties();
+
+            Console.WriteLine(props.Name);
+            Console.WriteLine("Using {0}optimized driver.", props.HighPerformanceDriver ? "" : "non-");
 
             // try it with malloc
             elapsedTime = cuda_malloc_test(SIZE, true);
