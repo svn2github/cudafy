@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Text;
+using System.Globalization;
 using System.Diagnostics;
 using ICSharpCode.ILSpy;
 using Mono.Cecil;
@@ -538,22 +539,22 @@ namespace Cudafy.Translator
 
         static string TranslateMathE(MemberReferenceExpression mre, object data)
         {
-            return Math.E.ToString();
+            return Math.E.ToString(CultureInfo.InvariantCulture);
         }
 
         static string TranslateMathPI(MemberReferenceExpression mre, object data)
         {
-            return Math.PI.ToString();
+            return Math.PI.ToString(CultureInfo.InvariantCulture);
         }
 
         static string TranslateGMathE(MemberReferenceExpression mre, object data)
         {
-            return GMath.E.ToString();
+            return GMath.E.ToString(CultureInfo.InvariantCulture);
         }
 
         static string TranslateGMathPI(MemberReferenceExpression mre, object data)
         {
-            return GMath.PI.ToString();
+            return GMath.PI.ToString(CultureInfo.InvariantCulture);
         }
 
         static string TranslateComplexD(MemberReferenceExpression mre, object data)
