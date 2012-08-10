@@ -24,12 +24,15 @@ namespace CudafyByExample
             CudafyModes.Target = eGPUType.Cuda;
             try
             {
+
+               
+                
                 // Chapter 3
                 Console.WriteLine("\r\nChapter 3");
-                Console.WriteLine("\r\nhello_world");
-                hello_world.Execute();
-                Console.WriteLine("\r\nsimple_kernel");
-                simple_kernel.Execute();
+                //Console.WriteLine("\r\nhello_world");
+                //hello_world.Execute();
+                //Console.WriteLine("\r\nsimple_kernel");
+                //simple_kernel.Execute();
                 Console.WriteLine("\r\nsimple_kernel_params");
                 simple_kernel_params.Execute();
                 Console.WriteLine("\r\nenum_gpu");

@@ -525,6 +525,30 @@ namespace Cudafy.Host.UnitTests
         }
 
         [Test]
+        public void Test_copyOnHost()
+        {
+            int len = 35687;
+            int[] bufa = new int[len];
+            int[] bufb = new int[len];
+            Random r = new Random();
+            for (int i = 0; i < len; i++)
+                bufa[i] = r.Next() + 1;
+            IntPtr ha = _gpu.HostAllocate<int>(len);
+
+            ha.Write(bufa, 0, 0, len);
+            IntPtr hb = _gpu.HostAllocate<int>(len);
+            GPGPU.CopyMemory(hb, ha, (uint)len * sizeof(int));
+
+            hb.Read(bufb, 0, 0, len);
+            for (int i = 0; i < len; i++)
+            {
+                Assert.True(bufa[i] == bufb[i]);
+                Assert.False(bufa[i] == 0);
+            }
+            _gpu.HostFreeAll();
+        }
+
+        [Test]
         public void Test_copyOnGPU_cplxD()
         {
             _gpucplxDBufferIn = _gpu.CopyToDevice(_cplxDBufferIn);

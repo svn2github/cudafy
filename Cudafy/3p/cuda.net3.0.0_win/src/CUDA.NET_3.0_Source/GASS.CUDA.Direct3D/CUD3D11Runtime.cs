@@ -6,11 +6,16 @@ namespace GASS.CUDA.Direct3D
 
     public class CUD3D11Runtime
     {
-        [DllImport("nvcuda")]
+#if LINUX
+        internal const string CUDA_DLL_NAME = "libcuda";
+#else
+        internal const string CUDA_DLL_NAME = "nvcuda";
+#endif
+        [DllImport(CUDA_DLL_NAME)]
         public static extern CUResult cudaD3D11GetDevice(ref int device, IntPtr pAdapter);
-        [DllImport("nvcuda")]
+        [DllImport(CUDA_DLL_NAME)]
         public static extern CUResult cudaD3D11SetDirect3DDevice(IntPtr pD3DDevice);
-        [DllImport("nvcuda")]
+        [DllImport(CUDA_DLL_NAME)]
         public static extern CUResult cudaGraphicsD3D11RegisterResource(ref cudaGraphicsResource resource, IntPtr pD3DResource, uint flags);
     }
 }

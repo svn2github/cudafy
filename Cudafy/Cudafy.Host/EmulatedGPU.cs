@@ -28,7 +28,7 @@ using System.Threading;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using Microsoft.VisualBasic.Devices;
+
 
 namespace Cudafy.Host
 {
@@ -47,6 +47,7 @@ namespace Cudafy.Host
             _stopWatch = new Stopwatch();
             _hostHandles = new Dictionary<IntPtr, GCHandle>();
             _lock = new object();
+            _availableBytesPerfctr = new PerformanceCounter("Memory", "Available Bytes");
         }
 
         ///// <summary>
@@ -75,13 +76,15 @@ namespace Cudafy.Host
             int i64K = 64 * i1K;
             int i32K = 32 * i1K;
 
-            Computer comp = new Computer();
+            //Computer comp = new Computer();
             GPGPUProperties props = new GPGPUProperties();
             props.UseAdvanced = useAdvanced;
             props.Capability = new Version(2, 1, 0, 0);
             props.Name = "Emulated GPGPU Kernel";
             props.DeviceId = DeviceId;
-            props.TotalMemory = comp.Info.TotalPhysicalMemory;
+
+            ulong freeMem = FreeMemory;
+            props.TotalMemory = freeMem;
             props.ClockRate = 0;
             props.IsSimulated = true;
             props.TotalConstantMemory = i64K;
@@ -99,6 +102,8 @@ namespace Cudafy.Host
                 props.MultiProcessorCount = 0;
             return props;
         }
+
+        private PerformanceCounter _availableBytesPerfctr;
 
         /// <summary>
         /// Gets the device count.
@@ -153,7 +158,7 @@ namespace Cudafy.Host
         /// <value>The free memory.</value>
         public override ulong FreeMemory
         {
-            get { return new Computer().Info.AvailablePhysicalMemory; }
+            get { return (ulong)_availableBytesPerfctr.NextValue(); }
         }
 
         /// <summary>
@@ -164,7 +169,7 @@ namespace Cudafy.Host
         /// </value>
         public override ulong TotalMemory
         {
-            get { return new Computer().Info.TotalPhysicalMemory; }
+            get { return (ulong)_availableBytesPerfctr.NextValue(); }
         }
 
         public override bool CanAccessPeer(GPGPU peer)

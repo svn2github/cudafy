@@ -8,8 +8,8 @@
     {
         internal const string CUBLAS_DLL_NAME = "cublas";
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern IntPtr LoadLibrary(string lpFileName);//[In, MarshalAs(UnmanagedType.LPStr)] 
+        //[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        //public static extern IntPtr LoadLibrary(string lpFileName);//[In, MarshalAs(UnmanagedType.LPStr)] 
 
 
         [DllImport(CUBLAS_DLL_NAME)]

@@ -1237,6 +1237,34 @@ namespace GASS.CUDA
         {
             this.LastError = CUDADriver.cuCtxDisablePeerAccess(peerContext);
         }
+
+        public IntPtr GetPointerAttribute(CUPointerAttribute attribute, CUdeviceptr ptr)
+        {
+            IntPtr data = new IntPtr();
+            this.LastError = CUDADriver.cuPointerGetAttribute(ref data, attribute, ptr);
+            return data;
+        }
+
+        public CUMemoryType GetPointerMemoryType(CUPointerAttribute attribute, CUdeviceptr ptr)
+        {
+            CUMemoryType data = new CUMemoryType();
+            this.LastError = CUDADriver.cuPointerGetAttribute(ref data, attribute, ptr);
+            return data;
+        }
+
+        public CUcontext GetPointerContext(CUdeviceptr ptr)
+        {
+            CUcontext ctx = new CUcontext();
+            this.LastError = CUDADriver.cuPointerGetAttribute(ref ctx, CUPointerAttribute.Context, ptr);
+            return ctx;
+        }
+
+        public CUP2PTokens GetP2PTokens(CUdeviceptr ptr)
+        {
+            CUP2PTokens tokens = new CUP2PTokens();
+            this.LastError = CUDADriver.cuPointerGetAttribute(ref tokens, CUPointerAttribute.P2PTokens, ptr);
+            return tokens;
+        }
     }
 }
 

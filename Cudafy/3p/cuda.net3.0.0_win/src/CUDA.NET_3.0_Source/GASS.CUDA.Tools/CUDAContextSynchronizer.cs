@@ -25,7 +25,7 @@ namespace GASS.CUDA.Tools
             {
                 throw new CUDAException(this.res);
             }
-            IsLocked = true;
+            _isLocked = true;
         }
 
         //private CUcontext _pctx;
@@ -49,8 +49,8 @@ namespace GASS.CUDA.Tools
             {
                 throw new CUDAException(this.res);
             }
-            Monitor.Exit(this.sync);
-            IsLocked = false;
+            _isLocked = false;
+            Monitor.Exit(this.sync);          
         }
 
         public CUcontext Context
@@ -73,7 +73,12 @@ namespace GASS.CUDA.Tools
             }
         }
 
-        public bool IsLocked { get; private set; }
+        private volatile bool _isLocked = false;
+
+        public bool IsLocked 
+        {
+            get { return _isLocked;  }     
+        }
     }
 }
 

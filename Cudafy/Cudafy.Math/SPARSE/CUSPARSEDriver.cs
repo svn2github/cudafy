@@ -8,10 +8,15 @@ namespace Cudafy.Maths.SPARSE
 
     public class CUSPARSEDriver64 : ICUSPARSEDriver
     {
-        internal const string CUSPARSE_DLL_NAME = "cusparse64_42_9";//"cusparse64_41_28";//
+        //internal const string CUSPARSE_DLL_NAME = "cusparse64_42_9";//"cusparse64_41_28";//
+#if LINUX
+        internal const string CUSPARSE_DLL_NAME = "libcusparse";
+#else
+        internal const string CUSPARSE_DLL_NAME = "cusparse64_42_9";
+#endif
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern IntPtr LoadLibrary(string lpFileName);
+        //[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        //public static extern IntPtr LoadLibrary(string lpFileName);
 
         #region Native Functions : Help Functions
         [DllImport(CUSPARSE_DLL_NAME)]

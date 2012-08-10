@@ -69,6 +69,10 @@ namespace Cudafy.Host.UnitTests
 
         private uint[] _uintBufferOut2;
 
+        private uint[] _gpuuintBufferIn3;
+
+        private uint[] _gpuuintBufferIn4;
+
         private void SetInputs()
         {
             Random rand = new Random(DateTime.Now.Millisecond);
@@ -76,16 +80,17 @@ namespace Cudafy.Host.UnitTests
             {
                 double r = rand.NextDouble();
                 _uintBufferIn1[i] = (uint)(r * uint.MaxValue);
+                _uintBufferIn2[i] = (uint)(r * uint.MaxValue / 2);
             }
         }
 
-        private void ClearOutputsAndGPU()
+        private void ClearOutputs()
         {
             for (int i = 0; i < N; i++)
             {
                 _uintBufferOut1[i] = 0;
+                _uintBufferOut2[i] = 0;
             }
-            _gpu.FreeAll();
         }
 
         [Test]
@@ -94,23 +99,24 @@ namespace Cudafy.Host.UnitTests
             _gpuuintBufferIn1 = _gpu.CopyToDevice(_uintBufferIn1);
             _gpu.CopyFromDevice(_gpuuintBufferIn1, _uintBufferOut1);
             Assert.IsTrue(Compare(_uintBufferIn1, _uintBufferOut1));
-            ClearOutputsAndGPU();
+            ClearOutputs();
+            _gpu.FreeAll();
         }
 
         [Test]
         public void Test_TwoThreadCopy()
         {
-            //CUDA cuda = ((_gpu as CudaGPU).CudaDotNet as CUDA);
-            //_ccs = new CUDAContextSynchronizer(cuda.CurrentContext);
-            //_ccs.MakeFloating();
-
             _gpu = CudafyHost.GetDevice(eGPUType.Cuda);
+            _gpuuintBufferIn3 = _gpu.Allocate(_uintBufferIn1);
+            _gpuuintBufferIn4 = _gpu.Allocate(_uintBufferIn1);
             _gpu.EnableMultithreading();
             bool j1 = false;
             bool j2 = false;
             for (int i = 0; i < 10; i++)
             {
                 Console.WriteLine(i);
+                SetInputs();
+                ClearOutputs();
                 Thread t1 = new Thread(Test_TwoThreadCopy_Thread1);
                 Thread t2 = new Thread(Test_TwoThreadCopy_Thread2);
                 t1.Start();
@@ -127,28 +133,56 @@ namespace Cudafy.Host.UnitTests
             Assert.IsTrue(j2);
         }
 
-        private CUDAContextSynchronizer _ccs;
+        //private CUDAContextSynchronizer _ccs;
 
         private void Test_TwoThreadCopy_Thread1()
         {
-            _gpu.Lock();
-            _gpuuintBufferIn1 = _gpu.CopyToDevice(_uintBufferIn1);
-            //Debug.WriteLine(string.Format("Thread {0}: {1} ticks", Thread.CurrentThread.ManagedThreadId, Environment.TickCount));
-            _gpu.CopyFromDevice(_gpuuintBufferIn1, _uintBufferOut1);
-            Assert.IsTrue(Compare(_uintBufferIn1, _uintBufferOut1));
-            _gpu.Free(_gpuuintBufferIn1);
-            _gpu.Unlock();
+            try
+            {
+                //Debug.WriteLine("thread 1, A");
+                _gpu.Lock();
+                //Debug.WriteLine("thread 1, B");
+                _gpuuintBufferIn1 = _gpu.CopyToDevice(_uintBufferIn1);
+                _gpu.CopyOnDevice(_gpuuintBufferIn1, _gpuuintBufferIn3);
+                //Debug.WriteLine("thread 1, C");
+                //Debug.WriteLine(string.Format("Thread {0}: {1} ticks", Thread.CurrentThread.ManagedThreadId, Environment.TickCount));
+                _gpu.CopyFromDevice(_gpuuintBufferIn3, _uintBufferOut1);
+                //Debug.WriteLine("thread 1, D");
+                Assert.IsTrue(Compare(_uintBufferIn1, _uintBufferOut1));
+                _gpu.Free(_gpuuintBufferIn1);
+                //Debug.WriteLine("thread 1, E");
+                _gpu.Unlock();
+                //Debug.WriteLine("thread 1, F");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+            }
         }
         
         private void Test_TwoThreadCopy_Thread2()
         {
-            _gpu.Lock();
-            _gpuuintBufferIn2 = _gpu.CopyToDevice(_uintBufferIn2);
-            //Debug.WriteLine(string.Format("Thread {0}: {1} ticks", Thread.CurrentThread.ManagedThreadId, Environment.TickCount));
-            _gpu.CopyFromDevice(_gpuuintBufferIn2, _uintBufferOut2);
-            Assert.IsTrue(Compare(_uintBufferIn2, _uintBufferOut2));
-            _gpu.Free(_gpuuintBufferIn2);
-            _gpu.Unlock();
+            try
+            {
+                //Debug.WriteLine("thread 2, A");
+                _gpu.Lock();
+                //Debug.WriteLine("thread 2, B");
+                _gpuuintBufferIn2 = _gpu.CopyToDevice(_uintBufferIn2);
+                _gpu.CopyOnDevice(_gpuuintBufferIn2, _gpuuintBufferIn4);
+                //Debug.WriteLine("thread 2, C");
+                //Debug.WriteLine(string.Format("Thread {0}: {1} ticks", Thread.CurrentThread.ManagedThreadId, Environment.TickCount));
+                _gpu.CopyFromDevice(_gpuuintBufferIn4, _uintBufferOut2);
+                //Debug.WriteLine("thread 2, D");
+                Assert.IsTrue(Compare(_uintBufferIn2, _uintBufferOut2));
+                _gpu.Free(_gpuuintBufferIn2);
+                //Debug.WriteLine("thread 2, E");
+                _gpu.Unlock();
+                //Debug.WriteLine("thread 2, F");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+            }
         }
 
 

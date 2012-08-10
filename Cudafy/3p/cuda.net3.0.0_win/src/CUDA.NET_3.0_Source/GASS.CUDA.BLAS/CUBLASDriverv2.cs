@@ -7,7 +7,12 @@
 
     public class CUBLASDriver32 : ICUBLASDriverv2
     {
-        public const string CUBLAS_DLL_NAME = "cublas32_42_9";//"cublas32_42_28";
+        //public const string CUBLAS_DLL_NAME = "cublas32_42_9";//"cublas32_42_28";
+#if LINUX
+        public const string CUBLAS_DLL_NAME = "libcublas";
+#else
+        public const string CUBLAS_DLL_NAME = "cublas32_42_9";
+#endif
 
         [DllImport(CUBLAS_DLL_NAME)]
         private static extern CUBLASStatusv2 cublasCreate_v2(ref cublasHandle handle);
@@ -576,7 +581,12 @@
 
     public class CUBLASDriver64 : ICUBLASDriverv2
     {
-        public const string CUBLAS_DLL_NAME = "cublas64_42_9";//"cublas64_41_28";//
+       // public const string CUBLAS_DLL_NAME = "cublas64_42_9";//"cublas64_41_28";//
+#if LINUX
+        public const string CUBLAS_DLL_NAME = "libcublas";
+#else
+        public const string CUBLAS_DLL_NAME = "cublas64_42_9";
+#endif
 
         [DllImport(CUBLAS_DLL_NAME)]
         private static extern CUBLASStatusv2 cublasCreate_v2(ref cublasHandle handle);

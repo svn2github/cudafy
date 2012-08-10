@@ -23,7 +23,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.VisualBasic.Devices;
+using System.Diagnostics;
+
 namespace Cudafy.Host
 {
     /// <summary>
@@ -44,8 +45,9 @@ namespace Cudafy.Host
                 Capability = new Version(0, 0);
                 Name = "Simulator";
                 DeviceId = 0;
-                Computer c = new Computer();
-                TotalMemory = c.Info.AvailablePhysicalMemory;
+                PerformanceCounter pc = new PerformanceCounter("Memory", "Available Bytes");
+                ulong freeMem = Convert.ToUInt64(pc.NextValue());
+                TotalMemory = freeMem;
                 MaxGridSize = new dim3(65536, 65536);
                 MaxThreadsSize = new dim3(1024, 1024);
                 MaxThreadsPerBlock = 1024;

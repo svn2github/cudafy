@@ -34,9 +34,9 @@ namespace Cudafy
     public static class CV
     {
         /// <summary>
-        /// Version 1.9.*
+        /// Version 1.10.*
         /// </summary>
-        public const string csVERSION = "1.9.*";
+        public const string csVERSION = "1.10.*";
     }
 
     /// <summary>
@@ -135,6 +135,22 @@ namespace Cudafy
                 fs.Write(text);
             }
             return text;
+        }
+
+
+        /// <summary>
+        /// Gets a value indicating whether the OS is Linux.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if OS is Linux; otherwise, <c>false</c>.
+        /// </value>
+        public static bool IsLinux
+        {
+            get
+            {
+                int p = (int)Environment.OSVersion.Platform;
+                return (p == 4) || (p == 6) || (p == 128);
+            }
         }
 
         /// <summary>

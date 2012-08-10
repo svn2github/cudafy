@@ -146,8 +146,12 @@ namespace Cudafy.Maths.RAND
 
     internal class CURANDDriver64 : ICURANDDriver
     {
-        public const string DLL_NAME = "curand64_42_9";//"curand64_41_28";
-
+        //public const string DLL_NAME = "curand64_42_9";//"curand64_41_28";
+#if LINUX
+        internal const string DLL_NAME = "libcurand";
+#else
+        internal const string DLL_NAME = "curand64_42_9";
+#endif
         //curandStatus_t curandCreateGenerator (curandGenerator_t generator, curandRngType_t rng_type)
         [DllImport(DLL_NAME)]
         private static extern curandStatus curandCreateGenerator(ref RandGenerator generator, curandRngType rng_type);
@@ -350,7 +354,12 @@ namespace Cudafy.Maths.RAND
 
     internal class CURANDDriver32 : ICURANDDriver
     {
-        public const string DLL_NAME = "curand32_42_9";//"curand32_41_28";
+        //public const string DLL_NAME = "curand32_42_9";//"curand32_41_28";
+#if LINUX
+        internal const string DLL_NAME = "libcurand";
+#else
+        internal const string DLL_NAME = "curand32_42_9";
+#endif
 
         //curandStatus_t curandCreateGenerator (curandGenerator_t generator, curandRngType_t rng_type)
         [DllImport(DLL_NAME)]

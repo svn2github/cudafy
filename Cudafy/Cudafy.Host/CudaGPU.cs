@@ -34,6 +34,20 @@ using GASS.CUDA.Types;
 using GASS.Types;
 namespace Cudafy.Host
 {
+    public enum eMemoryType
+    {
+        Host = 1,
+        Device,
+        Array,
+        Unified
+    }
+
+    public struct Peer2PeerTokens
+    {
+        public ulong p2pToken;
+        public uint vaSpaceToken;
+    };
+    
     /// <summary>
     /// Represents a Cuda GPU.
     /// </summary>
@@ -117,6 +131,77 @@ namespace Cudafy.Host
             return res;
         }
 
+        public eMemoryType GetPointerMemoryType<T>(T[] data)
+        {
+            return DoGetPointerMemoryType<T>(data);
+        }
+
+        public eMemoryType GetPointerMemoryType<T>(T[,] data)
+        {
+            return DoGetPointerMemoryType<T>(data);
+        }
+
+        public eMemoryType GetPointerMemoryType<T>(T[,,] data)
+        {
+            return DoGetPointerMemoryType<T>(data);
+        }
+
+        private eMemoryType DoGetPointerMemoryType<T>(Array data)
+        {
+            CUDevicePtrEx ptrEx = TryGetDeviceMemory(data) as CUDevicePtrEx;
+            eMemoryType rc = eMemoryType.Host;
+            if (ptrEx != null)
+            {
+                CUMemoryType mt = _cuda.GetPointerMemoryType(CUPointerAttribute.MemoryType, ptrEx.DevPtr);
+                rc = (eMemoryType)(int)mt;
+            }
+            return rc;
+        }
+
+        public Peer2PeerTokens GetPointerP2PTokens<T>(T[] data)
+        {
+            return DoGetPointerP2PTokens<T>(data);
+        }
+
+        public Peer2PeerTokens GetPointerP2PTokens<T>(T[,] data)
+        {
+            return DoGetPointerP2PTokens<T>(data);
+        }
+
+        public Peer2PeerTokens GetPointerP2PTokens<T>(T[, ,] data)
+        {
+            return DoGetPointerP2PTokens<T>(data);
+        }
+
+        private Peer2PeerTokens DoGetPointerP2PTokens<T>(Array data)
+        {
+            CUDevicePtrEx ptrEx = (CUDevicePtrEx)GetDeviceMemory(data);
+            CUP2PTokens t = _cuda.GetP2PTokens(ptrEx.DevPtr);
+            Peer2PeerTokens p2pt = new Peer2PeerTokens()
+            {
+                p2pToken = t.p2pToken,
+                vaSpaceToken = t.vaSpaceToken
+            };
+            return p2pt;
+        }
+
+        //protected override IntPtr DoGetPointerAttribute<T>(ePointerAttribute attr, Array devArray)
+        //{
+        //    CUPointerAttribute devAttr = (CUPointerAttribute)(int)attr;
+        //    CUdeviceptr devPtr = ((CUDevicePtrEx)GetDeviceMemory(devArray)).DevPtr;
+
+        //    CUMemoryType mt = _cuda.GetPointerMemoryType(devAttr, devPtr);
+        //    CUcontext ctx = _cuda.GetPointerContext(devPtr);
+        //    return _cuda.GetPointerAttribute(devAttr, devPtr);
+        //}
+
+        internal CUcontext GetPointerContext<T>(Array data)
+        {
+            CUDevicePtrEx ptrEx = (CUDevicePtrEx)GetDeviceMemory(data);
+            CUcontext ctx = _cuda.GetPointerContext(ptrEx.DevPtr);
+            return ctx;
+        }
+
         /// <summary>
         /// Gets the CUstream object identified by streamId.
         /// </summary>
@@ -180,7 +265,7 @@ namespace Cudafy.Host
             try
             {
                 //Debug.WriteLine("Unlocking");
-                if(_ccs.IsLocked)
+                //if(_ccs.IsLocked)
                     _ccs.Unlock();
             }
             catch (CUDAException ex)
@@ -364,9 +449,10 @@ namespace Cudafy.Host
                 }
                 catch (DllNotFoundException ex)
                 {
-                    props.Message = ex.Message;
+                    props.Message = string.Format("Dll {0} not found.", ex.Message);
                     props.UseAdvanced = false;
-                    Debug.WriteLine(ex.Message);
+                    Debug.WriteLine(props.Message);
+                    throw;
                 }
             }
 
@@ -1737,7 +1823,7 @@ namespace Cudafy.Host
             }
         }
 
-        public override void LoadModule(CudafyModule module, bool unload)
+        public override void LoadModule(CudafyModule module, bool unload = true)
         {
             if (!IsCurrentContext)
                 throw new CudafyHostException(CudafyHostException.csCONTEXT_IS_NOT_CURRENT);

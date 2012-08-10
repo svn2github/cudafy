@@ -107,7 +107,7 @@ namespace Cudafy.Maths.FFT
     /// </summary>
     public class fftw
     {
-        private const string cslibfftw3 = "libfftw3-3.dll";
+        private const string cslibfftw3 = "libfftw3-3";
 
 
         /// <summary>
@@ -521,7 +521,7 @@ namespace Cudafy.Maths.FFT
     /// </summary>
     public class fftwf
     {
-        private const string cslibfftw3f = "libfftw3f-3.dll";
+        private const string cslibfftw3f = "libfftw3f-3";
         
         
         /// <summary>

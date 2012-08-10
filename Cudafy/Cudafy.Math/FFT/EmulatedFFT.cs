@@ -263,11 +263,11 @@ namespace Cudafy.Maths.FFT
                     //for (int b = 0; b < batchSize; b++)
                     {
                         IntPtr srcOffsetPtr = new IntPtr(srcAddress + inoffset + (srcOffset * insize));
-                        CopyMemory(fftwplan.Input, srcOffsetPtr, (uint)(N * insize * batchSize));
+                        GPGPU.CopyMemory(fftwplan.Input, srcOffsetPtr, (uint)(N * insize * batchSize));
 
                         fftwplan.Execute();
                         IntPtr dstIntPtrOffset = new IntPtr(dstAddress + outoffset + (dstOffset * outsize));
-                        CopyMemory(dstIntPtrOffset, fftwplan.Output, (uint)(N * outsize * batchSize));
+                        GPGPU.CopyMemory(dstIntPtrOffset, fftwplan.Output, (uint)(N * outsize * batchSize));
 
                         //srcOffset += planLength;
                        // dstOffset += planLength;
@@ -323,8 +323,8 @@ namespace Cudafy.Maths.FFT
             DoExecute<T, U>(plan, input, output, inverse);
         }
 
-        [DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory")]
-        private static extern void CopyMemory(IntPtr Destination, IntPtr Source, uint Length);
+        //[DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory")]
+        //private static extern void CopyMemory(IntPtr Destination, IntPtr Source, uint Length);
 
         /// <summary>
         /// Frees the specified plan.

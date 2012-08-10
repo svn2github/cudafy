@@ -33,6 +33,16 @@ using GASS.CUDA.Types;
 
 namespace Cudafy.Host
 {    
+    public enum ePointerAttribute
+    {
+        Context = 1,        /**< The ::CUcontext on which a pointer was allocated or registered */
+        MemoryType = 2,     /**< The ::CUmemorytype describing the physical location of a pointer */
+        DevicePointer = 3,  /**< The address at which a pointer's memory may be accessed on the device */
+        HostPointer = 4,    /**< The address at which a pointer's memory may be accessed on the host */
+        P2PTokens = 5       /**< A pair of tokens for use with the nv-p2p.h Linux kernel interface */
+    }
+    
+    
     /// <summary>
     /// Abstract base class for General Purpose GPUs.
     /// </summary>
@@ -235,6 +245,47 @@ namespace Cudafy.Host
         /// <param name="peer">Peer to access.</param>
         /// <returns>True if access is possible, else false.</returns>
         public abstract bool CanAccessPeer(GPGPU peer);
+        //Context = 1,        /**< The ::CUcontext on which a pointer was allocated or registered */
+        //MemoryType = 2,     /**< The ::CUmemorytype describing the physical location of a pointer */
+        //DevicePointer = 3,  /**< The address at which a pointer's memory may be accessed on the device */
+        //HostPointer = 4,    /**< The address at which a pointer's memory may be accessed on the host */
+        //P2PTokens = 5       /**< A pair of tokens for use with the nv-p2p.h Linux kernel interface */
+        //public IntPtr GetPointerAttribute<T>(ePointerAttribute attr, T[] data)
+        //{
+        //    return DoGetPointerAttribute<T>(attr, data);
+        //}
+
+        //public IntPtr GetPointerAttribute<T>(ePointerAttribute attr, T[,] data)
+        //{
+        //    return DoGetPointerAttribute<T>(attr, data);
+        //}
+
+        //public IntPtr GetPointerAttribute<T>(ePointerAttribute attr, T[,,] data)
+        //{
+        //    return DoGetPointerAttribute<T>(attr, data);
+        //}
+        //http://developer.download.nvidia.com/compute/cuda/4_2/rel/toolkit/docs/online/group__CUDA__UNIFIED_g0c28ed0aff848042bc0533110e45820c.html
+
+        //public enum eMemoryType
+        //{
+        //    Host,
+        //    Device,
+        //    Array,
+        //    Unified
+        //}
+
+        //public eMemoryType GetPointerMemoryType<T>(T[] data)
+        //{
+        //    if(_deviceMemory.ContainsKey(data))
+        //        return eMeory
+        //}
+
+        ////protected eMemoryType 
+
+        //protected virtual IntPtr DoGetPointerAttribute<T>(ePointerAttribute attr, Array data)
+        //{
+        //    throw new NotSupportedException();
+        //}
 
         /// <summary>
         /// Copies from one device to another device. Depending on whether RDMA is supported the transfer may or may not be via CPU and system memory.
@@ -1363,6 +1414,43 @@ namespace Cudafy.Host
         /// </summary>
         public abstract void HostFreeAll();
 
+
+//
+        unsafe struct copystruct2
+        {
+            fixed long l[2];
+        }
+        unsafe struct copystruct4
+        {
+            fixed long l[4];
+        }
+        unsafe struct copystruct16
+        {
+            fixed long l[16];
+        }
+        unsafe struct copystruct128
+        {
+            fixed long l[128];
+        }
+#if LINUX     
+        public unsafe static void CopyMemory(IntPtr Destination, IntPtr Source, uint Length)
+        {
+            copystruct128* src = (copystruct128*)Source;
+            copystruct128* dest = (copystruct128*)Destination;
+            long blocks = Length / sizeof(copystruct128);
+            for (int i = 0; i < blocks; i++)
+            {
+                dest[i] = src[i];
+            }
+            byte* srcb = (byte*)Source;
+            byte* destb = (byte*)Destination;
+            for (long i = blocks * sizeof(copystruct128); i < Length; i++)
+            {
+                destb[i] = srcb[i];
+            }
+        }
+#else
+
         /// <summary>
         /// Copies memory on host using native CopyMemory function from kernel32.dll.
         /// </summary>
@@ -1371,7 +1459,7 @@ namespace Cudafy.Host
         /// <param name="Length">The length.</param>
         [DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory")]
         public static extern void CopyMemory(IntPtr Destination, IntPtr Source, uint Length);
-
+#endif
         /// <summary>
         /// Gets the value at specified index.
         /// </summary>

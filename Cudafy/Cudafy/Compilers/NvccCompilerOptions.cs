@@ -32,12 +32,14 @@ namespace Cudafy.Compilers
     /// </summary>
     public class NvccCompilerOptions : CompilerOptions
     {
+        private const string csNVCC = "nvcc";
+        
         /// <summary>
         /// Initializes a new instance of the <see cref="NvccCompilerOptions"/> class.
         /// </summary>
         /// <param name="name">The name.</param>
         public NvccCompilerOptions(string name)
-            : base(name, "nvcc.exe", string.Empty)
+            : base(name, csNVCC, string.Empty)
         {
 
         }
@@ -66,10 +68,10 @@ namespace Cudafy.Compilers
             command += includeDir;
             foreach (string opt in Options)
                 command += string.Format(" {0} ", opt);
-
+#if !Linux
             if (GenerateDebugInfo)
                 command += " -G0 ";
-
+#endif
             if (Sources.Count() == 0)
                 throw new CudafyCompileException(CudafyCompileException.csNO_SOURCES);
             foreach (string src in Sources)
@@ -154,15 +156,15 @@ namespace Cudafy.Compilers
 
             Debug.WriteLineIf(!string.IsNullOrEmpty(cvStr), "Compiler version: " + cvStr);
             string gpuToolKit = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT + cvStr;
-            string compiler = gpuToolKit + Path.DirectorySeparatorChar + @"bin\nvcc.exe";
+            string compiler = gpuToolKit + Path.DirectorySeparatorChar + @"bin" + Path.DirectorySeparatorChar + csNVCC;
             string includeDir = gpuToolKit + Path.DirectorySeparatorChar + @"include";
             NvccCompilerOptions opt = new NvccCompilerOptions("NVidia CC (x86)", compiler, includeDir);
             if (!opt.TryTest())
             {
-                opt = new NvccCompilerOptions("NVidia CC (x86)", "nvcc.exe", string.Empty);
-#if DEBUG
-                throw new CudafyCompileException("Test failed for NvccCompilerOptions for x86");
-#endif
+                opt = new NvccCompilerOptions("NVidia CC (x86)", csNVCC, string.Empty);
+//#if DEBUG
+//                throw new CudafyCompileException("Test failed for NvccCompilerOptions for x86");
+//#endif
             }
             opt.AddOption("-m32");
             opt.Platform = ePlatform.x86;
@@ -203,15 +205,15 @@ namespace Cudafy.Compilers
             string cvStr = GetCudaVersion(cudaVersion, toolkitbasedir);
             Debug.WriteLineIf(!string.IsNullOrEmpty(cvStr), "Compiler version: " + cvStr);
             string gpuToolKit = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT + cvStr;// cudaVersion;
-            string compiler = gpuToolKit + Path.DirectorySeparatorChar + @"bin\nvcc.exe";
+            string compiler = gpuToolKit + Path.DirectorySeparatorChar + @"bin" + Path.DirectorySeparatorChar + csNVCC;
             string includeDir = gpuToolKit + Path.DirectorySeparatorChar + @"include";
             NvccCompilerOptions opt = new NvccCompilerOptions("NVidia CC (x64)", compiler, includeDir);
             if (!opt.TryTest())
             {
-                opt = new NvccCompilerOptions("NVidia CC (x64)", "nvcc.exe", string.Empty);
-#if DEBUG
-                throw new CudafyCompileException("Test failed for NvccCompilerOptions for x64");
-#endif
+                opt = new NvccCompilerOptions("NVidia CC (x64)", csNVCC, string.Empty);
+//#if DEBUG
+//                throw new CudafyCompileException("Test failed for NvccCompilerOptions for x64");
+//#endif
             }
             opt.AddOption("-m64");
             //opt.AddOption("-DCUDA_FORCE_API_VERSION=3010"); //For mixed bitness mode
