@@ -200,6 +200,10 @@ namespace Cudafy
         /// <summary>
         /// sm_30
         /// </summary>
-        sm_30
+        sm_30,
+        /// <summary>
+        /// sm_35
+        /// </summary>
+        sm_35
     }
 }

@@ -39,7 +39,7 @@ namespace Cudafy.Compilers
         /// </summary>
         /// <param name="name">The name.</param>
         public NvccCompilerOptions(string name)
-            : base(name, csNVCC, string.Empty)
+            : base(name, csNVCC, string.Empty, null)
         {
 
         }
@@ -50,8 +50,9 @@ namespace Cudafy.Compilers
         /// <param name="name">The name.</param>
         /// <param name="compiler">The compiler.</param>
         /// <param name="includeDirectory">The include directory.</param>
-        public NvccCompilerOptions(string name, string compiler, string includeDirectory)
-            : base(name, compiler, includeDirectory)
+        /// <param name="compilerVersion">Compiler/toolkit version (e.g. CUDA V5.0).</param>
+        public NvccCompilerOptions(string name, string compiler, string includeDirectory, Version compilerVersion)
+            : base(name, compiler, includeDirectory, compilerVersion)
         {
 
         }
@@ -68,10 +69,15 @@ namespace Cudafy.Compilers
             command += includeDir;
             foreach (string opt in Options)
                 command += string.Format(" {0} ", opt);
-#if !Linux
+//#if !Linux
             if (GenerateDebugInfo)
-                command += " -G0 ";
-#endif
+            {
+                if(Version != null && Version.Major >= 5)
+                    command += " -G ";
+                else
+                    command += " -G0 ";
+            }
+//#endif
             if (Sources.Count() == 0)
                 throw new CudafyCompileException(CudafyCompileException.csNO_SOURCES);
             foreach (string src in Sources)
@@ -121,6 +127,8 @@ namespace Cudafy.Compilers
                 co.AddOption("-arch=sm_21");
             else if (arch == eArchitecture.sm_30)
                 co.AddOption("-arch=sm_30");
+            else if (arch == eArchitecture.sm_35)
+                co.AddOption("-arch=sm_35");
             else
                 throw new NotImplementedException(arch.ToString());
         }
@@ -145,7 +153,8 @@ namespace Cudafy.Compilers
         {
             string progFiles = Utility.ProgramFiles();
             string toolkitbasedir = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT;
-            string cvStr = GetCudaVersion(cudaVersion, toolkitbasedir);
+            Version selVer;
+            string cvStr = GetCudaVersion(cudaVersion, toolkitbasedir, out selVer);
             if (string.IsNullOrEmpty(cvStr))
             {
                 progFiles = "C:\\Program Files";
@@ -158,10 +167,10 @@ namespace Cudafy.Compilers
             string gpuToolKit = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT + cvStr;
             string compiler = gpuToolKit + Path.DirectorySeparatorChar + @"bin" + Path.DirectorySeparatorChar + csNVCC;
             string includeDir = gpuToolKit + Path.DirectorySeparatorChar + @"include";
-            NvccCompilerOptions opt = new NvccCompilerOptions("NVidia CC (x86)", compiler, includeDir);
+            NvccCompilerOptions opt = new NvccCompilerOptions("NVidia CC (x86)", compiler, includeDir, selVer);
             if (!opt.TryTest())
             {
-                opt = new NvccCompilerOptions("NVidia CC (x86)", csNVCC, string.Empty);
+                opt = new NvccCompilerOptions("NVidia CC (x86)", csNVCC, string.Empty, selVer);
 //#if DEBUG
 //                throw new CudafyCompileException("Test failed for NvccCompilerOptions for x86");
 //#endif
@@ -202,15 +211,16 @@ namespace Cudafy.Compilers
         {
             string progFiles = Utility.ProgramFiles();
             string toolkitbasedir = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT;
-            string cvStr = GetCudaVersion(cudaVersion, toolkitbasedir);
+            Version selVer;
+            string cvStr = GetCudaVersion(cudaVersion, toolkitbasedir, out selVer);
             Debug.WriteLineIf(!string.IsNullOrEmpty(cvStr), "Compiler version: " + cvStr);
             string gpuToolKit = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT + cvStr;// cudaVersion;
             string compiler = gpuToolKit + Path.DirectorySeparatorChar + @"bin" + Path.DirectorySeparatorChar + csNVCC;
             string includeDir = gpuToolKit + Path.DirectorySeparatorChar + @"include";
-            NvccCompilerOptions opt = new NvccCompilerOptions("NVidia CC (x64)", compiler, includeDir);
+            NvccCompilerOptions opt = new NvccCompilerOptions("NVidia CC (x64)", compiler, includeDir, selVer);
             if (!opt.TryTest())
             {
-                opt = new NvccCompilerOptions("NVidia CC (x64)", csNVCC, string.Empty);
+                opt = new NvccCompilerOptions("NVidia CC (x64)", csNVCC, string.Empty, selVer);
 //#if DEBUG
 //                throw new CudafyCompileException("Test failed for NvccCompilerOptions for x64");
 //#endif
@@ -226,10 +236,16 @@ namespace Cudafy.Compilers
             return opt;
         }
 
-
         private static string GetCudaVersion(Version cudaVersion, string gpuToolKitDir)
         {
+            Version v;
+            return GetCudaVersion(cudaVersion, gpuToolKitDir, out v);
+        }
+
+        private static string GetCudaVersion(Version cudaVersion, string gpuToolKitDir, out Version selectedVersion)
+        {
             string s = "v{0}.{1}";
+            selectedVersion = cudaVersion;
             if (cudaVersion != null)
             {
                 string version = string.Format(s, cudaVersion.Major, cudaVersion.Minor);
@@ -239,14 +255,17 @@ namespace Cudafy.Compilers
                 else
                     return string.Empty;
             }
-           
-            for (int i = 9; i >= 0; i--)
-            {
-                string version = string.Format(s, 4, i);
-                string dir = gpuToolKitDir + version;
-                if (System.IO.Directory.Exists(dir))
-                    return version;
-            }
+            for (int j = 5; j >= 4; j++)
+                for (int i = 9; i >= 0; i--)
+                {
+                    string version = string.Format(s, j, i);
+                    string dir = gpuToolKitDir + version;
+                    if (System.IO.Directory.Exists(dir))
+                    {
+                        selectedVersion = new Version(string.Format("{0}.{1}", j, i));
+                        return version;
+                    }
+                }
             return string.Empty;
         }
     }
