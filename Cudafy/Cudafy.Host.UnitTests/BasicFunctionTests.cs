@@ -351,7 +351,21 @@ namespace Cudafy.Host.UnitTests
             _gpu.Free(dev_a);
         }
 
-
+        [Test]
+        public void Test_warpSizeDevice()
+        {
+            int[] a = new int[N];
+            int[] c = new int[N];
+            for (int i = 0; i < N; i++)
+                a[i] = i;
+            int[] dev_a = _gpu.CopyToDevice(a);
+            _gpu.Launch(N, 1, "warpSizeDevice", dev_a);
+            _gpu.CopyFromDevice(dev_a, c);
+            int warpSize = _gpu.GetDeviceProperties().WarpSize;
+            for (int i = 0; i < N; i++)
+                Assert.AreEqual(i + warpSize, c[i]);
+            _gpu.Free(dev_a);
+        }
 
         [Test]
         public void Test_mpyVector()
@@ -597,6 +611,18 @@ namespace Cudafy.Host.UnitTests
         }
 
         [Cudafy]
+        public static void warpSizeDevice(GThread thread, int[] a)
+        {
+            int tid = thread.blockIdx.x;
+             
+            if (tid < N)
+            {
+                int x = thread.warpSize + a[tid];
+                a[tid] = x;
+            }
+        }
+
+        [Cudafy]
         public static void doubleVector(GThread thread, int[] a)
         {
             int tid = thread.blockIdx.x;
@@ -687,8 +713,7 @@ namespace Cudafy.Host.UnitTests
         [Cudafy]
         public static int addDevice(GThread t, int a, int b)
         {
-            //int coef = t.threadIdx.x / t.threadIdx.x;
-            return a + b;// *coef;
+            return a + b;
         }
 
         [Cudafy]

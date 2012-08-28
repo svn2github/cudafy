@@ -249,7 +249,7 @@ namespace Cudafy.Translator
             SpecialProperties.Add(new SpecialMember("ArrayType", "IsReadOnly", new Func<MemberReferenceExpression, object, string>(TranslateToFalse)));
             SpecialProperties.Add(new SpecialMember("ArrayType", "IsSynchronized", new Func<MemberReferenceExpression, object, string>(TranslateToFalse)));
             SpecialProperties.Add(new SpecialMember("ArrayType", "Rank", new Func<MemberReferenceExpression, object, string>(TranslateArrayRank)));
-
+            SpecialProperties.Add(new SpecialMember("Cudafy.GThread", "warpSize", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
             //
             SpecialProperties.Add(new SpecialMember("System.String", "Length", new Func<MemberReferenceExpression, object, string>(TranslateStringLength)));
             
