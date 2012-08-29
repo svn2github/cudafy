@@ -255,7 +255,7 @@ namespace Cudafy.Compilers
                 else
                     return string.Empty;
             }
-            for (int j = 5; j >= 4; j++)
+            for (int j = 5; j >= 4; j--)
                 for (int i = 9; i >= 0; i--)
                 {
                     string version = string.Format(s, j, i);
