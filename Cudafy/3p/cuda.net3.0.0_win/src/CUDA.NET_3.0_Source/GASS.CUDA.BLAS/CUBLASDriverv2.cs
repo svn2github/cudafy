@@ -8,9 +8,9 @@
     public class CUBLASDriver32 : ICUBLASDriverv2
     {
 #if LINUX
-        public const string CUBLAS_DLL_NAME = "libcublas";
+        public const string CUBLAS_DLL_NAME = "libcublas.so.5.0.7";
 #else
-        public const string CUBLAS_DLL_NAME = "cublas32_50_27";
+        public const string CUBLAS_DLL_NAME = "cublas32_50_35";
 #endif
 
         [DllImport(CUBLAS_DLL_NAME)]
@@ -583,7 +583,7 @@
 #if LINUX
         public const string CUBLAS_DLL_NAME = "libcublas";
 #else
-        public const string CUBLAS_DLL_NAME = "cublas64_50_27";
+        public const string CUBLAS_DLL_NAME = "cublas64_50_35";
 #endif
 
         [DllImport(CUBLAS_DLL_NAME)]

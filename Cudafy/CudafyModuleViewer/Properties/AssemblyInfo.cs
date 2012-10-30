@@ -31,7 +31,7 @@ using Cudafy;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Hybrid DSP Systems")]
 [assembly: AssemblyProduct("Cudafy")]
-[assembly: AssemblyCopyright("Copyright © Hybrid DSP Systems 2011")]
+[assembly: AssemblyCopyright("Copyright © Hybrid DSP Systems 2011-2012")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

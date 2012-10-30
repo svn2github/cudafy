@@ -113,6 +113,7 @@ namespace Cudafy.Host.UnitTests
             c[i++] = Math.Asin(42.3);
             c[i++] = Math.Atan(42.3);
             c[i++] = Math.Atan2(42.3, 3.8);
+            c[i++] = Math.Ceiling(42.3);
             c[i++] = Math.Cos(42.3);
             c[i++] = Math.Cosh(2.3);
             c[i++] = Math.E;
@@ -142,6 +143,7 @@ namespace Cudafy.Host.UnitTests
             c[i++] = GMath.Asin(42.3F);
             c[i++] = GMath.Atan(42.3F);
             c[i++] = GMath.Atan2(42.3F, 3.8F);
+            c[i++] = GMath.Ceiling(42.3F);
             c[i++] = GMath.Cos(42.3F);
             c[i++] = GMath.Cosh(2.3F);
             c[i++] = GMath.E;

@@ -11,7 +11,7 @@ namespace GASS.CUDA.FFT
 #if LINUX
         internal const string CUFFT_DLL_NAME = "libcufft";
 #else
-        internal const string CUFFT_DLL_NAME = "cufft32_50_27";
+        internal const string CUFFT_DLL_NAME = "cufft32_50_35";
 #endif
         [DllImport(CUFFT_DLL_NAME, EntryPoint = "cufftDestroy")]
         private static extern CUFFTResult cufftDestroy_ext(cufftHandle plan);
@@ -130,7 +130,7 @@ namespace GASS.CUDA.FFT
 #if LINUX
         internal const string CUFFT_DLL_NAME = "libcufft";
 #else
-        internal const string CUFFT_DLL_NAME = "cufft64_50_27";
+        internal const string CUFFT_DLL_NAME = "cufft64_50_35";
 #endif
 
         [DllImport(CUFFT_DLL_NAME, EntryPoint = "cufftDestroy")]
