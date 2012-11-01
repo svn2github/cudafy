@@ -241,8 +241,12 @@ namespace Cudafy.Translator
                 return new Version(1, 3);
             else if (arch == eArchitecture.sm_20)
                 return new Version(2, 0);
+            else if (arch == eArchitecture.sm_21)
+                return new Version(2, 1);
             else if (arch == eArchitecture.sm_30)
                 return new Version(3, 0);
+            else if (arch == eArchitecture.sm_35)
+                return new Version(3, 5);
             throw new ArgumentException("Unknown architecture.");
         }
         
