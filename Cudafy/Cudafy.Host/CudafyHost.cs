@@ -61,7 +61,7 @@ namespace Cudafy.Host
             else if (type == eGPUType.Cuda)
             {
                 // Store the current context
-                CUcontext ctx = CUDA.GetCurrentContext();
+                CUcontext? ctx = CUDA.TryGetCurrentContext();
                 GPGPU currentGPU = null;
                 int devCnt = CudaGPU.GetDeviceCount();
                 for (int i = 0; i < devCnt; i++)
@@ -73,12 +73,12 @@ namespace Cudafy.Host
                     if (gpu == null)
                         throw new CudafyHostException(CudafyHostException.csDEVICE_X_NOT_FOUND, string.Format("{0}{1}", eGPUType.Cuda.ToString(), i));
                     props = gpu.GetDeviceProperties(useAdvanced);
-                    if (gpu.GetDeviceContext().Pointer == ctx.Pointer)
+                    if (ctx != null && gpu.GetDeviceContext().Pointer == ctx.Value.Pointer)
                         currentGPU = gpu;
                     yield return props;
                 }
                 // Reset context to current GPU
-                if (currentGPU != null)
+                if (ctx != null && currentGPU != null)
                     currentGPU.SetCurrentContext();
             }
             else

@@ -885,6 +885,8 @@ namespace GASS.CUDA
         //[DllImport(CUDA_DLL_NAME)]
         //public static extern CUResult cuDriverGetVersion(ref int version);
 
+        //public static extern CUResult cuDeviceGetAttribute(ref int pi, CUDeviceAttribute attrib, CUdevice dev);
+
         public System.Version Version
         {
             get

@@ -63,8 +63,8 @@ namespace Cudafy.Host
             {
                 _cuda = new CUDA(deviceId, true);
                 _ccs = null;
-                if (this.GetDriverVersion() < 4000)
-                    throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, "CUDA Driver Version 3.2 or earlier");
+                if (this.GetDriverVersion() < 5000)
+                    throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, "CUDA Driver Version 4.2 or earlier");
                 if (IntPtr.Size == 8)
                     _runtimeDriver = new CUDARuntime64();
                 else

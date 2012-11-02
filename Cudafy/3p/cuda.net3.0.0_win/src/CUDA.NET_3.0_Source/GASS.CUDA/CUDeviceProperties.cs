@@ -4,6 +4,7 @@ namespace GASS.CUDA
     using System.Runtime.InteropServices;
 
     [StructLayout(LayoutKind.Sequential)]
+    [Obsolete]
     public struct CUDeviceProperties
     {
         public int maxThreadsPerBlock;

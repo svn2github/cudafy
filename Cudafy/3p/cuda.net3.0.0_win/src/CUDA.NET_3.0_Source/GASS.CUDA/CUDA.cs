@@ -859,6 +859,15 @@ namespace GASS.CUDA
             return ctx;
         }
 
+        public static CUcontext? TryGetCurrentContext()
+        {
+            CUcontext ctx = new CUcontext();
+            CUResult res = CUDADriver.cuCtxGetCurrent(ref ctx);
+            if (res != CUResult.Success)
+                return null;
+            return ctx;
+        }
+
         public CUcontext PopCurrentContext()
         {
             CUcontext pctx = new CUcontext();
