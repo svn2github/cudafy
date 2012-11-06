@@ -209,6 +209,16 @@ namespace Cudafy.Host.UnitTests
             }
         }
 
+        [Test]
+        public void Test_getArchitecture()
+        {
+            eArchitecture arch = _gpu.GetArchitecture();
+            var props = _gpu.GetDeviceProperties();
+            Version ver = props.Capability;
+            string propVerStr = string.Format("{0}{1}", ver.Major, ver.Minor);
+            string archStr = arch.ToString().Remove(0, 3);
+            Assert.AreEqual(propVerStr, archStr);
+        }
 
         [Test]
         public void Test_mpyVectorByCoeffShort()

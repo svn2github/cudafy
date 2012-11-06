@@ -287,6 +287,65 @@ namespace Cudafy.Host
         //    throw new NotSupportedException();
         //}
 
+        public virtual eArchitecture GetArchitecture()
+        {
+            //if (!(this is CudaGPU) && !(this is EmulatedGPU))
+            //    throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, this.GetType());
+            
+            var capability = this.GetDeviceProperties(false).Capability;
+
+            switch (capability.Major)
+            {
+
+                case 1:
+
+                    switch (capability.Minor)
+                    {
+
+                        case 1: return eArchitecture.sm_11;
+
+                        case 2: return eArchitecture.sm_12;
+
+                        case 3: return eArchitecture.sm_13;
+
+                        default:
+                            throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, capability.ToString());
+
+                    }
+
+                case 2:
+
+                    switch (capability.Minor)
+                    {
+
+                        case 0: return eArchitecture.sm_20;
+
+                        case 1: return eArchitecture.sm_21;
+
+                        default:
+                            throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, capability.ToString());
+
+                    }
+
+                case 3:
+
+                    switch (capability.Minor)
+                    {
+
+                        case 0: return eArchitecture.sm_30;
+
+                        case 5: return eArchitecture.sm_35;
+
+                        default:
+                            throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, capability.ToString());
+                    }
+
+                default:
+                    throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, capability.ToString());
+            }
+
+        }
+
         /// <summary>
         /// Copies from one device to another device. Depending on whether RDMA is supported the transfer may or may not be via CPU and system memory.
         /// </summary>
@@ -894,6 +953,8 @@ namespace Cudafy.Host
             get { return _module; }
         }
 
+        #region Strongly typed Launch
+
         /// <summary>
         /// Safe launches the specified action.
         /// </summary>
@@ -907,18 +968,54 @@ namespace Cudafy.Host
             LaunchAsync(gridSize, blockSize, -1, action.Method.Name, new object[] { t1 });
         }
 
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
         public void Launch<T1, T2>(dim3 gridSize, dim3 blockSize, Action<GThread, T1, T2> action, T1 t1, T2 t2)
         {
             LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
                 new object[] { t1, t2 });
         }
 
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
         public void Launch<T1, T2, T3>(dim3 gridSize, dim3 blockSize, Action<GThread, T1, T2, T3> action, T1 t1, T2 t2, T3 t3)
         {
             LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
                 new object[] { t1, t2, t3 });
         }
 
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
         public void Launch<T1, T2, T3, T4>
    (dim3 gridSize, dim3 blockSize,
    Action<GThread, T1, T2, T3, T4> action,
@@ -928,6 +1025,22 @@ namespace Cudafy.Host
                 new object[] { t1, t2, t3, t4 });
         }
 
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
         public void Launch<T1, T2, T3, T4, T5>
    (dim3 gridSize, dim3 blockSize,
    Action<GThread, T1, T2, T3, T4, T5> action, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5)
@@ -936,6 +1049,24 @@ namespace Cudafy.Host
                 new object[] { t1, t2, t3, t4, t5 });
         }
 
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
         public void Launch<T1, T2, T3, T4, T5, T6>
    (dim3 gridSize, dim3 blockSize,
    Action<GThread, T1, T2, T3, T4, T5, T6> action,
@@ -945,6 +1076,26 @@ namespace Cudafy.Host
                 new object[] { t1, t2, t3, t4, t5, t6 });
         }
 
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
         public void Launch<T1, T2, T3, T4, T5, T6, T7>
    (dim3 gridSize, dim3 blockSize,
    Action<GThread, T1, T2, T3, T4, T5, T6, T7> action,
@@ -954,6 +1105,28 @@ namespace Cudafy.Host
                 new object[] { t1, t2, t3, t4, t5, t6, t7 });
         }
 
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
         public void Launch<T1, T2, T3, T4, T5, T6, T7, T8>
    (dim3 gridSize, dim3 blockSize,
    Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8> action,
@@ -963,6 +1136,30 @@ namespace Cudafy.Host
                 new object[] { t1, t2, t3, t4, t5, t6, t7, t8 });
         }
 
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <typeparam name="T9">The type of the 9.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        /// <param name="t9">The t9.</param>
         public void Launch<T1, T2, T3, T4, T5, T6, T7, T8, T9>
    (dim3 gridSize, dim3 blockSize,
    Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9> action,
@@ -972,6 +1169,32 @@ namespace Cudafy.Host
                 new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9 });
         }
 
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <typeparam name="T9">The type of the 9.</typeparam>
+        /// <typeparam name="T10">The type of the 10.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        /// <param name="t9">The t9.</param>
+        /// <param name="t10">The T10.</param>
         public void Launch<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>
    (dim3 gridSize, dim3 blockSize,
    Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> action,
@@ -981,6 +1204,34 @@ namespace Cudafy.Host
                 new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10 });
         }
 
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <typeparam name="T9">The type of the 9.</typeparam>
+        /// <typeparam name="T10">The type of the 10.</typeparam>
+        /// <typeparam name="T11">The type of the 11.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        /// <param name="t9">The t9.</param>
+        /// <param name="t10">The T10.</param>
+        /// <param name="t11">The T11.</param>
         public void Launch<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>
    (dim3 gridSize, dim3 blockSize,
    Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> action,
@@ -999,6 +1250,38 @@ namespace Cudafy.Host
                 new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12 });
         }
 
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <typeparam name="T9">The type of the 9.</typeparam>
+        /// <typeparam name="T10">The type of the 10.</typeparam>
+        /// <typeparam name="T11">The type of the 11.</typeparam>
+        /// <typeparam name="T12">The type of the 12.</typeparam>
+        /// <typeparam name="T13">The type of the 13.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        /// <param name="t9">The t9.</param>
+        /// <param name="t10">The T10.</param>
+        /// <param name="t11">The T11.</param>
+        /// <param name="t12">The T12.</param>
+        /// <param name="t13">The T13.</param>
         public void Launch<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>
    (dim3 gridSize, dim3 blockSize,
    Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> action,
@@ -1008,6 +1291,40 @@ namespace Cudafy.Host
                 new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13 });
         }
 
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <typeparam name="T9">The type of the 9.</typeparam>
+        /// <typeparam name="T10">The type of the 10.</typeparam>
+        /// <typeparam name="T11">The type of the 11.</typeparam>
+        /// <typeparam name="T12">The type of the 12.</typeparam>
+        /// <typeparam name="T13">The type of the 13.</typeparam>
+        /// <typeparam name="T14">The type of the 14.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        /// <param name="t9">The t9.</param>
+        /// <param name="t10">The T10.</param>
+        /// <param name="t11">The T11.</param>
+        /// <param name="t12">The T12.</param>
+        /// <param name="t13">The T13.</param>
+        /// <param name="t14">The T14.</param>
         public void Launch<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>
    (dim3 gridSize, dim3 blockSize,
    Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> action,
@@ -1017,6 +1334,42 @@ namespace Cudafy.Host
                 new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14 });
         }
 
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <typeparam name="T9">The type of the 9.</typeparam>
+        /// <typeparam name="T10">The type of the 10.</typeparam>
+        /// <typeparam name="T11">The type of the 11.</typeparam>
+        /// <typeparam name="T12">The type of the 12.</typeparam>
+        /// <typeparam name="T13">The type of the 13.</typeparam>
+        /// <typeparam name="T14">The type of the 14.</typeparam>
+        /// <typeparam name="T15">The type of the 15.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        /// <param name="t9">The t9.</param>
+        /// <param name="t10">The T10.</param>
+        /// <param name="t11">The T11.</param>
+        /// <param name="t12">The T12.</param>
+        /// <param name="t13">The T13.</param>
+        /// <param name="t14">The T14.</param>
+        /// <param name="t15">The T15.</param>
         public void Launch<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>
            (dim3 gridSize, dim3 blockSize,
            Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> action,
@@ -1025,6 +1378,7 @@ namespace Cudafy.Host
             LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
                 new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15 });
         }
+#endregion
 
         ///// <summary>
         ///// Launches the specified kernel.

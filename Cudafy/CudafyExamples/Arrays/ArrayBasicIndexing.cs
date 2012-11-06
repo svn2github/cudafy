@@ -34,9 +34,10 @@ namespace CudafyExamples.Arrays
 
         public static void Execute()
         {
-            CudafyModule km = CudafyTranslator.Cudafy();
-
             GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
+            eArchitecture arch = gpu.GetArchitecture();
+            CudafyModule km = CudafyTranslator.Cudafy(arch);
+                                 
             gpu.LoadModule(km);
 
             int[] a = new int[N];
