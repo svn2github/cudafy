@@ -129,7 +129,8 @@ namespace CudafyByExample
             // generate a bitmap from our sphere data
             dim3 grids = new dim3(DIM / 16, DIM / 16);
             dim3 threads = new dim3(16, 16);
-            gpu.Launch(grids, threads).kernel(s, dev_bitmap);
+            //gpu.Launch(grids, threads).kernel(s, dev_bitmap); // Dynamic
+            gpu.Launch(grids, threads, ((Action<GThread, Sphere[], byte[]>)kernel), s, dev_bitmap); // Strongly typed
 
             // copy our bitmap back from the GPU for display
             gpu.CopyFromDevice(dev_bitmap, bitmap);

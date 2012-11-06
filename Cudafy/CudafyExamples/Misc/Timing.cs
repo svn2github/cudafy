@@ -90,7 +90,7 @@ namespace CudafyExamples.Misc
             Console.WriteLine(string.Format("CPU ::: e = 2 * dy - dx ::: Excecution time: {0} ms", t2 * 1000));
             Console.WriteLine(string.Format("CUDA ::: e = 2 * dy - dx ::: Excecution time: {0} ms", t3 * 1000));
             //Console.WriteLine(string.Format("CUDA copy to host {0} ms", t4 * 1000));
-            Console.ReadKey();
+            //Console.ReadKey();
         }
 
         static double MeasureTime(Action action)

@@ -79,5 +79,14 @@ namespace Cudafy
         /// Gets the z.
         /// </summary>
         public int z { get; private set; }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="System.Int32"/> to <see cref="Cudafy.dim3"/>.
+        /// </summary>
+        /// <param name="dimX">The dim X.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static implicit operator dim3(int dimX) { return new dim3(dimX); }
     }
 }

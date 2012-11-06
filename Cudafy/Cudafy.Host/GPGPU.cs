@@ -396,47 +396,47 @@ namespace Cudafy.Host
             return Launch(1, 1, -1);
         }
 
-        /// <summary>
-        /// Gets the dynamic launcher.
-        /// Allows GPU functions to be called using dynamic language run-time. For example:
-        /// gpgpu.Launch(16, new dim3(8,8)).myGPUFunction(x, y, res)   
-        /// </summary>
-        /// <param name="gridSize">Size of the grid.</param>
-        /// <param name="blockSize">Size of the block.</param>
-        /// <param name="streamId">The stream id or -1 for synchronous.</param>
-        /// <returns>Dynamic launcher</returns>
-        public dynamic Launch(int gridSize, dim3 blockSize, int streamId = -1)
-        {
-            return Launch(new dim3(gridSize), blockSize, streamId);
-        }
+        ///// <summary>
+        ///// Gets the dynamic launcher.
+        ///// Allows GPU functions to be called using dynamic language run-time. For example:
+        ///// gpgpu.Launch(16, new dim3(8,8)).myGPUFunction(x, y, res)   
+        ///// </summary>
+        ///// <param name="gridSize">Size of the grid.</param>
+        ///// <param name="blockSize">Size of the block.</param>
+        ///// <param name="streamId">The stream id or -1 for synchronous.</param>
+        ///// <returns>Dynamic launcher</returns>
+        //public dynamic Launch(int gridSize, dim3 blockSize, int streamId = -1)
+        //{
+        //    return Launch(new dim3(gridSize), blockSize, streamId);
+        //}
 
-        /// <summary>
-        /// Gets the dynamic launcher.
-        /// Allows GPU functions to be called using dynamic language run-time. For example:
-        /// gpgpu.Launch(new dim3(8,8), 16).myGPUFunction(x, y, res)   
-        /// </summary>
-        /// <param name="gridSize">Size of the grid.</param>
-        /// <param name="blockSize">Size of the block.</param>
-        /// <param name="streamId">The stream id or -1 for synchronous.</param>
-        /// <returns>Dynamic launcher</returns>
-        public dynamic Launch(dim3 gridSize, int blockSize, int streamId = -1)
-        {
-            return Launch(gridSize, new dim3(blockSize), streamId);
-        }
+        ///// <summary>
+        ///// Gets the dynamic launcher.
+        ///// Allows GPU functions to be called using dynamic language run-time. For example:
+        ///// gpgpu.Launch(new dim3(8,8), 16).myGPUFunction(x, y, res)   
+        ///// </summary>
+        ///// <param name="gridSize">Size of the grid.</param>
+        ///// <param name="blockSize">Size of the block.</param>
+        ///// <param name="streamId">The stream id or -1 for synchronous.</param>
+        ///// <returns>Dynamic launcher</returns>
+        //public dynamic Launch(dim3 gridSize, int blockSize, int streamId = -1)
+        //{
+        //    return Launch(gridSize, new dim3(blockSize), streamId);
+        //}
 
-        /// <summary>
-        /// Gets the dynamic launcher.
-        /// Allows GPU functions to be called using dynamic language run-time. For example:
-        /// gpgpu.Launch(16, 16).myGPUFunction(x, y, res)   
-        /// </summary>
-        /// <param name="gridSize">Size of the grid.</param>
-        /// <param name="blockSize">Size of the block.</param>
-        /// <param name="streamId">The stream id or -1 for synchronous.</param>
-        /// <returns>Dynamic launcher</returns>
-        public dynamic Launch(int gridSize, int blockSize, int streamId = -1)
-        {
-            return Launch(new dim3(gridSize), new dim3(blockSize), streamId);
-        }
+        ///// <summary>
+        ///// Gets the dynamic launcher.
+        ///// Allows GPU functions to be called using dynamic language run-time. For example:
+        ///// gpgpu.Launch(16, 16).myGPUFunction(x, y, res)   
+        ///// </summary>
+        ///// <param name="gridSize">Size of the grid.</param>
+        ///// <param name="blockSize">Size of the block.</param>
+        ///// <param name="streamId">The stream id or -1 for synchronous.</param>
+        ///// <returns>Dynamic launcher</returns>
+        //public dynamic Launch(int gridSize, int blockSize, int streamId = -1)
+        //{
+        //    return Launch(new dim3(gridSize), new dim3(blockSize), streamId);
+        //}
 
         /// <summary>
         /// Gets the dynamic launcher.
@@ -895,67 +895,199 @@ namespace Cudafy.Host
         }
 
         /// <summary>
-        /// Launches the specified kernel.
+        /// Safe launches the specified action.
         /// </summary>
+        /// <typeparam name="T1">The type.</typeparam>
         /// <param name="gridSize">Size of the grid.</param>
         /// <param name="blockSize">Size of the block.</param>
-        /// <param name="methodName">Name of the method.</param>
-        /// <param name="arguments">The arguments.</param>
-        public void Launch(int gridSize, int blockSize, string methodName, params object[] arguments)
+        /// <param name="action">The action.</param>
+        /// <param name="t1">First argument.</param>
+        public void Launch<T1>(dim3 gridSize, dim3 blockSize, Action<GThread, T1> action, T1 t1)
         {
-            LaunchAsync(new dim3(gridSize), new dim3(blockSize), -1, methodName, arguments);
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name, new object[] { t1 });
         }
 
-
-        /// <summary>
-        /// Launches the specified kernel.
-        /// </summary>
-        /// <param name="gridSize">Size of the grid.</param>
-        /// <param name="blockSize">Size of the block.</param>
-        /// <param name="streamId">The stream id.</param>
-        /// <param name="methodName">Name of the method.</param>
-        /// <param name="arguments">The arguments.</param>
-        public void LaunchAsync(int gridSize, int blockSize, int streamId, string methodName, params object[] arguments)
+        public void Launch<T1, T2>(dim3 gridSize, dim3 blockSize, Action<GThread, T1, T2> action, T1 t1, T2 t2)
         {
-            LaunchAsync(new dim3(gridSize), new dim3(blockSize), streamId, methodName, arguments);
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2 });
         }
 
-        /// <summary>
-        /// Launches the specified kernel.
-        /// </summary>
-        /// <param name="gridSize">Size of the grid.</param>
-        /// <param name="blockSize">Size of the block.</param>
-        /// <param name="methodName">Name of the method.</param>
-        /// <param name="arguments">The arguments.</param>
-        public void Launch(dim3 gridSize, int blockSize, string methodName, params object[] arguments)
+        public void Launch<T1, T2, T3>(dim3 gridSize, dim3 blockSize, Action<GThread, T1, T2, T3> action, T1 t1, T2 t2, T3 t3)
         {
-            LaunchAsync(gridSize, new dim3(blockSize), -1, methodName, arguments);
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3 });
         }
 
-        /// <summary>
-        /// Launches the specified kernel.
-        /// </summary>
-        /// <param name="gridSize">Size of the grid.</param>
-        /// <param name="blockSize">Size of the block.</param>
-        /// <param name="streamId">The stream id.</param>
-        /// <param name="methodName">Name of the method.</param>
-        /// <param name="arguments">The arguments.</param>
-        public void LaunchAsync(dim3 gridSize, int blockSize, int streamId, string methodName, params object[] arguments)
+        public void Launch<T1, T2, T3, T4>
+   (dim3 gridSize, dim3 blockSize,
+   Action<GThread, T1, T2, T3, T4> action,
+   T1 t1, T2 t2, T3 t3, T4 t4)
         {
-            LaunchAsync(gridSize, new dim3(blockSize), streamId, methodName, arguments);
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3, t4 });
         }
 
-        /// <summary>
-        /// Launches the specified kernel.
-        /// </summary>
-        /// <param name="gridSize">Size of the grid.</param>
-        /// <param name="blockSize">Size of the block.</param>
-        /// <param name="methodName">Name of the method.</param>
-        /// <param name="arguments">The arguments.</param>
-        public void Launch(int gridSize, dim3 blockSize, string methodName, params object[] arguments)
+        public void Launch<T1, T2, T3, T4, T5>
+   (dim3 gridSize, dim3 blockSize,
+   Action<GThread, T1, T2, T3, T4, T5> action, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5)
         {
-            LaunchAsync(new dim3(gridSize), blockSize, -1, methodName, arguments);
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5 });
         }
+
+        public void Launch<T1, T2, T3, T4, T5, T6>
+   (dim3 gridSize, dim3 blockSize,
+   Action<GThread, T1, T2, T3, T4, T5, T6> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6)
+        {
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6 });
+        }
+
+        public void Launch<T1, T2, T3, T4, T5, T6, T7>
+   (dim3 gridSize, dim3 blockSize,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7)
+        {
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7 });
+        }
+
+        public void Launch<T1, T2, T3, T4, T5, T6, T7, T8>
+   (dim3 gridSize, dim3 blockSize,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8)
+        {
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8 });
+        }
+
+        public void Launch<T1, T2, T3, T4, T5, T6, T7, T8, T9>
+   (dim3 gridSize, dim3 blockSize,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9)
+        {
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9 });
+        }
+
+        public void Launch<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>
+   (dim3 gridSize, dim3 blockSize,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10)
+        {
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10 });
+        }
+
+        public void Launch<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>
+   (dim3 gridSize, dim3 blockSize,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11)
+        {
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11 });
+        }
+
+        public void Launch<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>
+   (dim3 gridSize, dim3 blockSize,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12)
+        {
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12 });
+        }
+
+        public void Launch<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>
+   (dim3 gridSize, dim3 blockSize,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13)
+        {
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13 });
+        }
+
+        public void Launch<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>
+   (dim3 gridSize, dim3 blockSize,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14)
+        {
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14 });
+        }
+
+        public void Launch<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>
+           (dim3 gridSize, dim3 blockSize,
+           Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> action,
+           T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15)
+        {
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15 });
+        }
+
+        ///// <summary>
+        ///// Launches the specified kernel.
+        ///// </summary>
+        ///// <param name="gridSize">Size of the grid.</param>
+        ///// <param name="blockSize">Size of the block.</param>
+        ///// <param name="methodName">Name of the method.</param>
+        ///// <param name="arguments">The arguments.</param>
+        //public void Launch(int gridSize, int blockSize, string methodName, params object[] arguments)
+        //{
+        //    LaunchAsync(new dim3(gridSize), new dim3(blockSize), -1, methodName, arguments);
+        //}
+
+
+        ///// <summary>
+        ///// Launches the specified kernel.
+        ///// </summary>
+        ///// <param name="gridSize">Size of the grid.</param>
+        ///// <param name="blockSize">Size of the block.</param>
+        ///// <param name="streamId">The stream id.</param>
+        ///// <param name="methodName">Name of the method.</param>
+        ///// <param name="arguments">The arguments.</param>
+        //public void LaunchAsync(int gridSize, int blockSize, int streamId, string methodName, params object[] arguments)
+        //{
+        //    LaunchAsync(new dim3(gridSize), new dim3(blockSize), streamId, methodName, arguments);
+        //}
+
+        ///// <summary>
+        ///// Launches the specified kernel.
+        ///// </summary>
+        ///// <param name="gridSize">Size of the grid.</param>
+        ///// <param name="blockSize">Size of the block.</param>
+        ///// <param name="methodName">Name of the method.</param>
+        ///// <param name="arguments">The arguments.</param>
+        //public void Launch(dim3 gridSize, int blockSize, string methodName, params object[] arguments)
+        //{
+        //    LaunchAsync(gridSize, new dim3(blockSize), -1, methodName, arguments);
+        //}
+
+        ///// <summary>
+        ///// Launches the specified kernel.
+        ///// </summary>
+        ///// <param name="gridSize">Size of the grid.</param>
+        ///// <param name="blockSize">Size of the block.</param>
+        ///// <param name="streamId">The stream id.</param>
+        ///// <param name="methodName">Name of the method.</param>
+        ///// <param name="arguments">The arguments.</param>
+        //public void LaunchAsync(dim3 gridSize, int blockSize, int streamId, string methodName, params object[] arguments)
+        //{
+        //    LaunchAsync(gridSize, new dim3(blockSize), streamId, methodName, arguments);
+        //}
+
+        ///// <summary>
+        ///// Launches the specified kernel.
+        ///// </summary>
+        ///// <param name="gridSize">Size of the grid.</param>
+        ///// <param name="blockSize">Size of the block.</param>
+        ///// <param name="methodName">Name of the method.</param>
+        ///// <param name="arguments">The arguments.</param>
+        //public void Launch(int gridSize, dim3 blockSize, string methodName, params object[] arguments)
+        //{
+        //    LaunchAsync(new dim3(gridSize), blockSize, -1, methodName, arguments);
+        //}
 
         /// <summary>
         /// Launches the specified kernel.
@@ -969,18 +1101,18 @@ namespace Cudafy.Host
             LaunchAsync(gridSize, blockSize, -1, methodName, arguments);
         }
 
-        /// <summary>
-        /// Launches the specified kernel.
-        /// </summary>
-        /// <param name="gridSize">Size of the grid.</param>
-        /// <param name="blockSize">Size of the block.</param>
-        /// <param name="streamId">The stream id.</param>
-        /// <param name="methodName">Name of the method.</param>
-        /// <param name="arguments">The arguments.</param>
-        public void LaunchAsync(int gridSize, dim3 blockSize, int streamId, string methodName, params object[] arguments)
-        {
-            LaunchAsync(new dim3(gridSize), blockSize, streamId, methodName, arguments);
-        }
+        ///// <summary>
+        ///// Launches the specified kernel.
+        ///// </summary>
+        ///// <param name="gridSize">Size of the grid.</param>
+        ///// <param name="blockSize">Size of the block.</param>
+        ///// <param name="streamId">The stream id.</param>
+        ///// <param name="methodName">Name of the method.</param>
+        ///// <param name="arguments">The arguments.</param>
+        //public void LaunchAsync(int gridSize, dim3 blockSize, int streamId, string methodName, params object[] arguments)
+        //{
+        //    LaunchAsync(new dim3(gridSize), blockSize, streamId, methodName, arguments);
+        //}
 
         /// <summary>
         /// Launches the specified kernel.

@@ -69,7 +69,7 @@ namespace Cudafy.Host
         public const string csCAN_ONLY_LAUNCH_GLOBAL_METHODS = "Can only launch global methods.";
         public const string csCANNOT_EMULATE_DUMMY_FUNCTION_X = "Cannot launch dummy function '{0}'.";
         public const string csNO_X_PRESENT_IN_CUDAFY_MODULE = "No {0} present in Cudafy module.";
-        public const string csNO_SUITABLE_X_PRESENT_IN_CUDAFY_MODULE = "No suitable {0} present in Cudafy module.";
+        //public const string csNO_SUITABLE_X_PRESENT_IN_CUDAFY_MODULE = "No suitable {0} present in Cudafy module.";
         public const string csFAILED_TO_GET_PROPERIES_X = "Failed to get properties: {0}";
         public const string csDATA_IS_NOT_ON_GPU = "Data is not on the device.";
         public const string csDATA_IS_NOT_HOST_ALLOCATED = "Data is not host allocated.";

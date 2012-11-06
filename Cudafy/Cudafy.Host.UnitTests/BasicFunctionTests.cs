@@ -309,6 +309,19 @@ namespace Cudafy.Host.UnitTests
         }
 
         [Test]
+        public void Test_add_strongly_typed()
+        {
+            int a = 1;
+            int b = 2;
+            int c;
+            int[] dev_c = _gpu.Allocate<int>();
+            _gpu.Launch(1, 1, (Action<GThread,int, int, int[]>)(add_v2), a, b, dev_c);
+            _gpu.CopyFromDevice(dev_c, out c);
+            Assert.AreEqual(a + b, c);
+            _gpu.Free(dev_c);
+        }
+
+        [Test]
         public void Test_sub()
         {
             int a = 1;
@@ -594,6 +607,12 @@ namespace Cudafy.Host.UnitTests
 
         [Cudafy]
         public static void add(int a, int b, int[] c)
+        {
+            c[0] = a + b;
+        }
+
+        [Cudafy]
+        public static void add_v2(GThread thread, int a, int b, int[] c)
         {
             c[0] = a + b;
         }

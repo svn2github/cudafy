@@ -23,7 +23,7 @@ namespace CudafyByExample
             CudafyModes.CodeGen = eGPUCodeGenerator.CudaC;
             CudafyModes.Target = eGPUType.Cuda;
             try
-            {                              
+            {
                 // Chapter 3
                 Console.WriteLine("\r\nChapter 3");
                 Console.WriteLine("\r\nhello_world");
