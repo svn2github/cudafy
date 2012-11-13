@@ -52,6 +52,9 @@ namespace CudafyExamples
                 Console.WriteLine("\r\nDummyFunctions");
                 DummyFunctions.Execute();
 
+                Console.WriteLine("\r\nNestedTypeTest");
+                TypeTest.GetAnswer();
+
                 Console.WriteLine("\r\nVoting.Ballot");
                 Voting.Ballot.Execute();
                 Console.WriteLine("\r\nVoting.SyncThreadCount");

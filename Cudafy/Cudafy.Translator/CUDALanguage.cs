@@ -341,7 +341,7 @@ namespace Cudafy.Translator
                 return stp.Name;
             }
             else
-                return declaringType;
+                return declaringType.Replace(".", "");
         }
 
         public static void Reset()
