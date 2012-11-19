@@ -320,7 +320,9 @@ namespace Cudafy.Translator
                                 attr = fi.GetCudafyType(out isDummy);
                                 if (attr != null)
                                 {
-                                    System.Reflection.FieldInfo fieldInfo = type.GetField(fi.Name);
+                                    System.Reflection.FieldInfo fieldInfo = type.GetField(fi.Name, BindingFlags.Static|BindingFlags.Public | BindingFlags.NonPublic);
+                                    if(fieldInfo == null)
+                                        throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Non-static fields");
                                     int[] dims = _cl.GetFieldInfoDimensions(fieldInfo);
                                     _cl.DecompileCUDAConstantField(fi, dims, codePto, compOpts);
                                     cm.Constants.Add(fi.Name, new KernelConstantInfo(fi.Name, fieldInfo, isDummy));
@@ -338,7 +340,7 @@ namespace Cudafy.Translator
                                         throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Non-static methods");
                                     _cl.DecompileMethodDeclaration(med, declarationsPto, new DecompilationOptions { FullDecompilation = false });
                                     _cl.DecompileMethod(med, codePto, compOpts);
-                                    MethodInfo mi = type.GetMethod(med.Name);
+                                    MethodInfo mi = type.GetMethod(med.Name, BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic);
                                     if (mi == null)
                                         continue;
                                     eKernelMethodType kmt = eKernelMethodType.Device;

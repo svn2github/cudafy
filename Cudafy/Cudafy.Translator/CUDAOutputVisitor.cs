@@ -2240,6 +2240,24 @@ namespace Cudafy.Translator
                                     if (!(arg is PrimitiveExpression))
                                         throw new CudafyLanguageException(CudafyLanguageException.csSHARED_MEMORY_MUST_BE_CONSTANT);
                                     object o = (arg as PrimitiveExpression).Value;
+
+                                    //object o;
+                                    //if (arg is PrimitiveExpression)
+                                    //{
+                                    //    o = (arg as PrimitiveExpression).Value;
+                                    //}
+                                    //else if ((arg is MemberReferenceExpression))
+                                    //{
+                                    //    var method = GetGetMethod(((MemberReferenceExpression)arg));
+                                    //    if (method == null)   // TO-DO Revise the message string: csSHARED_MEMORY_MUST_BE_CONSTANT
+                                    //        throw new CudafyLanguageException(CudafyLanguageException.csSHARED_MEMORY_MUST_BE_CONSTANT);
+                                    //    o = new PrimitiveExpression(method.Invoke(method.DeclaringType, null));
+                                    //}
+                                    //else
+                                    //{
+                                    //    throw new CudafyLanguageException(CudafyLanguageException.csSHARED_MEMORY_MUST_BE_CONSTANT);
+                                    //}
+
                                     formatter.WriteIdentifier(o.ToString());
                                     if (ctr < argLen - 1)
                                         formatter.WriteKeyword("*");
@@ -2262,6 +2280,25 @@ namespace Cudafy.Translator
 
             }
             return isAlloc;
+        }
+
+        private System.Reflection.MethodInfo GetGetMethod(MemberReferenceExpression member)
+        {
+            var method = (from a in member.Annotations
+                          where a is Mono.Cecil.PropertyDefinition
+                          select ((Mono.Cecil.PropertyDefinition)a).GetMethod
+                        ).FirstOrDefault();
+            if (method == null) return null;
+            var type = (from ass in AppDomain.CurrentDomain.GetAssemblies()
+                        where ass.GetType(method.DeclaringType.FullName) != null
+                        select ass.GetType(method.DeclaringType.FullName)
+                        ).LastOrDefault();
+            if (type == null) return null;
+            return (from p in type.GetProperties(System.Reflection.BindingFlags.Static
+                                               | System.Reflection.BindingFlags.Public)
+                    where p.Name == member.MemberName
+                    select p.GetGetMethod()
+                        ).FirstOrDefault();
         }
 		
 		public object VisitWhileStatement(WhileStatement whileStatement, object data)
