@@ -830,6 +830,35 @@ namespace Cudafy.Host
         //    }
         //}
 
+        protected override void DoCopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci, int streamId)
+        {
+            Type type = typeof(T);
+            CUdeviceptr devPtr = (CUdeviceptr)ci.CudaPointer;
+            int size = MSizeOf(typeof(T));
+            if (count <= 0)
+                throw new ArgumentOutOfRangeException("count");
+            unsafe
+            {
+                GCHandle handle = GCHandle.Alloc(hostArray, GCHandleType.Pinned);
+                try
+                {
+                    IntPtr hostPtr = hostArray;
+                    IntPtr hostOffsetPtr = new IntPtr(hostPtr.ToInt64() + hostOffset * size);
+                    CUdeviceptr devOffsetPtr = devPtr + (long)(devOffset * size);
+                    CUstream stream = (CUstream)GetStream(streamId);
+                    _cuda.CopyHostToDeviceAsync(devOffsetPtr, hostOffsetPtr, (uint)(count * size), stream);
+                }
+                catch (CUDAException ex)
+                {
+                    HandleCUDAException(ex);
+                }
+                finally
+                {
+                    handle.Free();
+                }
+            }
+        }
+
         protected override void DoCopyToConstantMemory<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci)
         {
             Type type = typeof(T);
@@ -902,18 +931,29 @@ namespace Cudafy.Host
 
         protected override void DoCopyToDevice<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count)
         {
+            DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, 0);
+        }
+
+        protected override void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId)
+        {
             CUdeviceptr devPtr = ((CUDevicePtrEx)GetDeviceMemory(devArray)).DevPtr;
             Type type = typeof(T);
             unsafe
             {
                 GCHandle handle = GCHandle.Alloc(hostArray, GCHandleType.Pinned);
                 try
-                {
+                {                 
                     int size = MSizeOf(typeof(T));
                     IntPtr hostPtr = handle.AddrOfPinnedObject();
                     IntPtr hostOffsetPtr = new IntPtr(hostPtr.ToInt64() + hostOffset * size);
                     CUdeviceptr devOffsetPtr = devPtr + (long)(devOffset * size);
-                    _cuda.CopyHostToDevice(devOffsetPtr, hostOffsetPtr, (uint)(count * size));
+                    if(streamId > 0)
+                    {
+                        CUstream stream = (CUstream)GetStream(streamId);
+                        _cuda.CopyHostToDeviceAsync(devOffsetPtr, hostOffsetPtr, (uint)(count * size), stream);
+                    }
+                    else
+                        _cuda.CopyHostToDevice(devOffsetPtr, hostOffsetPtr, (uint)(count * size));
                 }
                 catch (CUDAException ex)
                 {
@@ -928,6 +968,11 @@ namespace Cudafy.Host
 
         protected override void DoCopyFromDevice<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count)
         {
+            DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, -1);
+        }
+
+        protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId)
+        {
             CUdeviceptr devPtr = ((CUDevicePtrEx)GetDeviceMemory(devArray)).DevPtr;
             Type type = typeof(T);
             unsafe
@@ -939,7 +984,13 @@ namespace Cudafy.Host
                     IntPtr hostPtr = handle.AddrOfPinnedObject();
                     IntPtr hostOffsetPtr = new IntPtr(hostPtr.ToInt64() + hostOffset * size);
                     CUdeviceptr devOffsetPtr = devPtr + (long)(devOffset * size);
-                    _cuda.CopyDeviceToHost(devOffsetPtr, hostOffsetPtr, (uint)(count * size));
+                    if (streamId > 0)
+                    {
+                        CUstream stream = (CUstream)GetStream(streamId);
+                        _cuda.CopyDeviceToHostAsync(devOffsetPtr, hostOffsetPtr, (uint)(count * size), stream);
+                    }
+                    else
+                        _cuda.CopyDeviceToHost(devOffsetPtr, hostOffsetPtr, (uint)(count * size));
                 }
                 catch (CUDAException ex)
                 {
@@ -958,7 +1009,9 @@ namespace Cudafy.Host
             DoCopyFromDevice<T>(devArray, 0, hostArray, 0, ptrEx.TotalSize);
         }
 
-        protected override void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost)
+
+
+        protected override void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost, bool isConstantMemory = false)
         {
             Lock();
             CUstream stream = (CUstream)GetStream(streamId);
@@ -979,7 +1032,8 @@ namespace Cudafy.Host
                                                   streamId = streamDesc,
                                                   copyToDevice = true,
                                                   hostArray = hostArray,
-                                                  hostOffset = hostOffset
+                                                  hostOffset = hostOffset,
+                                                  IsConstantMemory = isConstantMemory
             };
             AsyncCallback callback = OnCopyOnHostCompleted<T>;
             IAsyncResult res = copyM2N.BeginInvoke(hostArray, hostOffset, stagingPost, 0, count, callback,
@@ -1094,7 +1148,13 @@ namespace Cudafy.Host
             dlgt.EndInvoke(result);
             if (IsSmartCopyEnabled)
                 Lock();
-            DoCopyToDeviceAsync<T>(cdp.stagingPost, 0, cdp.devArray, cdp.devOffset, cdp.count, cdp.streamId.StreamId);
+            if (cdp.IsConstantMemory)
+            {
+                KernelConstantInfo ci = InitializeCopyToConstantMemory(null, cdp.hostOffset, cdp.devArray, cdp.devOffset, ref cdp.count);
+                DoCopyToConstantMemoryAsync<T>(cdp.stagingPost, 0, cdp.devArray, cdp.devOffset, cdp.count, ci, cdp.streamId.StreamId);
+            }
+            else
+                DoCopyToDeviceAsync<T>(cdp.stagingPost, 0, cdp.devArray, cdp.devOffset, cdp.count, cdp.streamId.StreamId);
             if (IsSmartCopyEnabled)
                 Unlock();
             lock (_smartCopyLock)
@@ -1149,6 +1209,7 @@ namespace Cudafy.Host
             public StreamDesc streamId;
             public bool copyToDevice;
             public IntPtr stagingPost;
+            public bool IsConstantMemory;
         }
 
         private delegate void DoCopyFromDeviceAsyncDelegate<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId);
@@ -1165,7 +1226,8 @@ namespace Cudafy.Host
 
         protected override void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, DevicePtrEx ptrEx, int devOffset, int count, int streamId)
         {
-            
+            if (count <= 0)
+                throw new ArgumentOutOfRangeException("count");
             CUdeviceptr ptr = (ptrEx as CUDevicePtrEx).DevPtr;
             Type type = typeof(T);
             CUstream cuStr = GetCUstream(streamId);
@@ -1575,7 +1637,7 @@ namespace Cudafy.Host
         {
             DevicePtrEx ptrSrcEx = (CUDevicePtrEx)GetDeviceMemory(srcDevArray);
             DevicePtrEx ptrDstEx = (CUDevicePtrEx)GetDeviceMemory(dstDevArray);
-            DoCopyOnDevice<T>(ptrSrcEx, srcOffset, ptrDstEx, dstOffet, count);
+            DoCopyOnDeviceAsync<T>(ptrSrcEx, srcOffset, ptrDstEx, dstOffet, count, streamId);
         }
 
         /// <summary>

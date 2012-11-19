@@ -747,8 +747,9 @@ namespace Cudafy.Host
         /// <param name="devArray">The device array.</param>
         public void CopyToConstantMemory<T>(T[] hostArray, T[] devArray)
         {
-            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, 0, devArray, 0, hostArray.Length);
-            DoCopyToConstantMemory<T>(hostArray, 0, devArray, 0, hostArray.Length, ci);
+            int count = hostArray.Length;
+            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, 0, devArray, 0, ref count);
+            DoCopyToConstantMemory<T>(hostArray, 0, devArray, 0, count, ci);
         }
 
         /// <summary>
@@ -759,8 +760,9 @@ namespace Cudafy.Host
         /// <param name="devArray">The device array.</param>
         public void CopyToConstantMemory<T>(T[,] hostArray, T[,] devArray)
         {
-            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, 0, devArray, 0, hostArray.Length);
-            DoCopyToConstantMemory<T>(hostArray, 0, devArray, 0, hostArray.Length, ci);
+            int count = hostArray.Length;
+            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, 0, devArray, 0, ref count);
+            DoCopyToConstantMemory<T>(hostArray, 0, devArray, 0, count, ci);
         }
 
         /// <summary>
@@ -771,8 +773,9 @@ namespace Cudafy.Host
         /// <param name="devArray">The device array.</param>
         public void CopyToConstantMemory<T>(T[,,] hostArray, T[,,] devArray)
         {
-            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, 0, devArray, 0, hostArray.Length);
-            DoCopyToConstantMemory<T>(hostArray, 0, devArray, 0, hostArray.Length, ci);
+            int count = hostArray.Length;
+            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, 0, devArray, 0, ref count);
+            DoCopyToConstantMemory<T>(hostArray, 0, devArray, 0, count, ci);
         }
 
         /// <summary>
@@ -786,11 +789,134 @@ namespace Cudafy.Host
         /// <param name="count">The number of element to copy.</param>
         public void CopyToConstantMemory<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count)
         {
-            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, hostOffset, devArray, devOffset, count);
+            KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, hostOffset, devArray, devOffset, ref count);
             DoCopyToConstantMemory<T>(hostArray, hostOffset, devArray, devOffset, count, ci);
         }
 
-        private KernelConstantInfo InitializeCopyToConstantMemory(Array hostArray, int hostOffset, Array devArray, int devOffset, int count)
+        /// <summary>
+        /// Copies to constant memory async.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="devArray">The dev array.</param>
+        /// <param name="devOffset">The dev offset.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="streamId">The stream id.</param>
+        public void CopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId)
+        {
+            KernelConstantInfo ci = InitializeCopyToConstantMemory(null, hostOffset, devArray, devOffset, ref count);
+            DoCopyToConstantMemoryAsync<T>(hostArray, hostOffset, devArray, devOffset, count, ci, streamId);
+        }
+
+        /// <summary>
+        /// Copies to constant memory asynchronously using smart copy.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="devArray">The dev array.</param>
+        /// <param name="devOffset">The dev offset.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="streamId">The stream id.</param>
+        /// <param name="stagingPost">The staging post.</param>
+        public void CopyToConstantMemoryAsync<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId, IntPtr stagingPost)
+        {
+            if (!IsSmartCopyEnabled)
+                throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
+            DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId, stagingPost, true);
+        }
+
+        /// <summary>
+        /// Copies to constant memory async.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="devArray">The dev array.</param>
+        /// <param name="devOffset">The dev offset.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="streamId">The stream id.</param>
+        public void CopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, T[,] devArray, int devOffset, int count, int streamId)
+        {
+            KernelConstantInfo ci = InitializeCopyToConstantMemory(null, hostOffset, devArray, devOffset, ref count);
+            DoCopyToConstantMemoryAsync<T>(hostArray, hostOffset, devArray, devOffset, count, ci, streamId);
+        }
+
+        /// <summary>
+        /// Copies to constant memory async.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="devArray">The dev array.</param>
+        /// <param name="devOffset">The dev offset.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="streamId">The stream id.</param>
+        public void CopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, T[,,] devArray, int devOffset, int count, int streamId)
+        {
+            KernelConstantInfo ci = InitializeCopyToConstantMemory(null, hostOffset, devArray, devOffset, ref count);
+            DoCopyToConstantMemoryAsync<T>(hostArray, hostOffset, devArray, devOffset, count, ci, streamId);
+        }
+
+        ///// <summary>
+        ///// Copies to constant memory.
+        ///// </summary>
+        ///// <typeparam name="T">Blittable type.</typeparam>
+        ///// <param name="hostArray">The host array.</param>
+        ///// <param name="hostOffset">The host offset.</param>
+        ///// <param name="devArray">The device array.</param>
+        ///// <param name="devOffset">The device offset.</param>
+        ///// <param name="count">The number of element to copy.</param>
+        ///// <param name="streamId">Stream id.</param>
+        //public void CopyToConstantMemoryAsync<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId)
+        //{
+        //    KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, hostOffset, devArray, devOffset, count);
+        //    DoCopyToConstantMemory<T>(hostArray, hostOffset, devArray, devOffset, count, ci, streamId);
+        //}
+
+        ///// <summary>
+        ///// Copies to constant memory.
+        ///// </summary>
+        ///// <typeparam name="T">Blittable type.</typeparam>
+        ///// <param name="hostArray">The host array.</param>
+        ///// <param name="hostOffset">The host offset.</param>
+        ///// <param name="devArray">The device array.</param>
+        ///// <param name="devOffset">The device offset.</param>
+        ///// <param name="count">The number of element to copy.</param>
+        ///// <param name="streamId">Stream id.</param>
+        //public void CopyToConstantMemoryAsync<T>(T[,] hostArray, int hostOffset, T[,] devArray, int devOffset, int count, int streamId)
+        //{
+        //    KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, hostOffset, devArray, devOffset, count);
+        //    DoCopyToConstantMemory<T>(hostArray, hostOffset, devArray, devOffset, count, ci, streamId);
+        //}
+
+        ///// <summary>
+        ///// Copies to constant memory.
+        ///// </summary>
+        ///// <typeparam name="T">Blittable type.</typeparam>
+        ///// <param name="hostArray">The host array.</param>
+        ///// <param name="hostOffset">The host offset.</param>
+        ///// <param name="devArray">The device array.</param>
+        ///// <param name="devOffset">The device offset.</param>
+        ///// <param name="count">The number of element to copy.</param>
+        ///// <param name="streamId">Stream id.</param>
+        //public void CopyToConstantMemoryAsync<T>(T[,,] hostArray, int hostOffset, T[,,] devArray, int devOffset, int count, int streamId)
+        //{
+        //    KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, hostOffset, devArray, devOffset, count);
+        //    DoCopyToConstantMemory<T>(hostArray, hostOffset, devArray, devOffset, count, ci, streamId);
+        //}
+
+        /// <summary>
+        /// Initializes the copy to constant memory.
+        /// </summary>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="devArray">The dev array.</param>
+        /// <param name="devOffset">The dev offset.</param>
+        /// <param name="count">The count.</param>
+        /// <returns></returns>
+        protected KernelConstantInfo InitializeCopyToConstantMemory(Array hostArray, int hostOffset, Array devArray, int devOffset, ref int count)
         {
             object o = null;
             KernelConstantInfo ci = null;
@@ -809,7 +935,7 @@ namespace Cudafy.Host
             }
             if (o == null)
                 throw new CudafyHostException(CudafyHostException.csCONSTANT_MEMORY_NOT_FOUND);
-            if (count == 0)
+            if (count == 0 && hostArray != null)
                 count = hostArray.Length;
             if (count > devArray.Length - devOffset)
                 throw new CudafyHostException(CudafyHostException.csINDEX_OUT_OF_RANGE);
@@ -954,6 +1080,475 @@ namespace Cudafy.Host
         }
 
         #region Strongly typed Launch
+
+        /// <summary>
+        /// Safe launches the specified action.
+        /// </summary>
+        /// <typeparam name="T1">The type.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">Stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">First argument.</param>
+        public void LaunchAsync<T1>(dim3 gridSize, dim3 blockSize, int streamId, Action<GThread, T1> action, T1 t1)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name, new object[] { t1 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">Stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        public void LaunchAsync<T1, T2>(dim3 gridSize, dim3 blockSize, int streamId, Action<GThread, T1, T2> action, T1 t1, T2 t2)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name,
+                new object[] { t1, t2 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        public void LaunchAsync<T1, T2, T3>(dim3 gridSize, dim3 blockSize, int streamId, Action<GThread, T1, T2, T3> action, T1 t1, T2 t2, T3 t3)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name,
+                new object[] { t1, t2, t3 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">Stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        public void LaunchAsync<T1, T2, T3, T4>
+   (dim3 gridSize, dim3 blockSize, int streamId,
+   Action<GThread, T1, T2, T3, T4> action,
+   T1 t1, T2 t2, T3 t3, T4 t4)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name,
+                new object[] { t1, t2, t3, t4 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">Stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        public void LaunchAsync<T1, T2, T3, T4, T5>
+   (dim3 gridSize, dim3 blockSize, int streamId,
+   Action<GThread, T1, T2, T3, T4, T5> action, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">Stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        public void LaunchAsync<T1, T2, T3, T4, T5, T6>
+   (dim3 gridSize, dim3 blockSize, int streamId,
+   Action<GThread, T1, T2, T3, T4, T5, T6> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">Stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        public void LaunchAsync<T1, T2, T3, T4, T5, T6, T7>
+   (dim3 gridSize, dim3 blockSize, int streamId,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">Stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        public void LaunchAsync<T1, T2, T3, T4, T5, T6, T7, T8>
+   (dim3 gridSize, dim3 blockSize, int streamId,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <typeparam name="T9">The type of the 9.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">Stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        /// <param name="t9">The t9.</param>
+        public void LaunchAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9>
+   (dim3 gridSize, dim3 blockSize, int streamId,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <typeparam name="T9">The type of the 9.</typeparam>
+        /// <typeparam name="T10">The type of the 10.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">Stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        /// <param name="t9">The t9.</param>
+        /// <param name="t10">The T10.</param>
+        public void LaunchAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>
+   (dim3 gridSize, dim3 blockSize, int streamId,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <typeparam name="T9">The type of the 9.</typeparam>
+        /// <typeparam name="T10">The type of the 10.</typeparam>
+        /// <typeparam name="T11">The type of the 11.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">Stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        /// <param name="t9">The t9.</param>
+        /// <param name="t10">The T10.</param>
+        /// <param name="t11">The T11.</param>
+        public void LaunchAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>
+   (dim3 gridSize, dim3 blockSize, int streamId,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11)
+        {
+            LaunchAsync(gridSize, blockSize, -1, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <typeparam name="T9">The type of the 9.</typeparam>
+        /// <typeparam name="T10">The type of the 10.</typeparam>
+        /// <typeparam name="T11">The type of the 11.</typeparam>
+        /// <typeparam name="T12">The type of the 12.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">The stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        /// <param name="t9">The t9.</param>
+        /// <param name="t10">The T10.</param>
+        /// <param name="t11">The T11.</param>
+        /// <param name="t12">The T12.</param>
+        public void LaunchAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>
+   (dim3 gridSize, dim3 blockSize, int streamId,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <typeparam name="T9">The type of the 9.</typeparam>
+        /// <typeparam name="T10">The type of the 10.</typeparam>
+        /// <typeparam name="T11">The type of the 11.</typeparam>
+        /// <typeparam name="T12">The type of the 12.</typeparam>
+        /// <typeparam name="T13">The type of the 13.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">Stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        /// <param name="t9">The t9.</param>
+        /// <param name="t10">The T10.</param>
+        /// <param name="t11">The T11.</param>
+        /// <param name="t12">The T12.</param>
+        /// <param name="t13">The T13.</param>
+        public void LaunchAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>
+   (dim3 gridSize, dim3 blockSize, int streamId,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <typeparam name="T9">The type of the 9.</typeparam>
+        /// <typeparam name="T10">The type of the 10.</typeparam>
+        /// <typeparam name="T11">The type of the 11.</typeparam>
+        /// <typeparam name="T12">The type of the 12.</typeparam>
+        /// <typeparam name="T13">The type of the 13.</typeparam>
+        /// <typeparam name="T14">The type of the 14.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">Stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        /// <param name="t9">The t9.</param>
+        /// <param name="t10">The T10.</param>
+        /// <param name="t11">The T11.</param>
+        /// <param name="t12">The T12.</param>
+        /// <param name="t13">The T13.</param>
+        /// <param name="t14">The T14.</param>
+        public void LaunchAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>
+   (dim3 gridSize, dim3 blockSize, int streamId,
+   Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> action,
+   T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14 });
+        }
+
+        /// <summary>
+        /// Launches the specified grid size.
+        /// </summary>
+        /// <typeparam name="T1">The type of the 1.</typeparam>
+        /// <typeparam name="T2">The type of the 2.</typeparam>
+        /// <typeparam name="T3">The type of the 3.</typeparam>
+        /// <typeparam name="T4">The type of the 4.</typeparam>
+        /// <typeparam name="T5">The type of the 5.</typeparam>
+        /// <typeparam name="T6">The type of the 6.</typeparam>
+        /// <typeparam name="T7">The type of the 7.</typeparam>
+        /// <typeparam name="T8">The type of the 8.</typeparam>
+        /// <typeparam name="T9">The type of the 9.</typeparam>
+        /// <typeparam name="T10">The type of the 10.</typeparam>
+        /// <typeparam name="T11">The type of the 11.</typeparam>
+        /// <typeparam name="T12">The type of the 12.</typeparam>
+        /// <typeparam name="T13">The type of the 13.</typeparam>
+        /// <typeparam name="T14">The type of the 14.</typeparam>
+        /// <typeparam name="T15">The type of the 15.</typeparam>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <param name="blockSize">Size of the block.</param>
+        /// <param name="streamId">Stream id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="streamId">Stream number.</param>
+        /// <param name="t1">The t1.</param>
+        /// <param name="t2">The t2.</param>
+        /// <param name="t3">The t3.</param>
+        /// <param name="t4">The t4.</param>
+        /// <param name="t5">The t5.</param>
+        /// <param name="t6">The t6.</param>
+        /// <param name="t7">The t7.</param>
+        /// <param name="t8">The t8.</param>
+        /// <param name="t9">The t9.</param>
+        /// <param name="t10">The T10.</param>
+        /// <param name="t11">The T11.</param>
+        /// <param name="t12">The T12.</param>
+        /// <param name="t13">The T13.</param>
+        /// <param name="t14">The T14.</param>
+        /// <param name="t15">The T15.</param>
+        public void LaunchAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>
+           (dim3 gridSize, dim3 blockSize, int streamId,
+           Action<GThread, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> action,
+           T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15)
+        {
+            LaunchAsync(gridSize, blockSize, streamId, action.Method.Name,
+                new object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15 });
+        }
 
         /// <summary>
         /// Safe launches the specified action.
@@ -1515,6 +2110,20 @@ namespace Cudafy.Host
         protected abstract void DoCopyToConstantMemory<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci);
 
         /// <summary>
+        /// Does the copy to constant memory async.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="hostArray">The host array.</param>
+        /// <param name="hostOffset">The host offset.</param>
+        /// <param name="devArray">The dev array.</param>
+        /// <param name="devOffset">The dev offset.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="ci">The ci.</param>
+        /// <param name="streamId">The stream id.</param>
+        protected abstract void DoCopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci, int streamId);
+
+
+        /// <summary>
         /// Does the copy to device.
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -1544,6 +2153,8 @@ namespace Cudafy.Host
         /// <param name="count">The count.</param>
         protected abstract void DoCopyFromDevice<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count);
 
+        protected abstract void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId);
+
         /// <summary>
         /// Does the copy to device async.
         /// </summary>
@@ -1555,6 +2166,8 @@ namespace Cudafy.Host
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
         protected abstract void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId);
+
+        protected abstract void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId);
 
         /// <summary>
         /// Does the copy to device async.
@@ -1579,7 +2192,7 @@ namespace Cudafy.Host
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
         /// <param name="stagingPost">The staging post.</param>
-        protected abstract void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost);
+        protected abstract void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost, bool isConstantMemory = false);
 
 
         /// <summary>
@@ -1711,6 +2324,51 @@ namespace Cudafy.Host
             DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId);
         }
 
+        ///// <summary>
+        ///// Copies asynchronously to preallocated array on device.
+        ///// </summary>
+        ///// <typeparam name="T">Blittable type.</typeparam>
+        ///// <param name="hostArray">The host array.</param>
+        ///// <param name="hostOffset">The host offset.</param>
+        ///// <param name="devArray">The device array.</param>
+        ///// <param name="devOffset">The device offset.</param>
+        ///// <param name="count">The number of elements.</param>
+        ///// <param name="streamId">The stream id.</param>
+        //public void CopyToDeviceAsync<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId)
+        //{
+        //    DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId);
+        //}
+
+        ///// <summary>
+        ///// Copies asynchronously to preallocated array on device.
+        ///// </summary>
+        ///// <typeparam name="T">Blittable type.</typeparam>
+        ///// <param name="hostArray">The host array.</param>
+        ///// <param name="hostOffset">The host offset.</param>
+        ///// <param name="devArray">The device array.</param>
+        ///// <param name="devOffset">The device offset.</param>
+        ///// <param name="count">The number of elements.</param>
+        ///// <param name="streamId">The stream id.</param>
+        //public void CopyToDeviceAsync<T>(T[,] hostArray, int hostOffset, T[,] devArray, int devOffset, int count, int streamId)
+        //{
+        //    DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId);
+        //}
+
+        ///// <summary>
+        ///// Copies asynchronously to preallocated array on device.
+        ///// </summary>
+        ///// <typeparam name="T">Blittable type.</typeparam>
+        ///// <param name="hostArray">The host array.</param>
+        ///// <param name="hostOffset">The host offset.</param>
+        ///// <param name="devArray">The device array.</param>
+        ///// <param name="devOffset">The device offset.</param>
+        ///// <param name="count">The number of elements.</param>
+        ///// <param name="streamId">The stream id.</param>
+        //public void CopyToDeviceAsync<T>(T[,,] hostArray, int hostOffset, T[,,] devArray, int devOffset, int count, int streamId)
+        //{
+        //    DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId);
+        //}
+
         /// <summary>
         /// Copies asynchronously to preallocated array on device.
         /// </summary>
@@ -1800,6 +2458,51 @@ namespace Cudafy.Host
         {
             DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, streamId);
         }
+
+        ///// <summary>
+        ///// Copies from device asynchronously.
+        ///// </summary>
+        ///// <typeparam name="T">Blittable type.</typeparam>
+        ///// <param name="devArray">The dev array.</param>
+        ///// <param name="devOffset">The device offset.</param>
+        ///// <param name="hostArray">The host array.</param>
+        ///// <param name="hostOffset">The host offset.</param>
+        ///// <param name="count">The number of elements.</param>
+        ///// <param name="streamId">The stream id.</param>
+        //public void CopyFromDeviceAsync<T>(T[] devArray, int devOffset, T[] hostArray, int hostOffset, int count, int streamId)
+        //{
+        //    DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, streamId);
+        //}
+
+        ///// <summary>
+        ///// Copies from device asynchronously.
+        ///// </summary>
+        ///// <typeparam name="T">Blittable type.</typeparam>
+        ///// <param name="devArray">The dev array.</param>
+        ///// <param name="devOffset">The device offset.</param>
+        ///// <param name="hostArray">The host array.</param>
+        ///// <param name="hostOffset">The host offset.</param>
+        ///// <param name="count">The number of elements.</param>
+        ///// <param name="streamId">The stream id.</param>
+        //public void CopyFromDeviceAsync<T>(T[,] devArray, int devOffset, T[,] hostArray, int hostOffset, int count, int streamId)
+        //{
+        //    DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, streamId);
+        //}
+
+        ///// <summary>
+        ///// Copies from device asynchronously.
+        ///// </summary>
+        ///// <typeparam name="T">Blittable type.</typeparam>
+        ///// <param name="devArray">The dev array.</param>
+        ///// <param name="devOffset">The device offset.</param>
+        ///// <param name="hostArray">The host array.</param>
+        ///// <param name="hostOffset">The host offset.</param>
+        ///// <param name="count">The number of elements.</param>
+        ///// <param name="streamId">The stream id.</param>
+        //public void CopyFromDeviceAsync<T>(T[,,] devArray, int devOffset, T[,,] hostArray, int hostOffset, int count, int streamId)
+        //{
+        //    DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, streamId);
+        //}
 
         /// <summary>
         /// Copies from device asynchronously.

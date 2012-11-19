@@ -537,6 +537,14 @@ namespace Cudafy.Host
             Array.Copy(hostArray, hostOffset, devArray, devOffset, hostArray.Length);
         }
 
+        protected override void DoCopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci, int streamId)
+        {
+            DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId);
+        }
+
+
+
+
         /// <summary>
         /// Does the copy to device.
         /// </summary>
@@ -551,6 +559,20 @@ namespace Cudafy.Host
             EmuDevicePtrEx devPtr = (EmuDevicePtrEx)GetDeviceMemory(devArray);
             DoCopy<T>(hostArray, hostOffset, devPtr.DevPtr, devPtr.Offset + devOffset, count);
         }
+
+        protected override void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId)
+        {
+            GetStream(streamId);
+            DoCopyToDevice<T>(hostArray, hostOffset, devArray, devOffset, count);
+        }
+
+        protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId)
+        {
+            GetStream(streamId);
+            DoCopyFromDevice<T>(devArray, devOffset, hostArray, hostOffset, count);
+        }
+
+
 
         /// <summary>
         /// Does the copy from device.
@@ -611,7 +633,7 @@ namespace Cudafy.Host
             DoCopyOnHost<T>(stagingPost, 0, hostArray, hostOffset, count);
         }
 
-        protected override void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost)
+        protected override void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost, bool isConstantMemory = false)
         {
             DoCopyOnHost<T>(hostArray, hostOffset, stagingPost, 0, count);
             DoCopyToDeviceAsync<T>(stagingPost, 0, devArray, devOffset, count, streamId);
@@ -1008,6 +1030,8 @@ namespace Cudafy.Host
             }
         }
 #pragma warning restore 1591
+
+
 
 
 
