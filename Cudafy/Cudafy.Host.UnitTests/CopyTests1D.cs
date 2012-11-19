@@ -258,6 +258,8 @@ namespace Cudafy.Host.UnitTests
         }
 
 
+
+
         [Test]
         public void Test_getValue_int2D()
         {
@@ -270,6 +272,38 @@ namespace Cudafy.Host.UnitTests
             Assert.AreEqual(data2D[14,9], v);
             ClearOutputsAndGPU();
         }
+
+        //[Test]
+        //public void Test_asyncNonpinnedTransfers()
+        //{
+        //    int[] data = new int[N];
+        //    int[] data_d = _gpu.Allocate(data);
+        //    int[] res = new int[N];
+        //    int[] res_d = _gpu.Allocate(res);
+        //    IntPtr resPtr = _gpu.HostAllocate<int>(N);
+        //    IntPtr dataPtr = _gpu.HostAllocate<int>(N);
+        //    Random r = new Random(543);
+        //    for (int i = 0; i < N; i++)
+        //        data[i] = r.Next();
+        //    _gpu.CreateStream(1);
+        //    Stopwatch sw = Stopwatch.StartNew();
+        //    //_gpu.CopyToDeviceAsync(dataPtr, 0, data_d, 0, N, 1);
+        //    _gpu.CopyToDeviceAsync(data, 0, data_d, 0, N, 1);
+        //    _gpu.CopyOnDeviceAsync(data_d, 0, res_d, 0, N, 1);
+        //    _gpu.CopyOnDeviceAsync(data_d, 0, res_d, 0, N, 1);
+        //    _gpu.CopyOnDeviceAsync(data_d, 0, res_d, 0, N, 1);
+        //    _gpu.CopyOnDeviceAsync(data_d, 0, res_d, 0, N, 1);
+        //    _gpu.CopyOnDeviceAsync(data_d, 0, res_d, 0, N, 1);
+        //    //_gpu.CopyFromDeviceAsync(res_d, 0, res, 0, N, 1);
+        //    //_gpu.CopyFromDeviceAsync(res_d, 0, resPtr, 0, N, 1);
+        //    long t1 = sw.ElapsedMilliseconds;
+        //    //for (int i = N - 1024; i < N; i++)
+        //    //    Assert.AreEqual(0, res[i], string.Format("Sample i={0}", i));
+        //    _gpu.SynchronizeStream(1);
+        //    long t2 = sw.ElapsedMilliseconds;
+        //    //for (int i = 0; i < N; i++)
+        //    //    Assert.AreEqual(data[i], res[i]);       
+        //}
 
         [Test]
         public void Test_getValue_int3D()

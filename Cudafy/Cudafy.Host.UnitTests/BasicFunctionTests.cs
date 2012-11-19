@@ -186,7 +186,7 @@ namespace Cudafy.Host.UnitTests
 
 
         [Cudafy]
-        public static void ProcessStructure(GThread thread, PrimitiveStruct[] x, PrimitiveStruct[] y)
+        protected static void ProcessStructure(GThread thread, PrimitiveStruct[] x, PrimitiveStruct[] y)
         {
             int idx = thread.threadIdx.x;
             y[idx].Value1 = x[idx].Value1;
@@ -207,6 +207,82 @@ namespace Cudafy.Host.UnitTests
                     }
                 }
             }
+        }
+
+        [Cudafy]
+        private static int[] constant_data = new int[1024];
+
+        [Test]
+        public void Test_copyToConstantMemory()
+        {
+            int n = constant_data.Length;
+            int[] data = new int[n];
+            Random rand = new Random(4782);
+            for (int i = 0; i < data.Length; i++)
+                data[i] = rand.Next();
+            _gpu.CopyToConstantMemory(data, constant_data);
+            int[] res = new int[n];
+            int[] res_dev = _gpu.Allocate(res);
+            _gpu.Launch(1, 1, "ReadConstantMemory", res_dev, res.Length);
+            _gpu.CopyFromDevice(res_dev, res);
+            Assert.IsTrue(Compare(data, res));
+
+            int[] zeros = new int[constant_data.Length];
+            _gpu.CopyToConstantMemory(zeros, constant_data);
+            _gpu.Launch(1, 1, "ReadConstantMemory", res_dev, res.Length);
+            _gpu.CopyFromDevice(res_dev, res);
+            Assert.IsTrue(Compare(zeros, res));
+
+            _gpu.CopyToConstantMemory(data, n / 2, constant_data, n / 2, n / 2);
+            _gpu.Launch(1, 1, "ReadConstantMemory", res_dev, res.Length);
+            _gpu.CopyFromDevice(res_dev, res);
+            for(int i = 0; i < n / 2; i++)
+                Assert.AreEqual(0, res[i]);
+            for(int i = n / 2; i < n; i++)
+                Assert.AreEqual(data[i], res[i]);
+
+            _gpu.CopyToConstantMemory(zeros, constant_data);
+            _gpu.Launch(1, 1, "ReadConstantMemory", res_dev, res.Length);
+            _gpu.CopyFromDevice(res_dev, res);
+            Assert.IsTrue(Compare(zeros, res));
+
+            IntPtr stagingPost = _gpu.HostAllocate<int>(n);
+            for (int i = 0; i < data.Length; i++)
+                data[i] = rand.Next();
+            stagingPost.Write(data);
+            _gpu.CopyToConstantMemoryAsync(stagingPost, 0, constant_data, 0, n, 1);
+            _gpu.SynchronizeStream(1);
+            _gpu.Launch(1, 1, "ReadConstantMemory", res_dev, res.Length);
+            _gpu.CopyFromDevice(res_dev, res);
+            Assert.IsTrue(Compare(data, res));
+
+            _gpu.CopyToConstantMemory(zeros, constant_data);
+            _gpu.Launch(1, 1, "ReadConstantMemory", res_dev, res.Length);
+            _gpu.CopyFromDevice(res_dev, res);
+            Assert.IsTrue(Compare(zeros, res));
+
+            
+            for (int i = 0; i < data.Length; i++)
+                data[i] = rand.Next();
+            stagingPost.Write(zeros);
+
+            _gpu.EnableSmartCopy();
+            _gpu.CopyToConstantMemoryAsync(data, 0, constant_data, 0, n, 1, stagingPost);
+            _gpu.SynchronizeStream(1);
+            _gpu.LaunchAsync(1, 1, 1, "ReadConstantMemory", res_dev, res.Length);
+            _gpu.DisableSmartCopy();
+
+            _gpu.CopyFromDevice(res_dev, res);
+            Assert.IsTrue(Compare(data, res));
+            
+            _gpu.FreeAll();
+        }
+
+        [Cudafy]
+        public static void ReadConstantMemory(int[] res, int len)
+        {
+            for (int i = 0; i < len; i++)
+                res[i] = constant_data[i];
         }
 
         [Test]
@@ -609,6 +685,42 @@ namespace Cudafy.Host.UnitTests
             Assert.AreEqual(714779648.0, c, 0.00001);
         }
 
+        [Test]
+        public void TestAnyBarrier()
+        {
+            int[] data = new int[1024];
+            data[5] = 42;
+            int[] data_dev = _gpu.CopyToDevice(data);
+            int[] res = new int[1];
+            int[] res_dev = _gpu.Allocate(res);
+            _gpu.Launch(1, 1024, (Action<GThread, int[], int[]>)(barrierAnyTest), data_dev, res_dev);
+            _gpu.CopyFromDevice(res_dev, res);
+            Assert.AreEqual(1, res[0]);
+            _gpu.FreeAll();
+        }
+
+        [Test]
+        public void TestAllBarrier()
+        {
+            int[] data = new int[1024];
+            data[5] = 42;
+
+            int[] data_dev = _gpu.CopyToDevice(data);
+            int[] res = new int[1];
+            int[] res_dev = _gpu.Allocate(res);
+            _gpu.Launch(1, 1024, (Action<GThread, int[], int[]>)(barrierAllTest), data_dev, res_dev);
+            _gpu.CopyFromDevice(res_dev, res);
+            Assert.AreEqual(0, res[0]);
+
+            for(int i =0; i < 1024; i++)
+                data[i] = 42;
+            _gpu.CopyToDevice(data, data_dev); ;
+            _gpu.Launch(1, 1024, (Action<GThread, int[], int[]>)(barrierAllTest), data_dev, res_dev);
+            _gpu.CopyFromDevice(res_dev, res);
+            Assert.AreEqual(1, res[0]);
+            _gpu.FreeAll();
+        }
+
         private static float sum_squares(float x)
         {
             return (x * (x + 1) * (2 * x + 1) / 6);
@@ -826,6 +938,24 @@ namespace Cudafy.Host.UnitTests
             foreach (sbyte i in a)
                 total += i;
             c[0] = total;
+        }
+
+
+
+        [Cudafy]
+        public static void barrierAnyTest(GThread thread, int[] a, int[] res)
+        {
+            bool b = thread.Any(a[thread.threadIdx.x] == 42);
+            if(thread.threadIdx.x == 0)
+                res[0] = b ? 1 : 0;
+        }
+
+        [Cudafy]
+        public static void barrierAllTest(GThread thread, int[] a, int[] res)
+        {
+            bool b = thread.All(a[thread.threadIdx.x] == 42);
+            if (thread.threadIdx.x == 0)
+                res[0] = b ? 1 : 0;
         }
 
         [SetUp]
