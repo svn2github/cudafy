@@ -243,9 +243,10 @@ namespace Cudafy.Translator
             throw new InvalidOperationException("SpecialProperty not found.");
         }
 
-        public static string TranslateSpecialMethod(this MemberReferenceExpression mre, object data)//, out bool callFunc)
+        public static string TranslateSpecialMethod(this MemberReferenceExpression mre, object data, out bool noSemicolon)
         {
             //callFunc = true;
+            noSemicolon = false;
             if (mre.Target.Annotations.Count() > 0)
             {
                 foreach (var ann in mre.Target.Annotations)
@@ -255,6 +256,7 @@ namespace Cudafy.Translator
                     {
                         SpecialMember sm = CUDALanguage.GetSpecialMethod(mre.MemberName, pd.Type.FullName);// .GetType().Name);
                         //callFunc = sm.CallFunction;
+                        noSemicolon = sm.NoSemicolon;
                         return sm.GetTranslation(mre, data);
                     }
                 }
@@ -262,6 +264,7 @@ namespace Cudafy.Translator
             else
             {
                 SpecialMember sm = CUDALanguage.GetSpecialMethod(mre.MemberName, mre.Target.ToString());// .GetType().Name);
+                noSemicolon = sm.NoSemicolon;
                 return sm.GetTranslation(mre, data);
             }
             throw new InvalidOperationException("SpecialMethod not found.");

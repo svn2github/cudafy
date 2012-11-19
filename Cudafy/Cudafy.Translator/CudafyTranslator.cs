@@ -81,7 +81,7 @@ namespace Cudafy.Translator
 
         /// <summary>
         /// Tries to use a previous serialized CudafyModule else cudafies and compiles the type in which the calling method is located. 
-        /// CUDA architecture is 1.2; platform is set to the current application's (x86 or x64); and the CUDA version is the 
+        /// CUDA architecture is 1.3; platform is set to the current application's (x86 or x64); and the CUDA version is the 
         /// latest official release found on the current machine. 
         /// </summary>
         /// <returns>A CudafyModule.</returns>
@@ -122,7 +122,7 @@ namespace Cudafy.Translator
 
         /// <summary>
         /// Tries to use a previous serialized CudafyModule else cudafies and compiles the type in which the calling method is located. 
-        /// CUDA architecture is 1.2; platform is as specified; and the CUDA version is the 
+        /// CUDA architecture is 1.3; platform is as specified; and the CUDA version is the 
         /// latest official release found on the current machine. 
         /// </summary>
         /// <param name="platform">The platform.</param>
@@ -134,7 +134,7 @@ namespace Cudafy.Translator
             CudafyModule km = CudafyModule.TryDeserialize(type.Name);
             if (km == null || !km.TryVerifyChecksums() || !km.HasPTXForPlatform(platform))
             {
-                km = Cudafy(platform, eArchitecture.sm_12, type);
+                km = Cudafy(platform, eArchitecture.sm_13, type);
                 km.Name = type.Name;
                 km.TrySerialize();
             }
@@ -163,7 +163,7 @@ namespace Cudafy.Translator
 
         /// <summary>
         /// Cudafies and compiles the type of the specified object with default settings. 
-        /// CUDA architecture is 1.2; platform is set to the current application's (x86 or x64); and the CUDA version is the 
+        /// CUDA architecture is 1.3; platform is set to the current application's (x86 or x64); and the CUDA version is the 
         /// latest official release found on the current machine. 
         /// </summary>
         /// <param name="o">An instance of the type to cudafy. Typically pass 'this'.</param>
@@ -176,14 +176,14 @@ namespace Cudafy.Translator
 
         /// <summary>
         /// Cudafies and compiles the specified types with default settings. 
-        /// CUDA architecture is 1.2; platform is set to the current application's (x86 or x64); and the CUDA version is the 
+        /// CUDA architecture is 1.3; platform is set to the current application's (x86 or x64); and the CUDA version is the 
         /// latest official release found on the current machine. 
         /// </summary>
         /// <param name="types">The types.</param>
         /// <returns>A CudafyModule.</returns>
         public static CudafyModule Cudafy(params Type[] types)
         {
-            return Cudafy(ePlatform.Auto, eArchitecture.sm_12, null, true, types);
+            return Cudafy(ePlatform.Auto, eArchitecture.sm_13, null, true, types);
         }
 
         /// <summary>

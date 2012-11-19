@@ -38,7 +38,7 @@ namespace CudafyExamples
             try
             {
                 CudafyModes.Target = Cudafy.eGPUType.Cuda;
-
+               
                 Console.WriteLine("\r\nArrayBasicIndexing");
                 ArrayBasicIndexing.Execute();
                 Console.WriteLine("\r\nArrayMultidimensions");
@@ -51,6 +51,8 @@ namespace CudafyExamples
                 ComplexNumbersF.Execute();
                 Console.WriteLine("\r\nDummyFunctions");
                 DummyFunctions.Execute();
+                Console.WriteLine("\r\nTextInsertion");
+                TextInsertion.Execute();
 
                 Console.WriteLine("\r\nVoting.Ballot");
                 Voting.Ballot.Execute();

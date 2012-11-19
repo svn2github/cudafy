@@ -99,7 +99,7 @@ namespace Cudafy
         }
 
          /// <summary>
-        /// NOTE Compute Capability 2.x only. Syncs the threads in the block.
+        /// NOTE Compute Capability 2.x and later only. Syncs the threads in the block.
         /// </summary>
         public int SyncThreadsCount(bool condition)
         {
@@ -167,6 +167,53 @@ namespace Cudafy
         public T[,,] AllocateShared<T>(string varName, int x, int y, int z)
         {
             return block.AllocateShared<T>(varName, x, y, z);
+        }
+
+
+        /// <summary>
+        /// Inserts CUDA C code directly into kernel. Example: thread.InsertCode("#pragma unroll 5");
+        /// </summary>
+        /// <param name="text">The code to be inserted.</param>
+        /// <exception cref="CudafyException">Attempt to run code through emulator made.</exception>
+        public void InsertCode(string text)
+        {
+            InsertCode(text, true);
+        }
+        //thread.InsertCode("{0}[{2}] = {1}[{2}];", results, data, h); 
+        /// <summary>
+        /// Inserts CUDA C code directly into kernel. Example: thread.InsertCode("#pragma unroll 5", false);
+        /// </summary>
+        /// <param name="text">The code to be inserted.</param>
+        /// <param name="throwIfNotSupported">If true (default) then throw an exception if emulation is attempted.</param>
+        /// <exception cref="CudafyException">Attempt to run code through emulator made while throwIfNotSupported is true.</exception>
+        public void InsertCode(string text, bool throwIfNotSupported)
+        {
+            if (throwIfNotSupported)
+                throw new CudafyException(CudafyException.csX_NOT_SUPPORTED, "Text insertion");
+        }
+
+        /// <summary>
+        /// Inserts CUDA C code directly into kernel. Example: thread.InsertCode("{0}[{2}] = {1}[{2}];", results, data, index); 
+        /// </summary>
+        /// <param name="text">The code to be inserted.</param>
+        /// <param name="args">Replaces place holders with names of one or more arguments.</param>
+        /// <exception cref="CudafyException">Attempt to run code through emulator made.</exception>
+        public void InsertCode(string format, params object[] args)
+        {
+            InsertCode(format, true, args);
+        }
+
+        /// <summary>
+        /// Inserts CUDA C code directly into kernel. Example: thread.InsertCode("{0}[{2}] = {1}[{2}];", results, data, index); 
+        /// </summary>
+        /// <param name="text">The code to be inserted.</param>
+        /// <param name="throwIfNotSupported">If true (default) then throw an exception if emulation is attempted.</param>
+        /// <param name="args">Replaces place holders with names of one or more arguments.</param>
+        /// <exception cref="CudafyException">Attempt to run code through emulator made while throwIfNotSupported is true.</exception>
+        public void InsertCode(string format, bool throwIfNotSupported, params object[] args)
+        {
+            if (throwIfNotSupported)
+                throw new CudafyException(CudafyException.csX_NOT_SUPPORTED, "Text insertion");
         }
 
         /// <summary>

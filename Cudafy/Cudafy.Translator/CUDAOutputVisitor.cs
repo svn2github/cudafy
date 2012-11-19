@@ -445,8 +445,11 @@ namespace Cudafy.Translator
 		void Semicolon()
 		{
 			Role role = containerStack.Peek().Role; // get the role of the current node
-			if (!(role == ForStatement.InitializerRole || role == ForStatement.IteratorRole || role == UsingStatement.ResourceAcquisitionRole)) {
-				WriteToken(";", AstNode.Roles.Semicolon);
+			if (!(role == ForStatement.InitializerRole || role == ForStatement.IteratorRole || role == UsingStatement.ResourceAcquisitionRole)) 
+            {
+				if(!_noSemicolon)
+                    WriteToken(";", AstNode.Roles.Semicolon);
+                _noSemicolon = false;
 				NewLine();
 			}
 		}
@@ -951,7 +954,9 @@ namespace Cudafy.Translator
 			var p = lambdaExpression.Parameters.Single();
 			return !(p.Type.IsNull && p.ParameterModifier == ParameterModifier.None);
 		}
-		
+
+        private bool _noSemicolon = false;
+
 		public object VisitMemberReferenceExpression(MemberReferenceExpression mre, object data)
 		{
 			StartNode(mre);
@@ -964,7 +969,9 @@ namespace Cudafy.Translator
             bool callFunc = !isSpecialProp;
             if (isSpecialMethod)
             {
-                string s = mre.TranslateSpecialMethod(data);//,out callFunc);
+                bool noSemicolon = false;
+                string s = mre.TranslateSpecialMethod(data, out noSemicolon);//,out callFunc);
+                _noSemicolon = noSemicolon;
                 formatter.WriteIdentifier(s);
             }
             else if (isSpecialProp)

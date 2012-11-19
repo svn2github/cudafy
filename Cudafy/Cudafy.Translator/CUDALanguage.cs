@@ -37,13 +37,14 @@ namespace Cudafy.Translator
 #pragma warning disable 1591
     public class SpecialMember
     {
-        public SpecialMember(string declaringType, string original, Func<MemberReferenceExpression, object, string> func, bool callFunc = true)
+        public SpecialMember(string declaringType, string original, Func<MemberReferenceExpression, object, string> func, bool callFunc = true, bool noSemiColon = false)
         {
             OriginalName = original;
             //_translation = translation;
             DeclaringType = declaringType;
             Function = func;
             CallFunction = callFunc;
+            NoSemicolon = noSemiColon;
         }
 
         public bool CallFunction { get; private set; }
@@ -52,7 +53,7 @@ namespace Cudafy.Translator
         
         public string OriginalName { get; private set; }
 
-        //private string _translation;
+        public bool NoSemicolon { get; private set; }
 
         public Func<MemberReferenceExpression, object, string> Function { get; private set; }
 
@@ -188,7 +189,7 @@ namespace Cudafy.Translator
         static CUDALanguage()
         {
             ComputeCapability = new Version(1, 2);
-            
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "InsertCode", new Func<MemberReferenceExpression, object, string>(TranslateInsertCode), false, true)); 
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "SyncThreads", new Func<MemberReferenceExpression, object, string>(TranslateSyncThreads)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "SyncThreadsCount", new Func<MemberReferenceExpression, object, string>(TranslateSyncThreadsCount)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "All", new Func<MemberReferenceExpression, object, string>(TranslateAll)));
@@ -402,6 +403,39 @@ namespace Cudafy.Translator
         static string TranslateToFalse(MemberReferenceExpression mre, object data)
         {
             return "false";
+        }
+
+        static string TranslateInsertCode(MemberReferenceExpression mre, object data)
+        {
+            var anl = ((Expression)data).Children.ToList();
+            PrimitiveExpression pe = anl[1] as PrimitiveExpression;
+            string value = string.Empty;
+            if (pe == null)
+                throw new CudafyLanguageException(CudafyLanguageException.csMETHOD_X_X_ONLY_SUPPORTS_X, "GThread", "InsertCode", "strings");
+
+            value = pe.Value.ToString();
+            if(anl.Count > 2)
+            {
+                string format = value;
+                ArrayCreateExpression ace = anl[2] as ArrayCreateExpression;
+                if(ace == null)
+                    throw new CudafyLanguageException(CudafyLanguageException.csMETHOD_X_X_ONLY_SUPPORTS_X, "GThread", "InsertCode", "list of arguments to text formatting");
+                var acecl = ace.Children.ToList();
+                if (acecl.Count > 1)
+                {
+                    ArrayInitializerExpression aie = acecl[1] as ArrayInitializerExpression;
+                    if (aie != null)
+                    {
+                        object[] args = aie.Children.ToArray();
+                        foreach(object o in args)
+                            if(!(o is IdentifierExpression) && !(o is PrimitiveExpression))
+                                throw new CudafyLanguageException(CudafyLanguageException.csMETHOD_X_X_ONLY_SUPPORTS_X, "GThread", "InsertText", "identifiers and primitives as list of arguments to text formatting"); 
+                        value = string.Format(format, args);
+                    }
+                }
+            }
+                            
+            return value;
         }
 
         static string TranslateSyncThreads(MemberReferenceExpression mre, object data)
