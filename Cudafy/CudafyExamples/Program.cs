@@ -38,7 +38,7 @@ namespace CudafyExamples
             try
             {
                 CudafyModes.Target = Cudafy.eGPUType.Cuda;
-               
+
                 Console.WriteLine("\r\nArrayBasicIndexing");
                 ArrayBasicIndexing.Execute();
                 Console.WriteLine("\r\nArrayMultidimensions");

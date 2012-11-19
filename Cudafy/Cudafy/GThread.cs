@@ -175,7 +175,7 @@ namespace Cudafy
         /// </summary>
         /// <param name="text">The code to be inserted.</param>
         /// <exception cref="CudafyException">Attempt to run code through emulator made.</exception>
-        public void InsertCode(string text)
+        public static void InsertCode(string text)
         {
             InsertCode(text, true);
         }
@@ -186,7 +186,7 @@ namespace Cudafy
         /// <param name="text">The code to be inserted.</param>
         /// <param name="throwIfNotSupported">If true (default) then throw an exception if emulation is attempted.</param>
         /// <exception cref="CudafyException">Attempt to run code through emulator made while throwIfNotSupported is true.</exception>
-        public void InsertCode(string text, bool throwIfNotSupported)
+        public static void InsertCode(string text, bool throwIfNotSupported)
         {
             if (throwIfNotSupported)
                 throw new CudafyException(CudafyException.csX_NOT_SUPPORTED, "Text insertion");
@@ -198,7 +198,7 @@ namespace Cudafy
         /// <param name="text">The code to be inserted.</param>
         /// <param name="args">Replaces place holders with names of one or more arguments.</param>
         /// <exception cref="CudafyException">Attempt to run code through emulator made.</exception>
-        public void InsertCode(string format, params object[] args)
+        public static void InsertCode(string format, params object[] args)
         {
             InsertCode(format, true, args);
         }
@@ -210,7 +210,7 @@ namespace Cudafy
         /// <param name="throwIfNotSupported">If true (default) then throw an exception if emulation is attempted.</param>
         /// <param name="args">Replaces place holders with names of one or more arguments.</param>
         /// <exception cref="CudafyException">Attempt to run code through emulator made while throwIfNotSupported is true.</exception>
-        public void InsertCode(string format, bool throwIfNotSupported, params object[] args)
+        public static void InsertCode(string format, bool throwIfNotSupported, params object[] args)
         {
             if (throwIfNotSupported)
                 throw new CudafyException(CudafyException.csX_NOT_SUPPORTED, "Text insertion");
@@ -227,6 +227,4 @@ namespace Cudafy
         internal GBlock block { get; private set; }
 
     }
-
-
 }

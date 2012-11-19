@@ -35,11 +35,11 @@ namespace CudafyExamples.Misc
         }
 
         [Cudafy]
-        private static void AHybridMethod(GThread thread, int[] data, int[] results)
+        private static void AHybridMethod(Cudafy.GThread thread, int[] data, int[] results)
         {
-            thread.InsertCode("#pragma unroll 5");
+            GThread.InsertCode("#pragma unroll 5");
             for (int h = 0; h < data.Length; h++)
-                thread.InsertCode("{0}[{2}] = {1}[{2}];", results, data, h);            
+                GThread.InsertCode("{0}[{2}] = {1}[{2}];", results, data, h);
         }
     }
 }
