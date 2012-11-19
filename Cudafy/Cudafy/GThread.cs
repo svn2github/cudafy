@@ -51,7 +51,8 @@ namespace Cudafy
         /// </value>
         internal int WarpId()
         {
-            return (threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y) / warpSize;
+            //return (threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y) / warpSize;
+            return threadIdx.x / warpSize - 1;
         }
 
         /// <summary>
@@ -110,7 +111,7 @@ namespace Cudafy
         /// </summary>
         public bool Any(bool predicate)
         {
-            return block.Any(predicate, WarpId());
+            return block.Any(predicate, WarpId());// ? 1 : 0;
         }
 
         /// <summary>

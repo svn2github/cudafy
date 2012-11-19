@@ -115,22 +115,23 @@ namespace Cudafy.Compilers
 
         private static void AddArchOptions(CompilerOptions co, eArchitecture arch)
         {
-            if (arch == eArchitecture.sm_11)
-                co.AddOption("-arch=sm_11");
-            else if (arch == eArchitecture.sm_12)
-                co.AddOption("-arch=sm_12");
-            else if (arch == eArchitecture.sm_13)
-                co.AddOption("-arch=sm_13");
-            else if (arch == eArchitecture.sm_20)
-                co.AddOption("-arch=sm_20");
-            else if (arch == eArchitecture.sm_21)
-                co.AddOption("-arch=sm_21");
-            else if (arch == eArchitecture.sm_30)
-                co.AddOption("-arch=sm_30");
-            else if (arch == eArchitecture.sm_35)
-                co.AddOption("-arch=sm_35");
-            else
-                throw new NotImplementedException(arch.ToString());
+            //if (arch == eArchitecture.sm_11)
+            //    co.AddOption("-arch=sm_11");
+            //else if (arch == eArchitecture.sm_12)
+            //    co.AddOption("-arch=sm_12");
+            //else if (arch == eArchitecture.sm_13)
+            //    co.AddOption("-arch=sm_13");
+            //else if (arch == eArchitecture.sm_20)
+            //    co.AddOption("-arch=sm_20");
+            //else if (arch == eArchitecture.sm_21)
+            //    co.AddOption("-arch=sm_21");
+            //else if (arch == eArchitecture.sm_30)
+            //    co.AddOption("-arch=sm_30");
+            //else if (arch == eArchitecture.sm_35)
+            //    co.AddOption("-arch=sm_35");
+            //else
+            //    throw new NotImplementedException(arch.ToString());
+            co.AddOption("-arch=" + arch.ToString());
         }
 
         /// <summary>

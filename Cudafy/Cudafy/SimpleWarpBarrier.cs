@@ -26,11 +26,12 @@ namespace info.jhpc.warp
             initCount = new int[warps];
             predicate_sum = new int[warps];
             predicate_final = new int[warps];
-
+            syncers = new object[warps];
             for (var i = 0; i < warps; i++)
             {
                 count[i] = initCount[i] = warpsize;
                 predicate_sum[i] = 0;
+                syncers[i] = new object();
             }
         }
 

@@ -6,7 +6,7 @@ using System.Text;
 namespace Cudafy
 {
     /// <summary>
-    /// Methods, structures and fields to be converted to Cuda C should be decorated with this attribute.
+    /// Static methods, static fields and structures to be converted to CUDA C should be decorated with this attribute.
     /// </summary>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Struct | AttributeTargets.Field | AttributeTargets.Enum)]
     public class CudafyAttribute : Attribute
@@ -35,6 +35,7 @@ namespace Cudafy
         /// The type of the cudafy.
         /// </value>
         public eCudafyType CudafyType { get; private set; }
+     
     }
 
     /// <summary>
