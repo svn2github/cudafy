@@ -189,7 +189,7 @@ namespace Cudafy.Translator
         static CUDALanguage()
         {
             ComputeCapability = new Version(1, 2);
-            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "InsertCode", new Func<MemberReferenceExpression, object, string>(TranslateInsertCode), false, true)); 
+            SpecialMethods.Add(new SpecialMember("GThread", "InsertCode", new Func<MemberReferenceExpression, object, string>(TranslateInsertCode), false, true)); 
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "SyncThreads", new Func<MemberReferenceExpression, object, string>(TranslateSyncThreads)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "SyncThreadsCount", new Func<MemberReferenceExpression, object, string>(TranslateSyncThreadsCount)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "All", new Func<MemberReferenceExpression, object, string>(TranslateAll)));
