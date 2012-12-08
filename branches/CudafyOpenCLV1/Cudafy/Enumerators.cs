@@ -59,7 +59,11 @@ namespace Cudafy
         /// <summary>
         /// Target a Cuda GPU.
         /// </summary>
-        Cuda
+        Cuda,
+        /// <summary>
+        /// Target an OpenCL Device
+        /// </summary>
+        OpenCL
     }
 
     /// <summary>
