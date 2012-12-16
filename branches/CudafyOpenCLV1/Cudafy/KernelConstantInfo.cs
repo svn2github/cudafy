@@ -91,7 +91,6 @@ namespace Cudafy
             StringBuilder sb = new StringBuilder();
             sb.Append("__constant__ ");
 
-            List<int> dimensions = new List<int>();
             Type type = Information.FieldType;
             Array array = null;
             int rank = 0;
@@ -124,6 +123,25 @@ namespace Cudafy
             }
             sb.AppendLine(";");
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Gets the total length.
+        /// </summary>
+        /// <returns></returns>
+        public int GetTotalLength()
+        {
+            Type type = Information.FieldType;
+            Array array = Information.GetValue(null) as Array;
+            if (array == null)
+                return 1;
+            int rank = array.Rank;
+            int length = 1;
+            for (int dim = 1; dim <= rank; dim++)
+            {
+                length *= array.GetUpperBound(dim - 1) + 1;
+            }
+            return length;
         }
 
         internal override XElement GetXElement()

@@ -65,6 +65,8 @@ namespace Cudafy
         /// </summary>
         protected const string csISDUMMY = "IsDummy";
 
+        public CudafyModule ParentModule { get; internal set; }
+
         /// <summary>
         /// Gets or sets the deserialized checksum.
         /// </summary>

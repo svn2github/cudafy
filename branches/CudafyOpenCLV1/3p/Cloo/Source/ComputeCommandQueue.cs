@@ -604,6 +604,32 @@ namespace Cloo
         }
 
         /// <summary>
+        /// Added by Hybrid DSP
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="destinationHandle">The destination.</param>
+        /// <param name="blocking">if set to <c>true</c> [blocking].</param>
+        /// <param name="destinationOffset">The destination offset.</param>
+        /// <param name="region">The region.</param>
+        /// <param name="source">The source.</param>
+        /// <param name="events">The events.</param>
+        public void WriteEx<T>(CLMemoryHandle destinationHandle, bool blocking, long destinationOffset, long region, IntPtr source, ICollection<ComputeEventBase> events) where T : struct
+        {
+            int sizeofT = Marshal.SizeOf(typeof(T));
+
+            int eventWaitListSize;
+            CLEventHandle[] eventHandles = ComputeTools.ExtractHandles(events, out eventWaitListSize);
+            bool eventsWritable = (events != null && !events.IsReadOnly);
+            CLEventHandle[] newEventHandle = (eventsWritable) ? new CLEventHandle[1] : null;
+
+            ComputeErrorCode error = CL10.EnqueueWriteBuffer(Handle, destinationHandle, blocking, new IntPtr(destinationOffset * sizeofT), new IntPtr(region * sizeofT), source, eventWaitListSize, eventHandles, newEventHandle);
+            ComputeException.ThrowOnError(error);
+
+            if (eventsWritable)
+                events.Add(new ComputeEvent(newEventHandle[0], this));
+        }
+
+        /// <summary>
         /// Enqueues a command to write a 2D or 3D region of elements to a buffer.
         /// </summary>
         /// <typeparam name="T"> The type of the elements of the buffer. </typeparam>

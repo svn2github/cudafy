@@ -130,7 +130,7 @@ namespace Cudafy.Translator
                 foreach (var ann in mre.Target.Annotations)
                 {
                     PropertyDefinition pd = ann as PropertyDefinition;
-                    if (pd != null && pd.DeclaringType.ToString().Contains("Cudafy.GThread"))
+                    if (pd != null && (pd.DeclaringType.ToString().Contains("Cudafy.GThread"))) 
                         return true;
 
                 }

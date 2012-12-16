@@ -42,7 +42,6 @@ namespace CudafyByExample
     
     public class ray_noconst
     {        
-        public const int DIM = 1024;
         public const int RAND_MAX = Int32.MaxValue;
         public const float INF = 2e10f;
 
@@ -57,14 +56,14 @@ namespace CudafyByExample
         public const int SPHERES = 20;
 
         [Cudafy]
-        public static void kernel(GThread thread, Sphere[] s, byte[] ptr)
+        public static void thekernel(GThread thread, Sphere[] s, byte[] ptr)
         {
             // map from threadIdx/BlockIdx to pixel position
             int x = thread.threadIdx.x + thread.blockIdx.x * thread.blockDim.x;
             int y = thread.threadIdx.y + thread.blockIdx.y * thread.blockDim.y;
             int offset = x + y * thread.blockDim.x * thread.gridDim.x;
-            float ox = (x - DIM / 2);
-            float oy = (y - DIM / 2);
+            float ox = (x - ray_gui.DIM / 2);
+            float oy = (y - ray_gui.DIM / 2);
 
             float r = 0, g = 0, b = 0;
             float maxz = -INF;
@@ -98,7 +97,7 @@ namespace CudafyByExample
                 km.TrySerialize();
             }
 
-            GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
+            GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
             gpu.LoadModule(km);
 
             // capture the start time
@@ -127,10 +126,10 @@ namespace CudafyByExample
             gpu.CopyToDevice(temp_s, s);
 
             // generate a bitmap from our sphere data
-            dim3 grids = new dim3(DIM / 16, DIM / 16);
+            dim3 grids = new dim3(ray_gui.DIM / 16, ray_gui.DIM / 16);
             dim3 threads = new dim3(16, 16);
             //gpu.Launch(grids, threads).kernel(s, dev_bitmap); // Dynamic
-            gpu.Launch(grids, threads, ((Action<GThread, Sphere[], byte[]>)kernel), s, dev_bitmap); // Strongly typed
+            gpu.Launch(grids, threads, ((Action<GThread, Sphere[], byte[]>)thekernel), s, dev_bitmap); // Strongly typed
 
             // copy our bitmap back from the GPU for display
             gpu.CopyFromDevice(dev_bitmap, bitmap);

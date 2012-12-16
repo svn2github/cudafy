@@ -40,7 +40,9 @@ namespace Cudafy.Translator
     /// </summary>
     public class CudafyTranslator
     {
-        private static CUDALanguage _cl = new CUDALanguage();
+        private static CUDALanguage _cl = new CUDALanguage(eLanguage.Cuda);
+
+        internal static CUDAfyLanguageSpecifics LanguageSpecifics = new CUDAfyLanguageSpecifics();
 
         private static IEnumerable<Type> GetNestedTypes(Type type)
         {
@@ -72,6 +74,23 @@ namespace Cudafy.Translator
         }
 
         /// <summary>
+        /// Gets or sets the language to generate.
+        /// </summary>
+        /// <value>
+        /// The language.
+        /// </value>
+        public static eLanguage Language
+        {
+            get { return LanguageSpecifics.Language; }
+            set 
+            { 
+                if (value != LanguageSpecifics.Language) 
+                    _cl = new CUDALanguage(value); 
+                LanguageSpecifics.Language = value; 
+            }
+        }
+
+        /// <summary>
         /// Gets or sets a value indicating whether to compile for debug.
         /// </summary>
         /// <value>
@@ -92,7 +111,7 @@ namespace Cudafy.Translator
             CudafyModule km = CudafyModule.TryDeserialize(type.Name);
             if (km == null || !km.TryVerifyChecksums())
             {
-                km = Cudafy(ePlatform.Auto, eArchitecture.sm_12, type);
+                km = Cudafy(ePlatform.Auto, eArchitecture.sm_13, type);
                 km.Name = type.Name;
                 km.TrySerialize();
             }
@@ -142,7 +161,7 @@ namespace Cudafy.Translator
         }
 
         /// <summary>
-        /// Cudafies the specified platform.
+        /// Cudafies for the specified platform.
         /// </summary>
         /// <param name="platform">The platform.</param>
         /// <param name="arch">The architecture.</param>
@@ -187,7 +206,7 @@ namespace Cudafy.Translator
         }
 
         /// <summary>
-        /// Cudafies the specified platform.
+        /// Cudafies the specified types for the specified platform.
         /// </summary>
         /// <param name="platform">The platform.</param>
         /// <param name="arch">The architecture.</param>
@@ -196,6 +215,17 @@ namespace Cudafy.Translator
         public static CudafyModule Cudafy(ePlatform platform, eArchitecture arch, params Type[] types)
         {
             return Cudafy(platform, arch, null, true, types);
+        }
+
+        /// <summary>
+        /// Cudafies the specified types for the specified architecture on automatic platform.
+        /// </summary>
+        /// <param name="arch">The architecture.</param>
+        /// <param name="types">The types.</param>
+        /// <returns>A CudafyModule.</returns>
+        public static CudafyModule Cudafy(eArchitecture arch, params Type[] types)
+        {
+            return Cudafy(ePlatform.Auto, arch, null, true, types);
         }
 
 
@@ -212,10 +242,10 @@ namespace Cudafy.Translator
         {
             CudafyModule km = null;
             CUDALanguage.ComputeCapability = GetComputeCapability(arch);
-            km = Cudafy(eGPUCodeGenerator.CudaC, types);
+            km = DoCudafy(types);
             if (km == null)
                 throw new CudafyFatalException(CudafyFatalException.csUNEXPECTED_STATE_X, "CudafyModule km = null");
-            if (compile)
+            if (compile && LanguageSpecifics.Language == eLanguage.Cuda)
             {
                 if (platform == ePlatform.Auto)
                     platform = IntPtr.Size == 8 ? ePlatform.x64 : ePlatform.x86;
@@ -250,7 +280,7 @@ namespace Cudafy.Translator
             throw new ArgumentException("Unknown architecture.");
         }
         
-        private static CudafyModule Cudafy(eGPUCodeGenerator mode, params Type[] types)
+        private static CudafyModule DoCudafy(params Type[] types)
         {
             MemoryStream output = new MemoryStream();
             var outputSw = new StreamWriter(output);
@@ -320,15 +350,19 @@ namespace Cudafy.Translator
                                 attr = fi.GetCudafyType(out isDummy);
                                 if (attr != null)
                                 {
+                                    VerifyMemberName(fi.Name);
                                     System.Reflection.FieldInfo fieldInfo = type.GetField(fi.Name, BindingFlags.Static|BindingFlags.Public | BindingFlags.NonPublic);
                                     if(fieldInfo == null)
                                         throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Non-static fields");
                                     int[] dims = _cl.GetFieldInfoDimensions(fieldInfo);
                                     _cl.DecompileCUDAConstantField(fi, dims, codePto, compOpts);
-                                    cm.Constants.Add(fi.Name, new KernelConstantInfo(fi.Name, fieldInfo, isDummy));
+                                    var kci = new KernelConstantInfo(fi.Name, fieldInfo, isDummy);
+                                    cm.Constants.Add(fi.Name, kci);
+                                    CUDALanguage.AddConstant(kci);
                                 }
                             }
 #warning TODO Only Global Methods can be called from host
+#warning For OpenCL may need to do Methods once all Constants have been handled
                             // Methods
                             foreach (var med in td.Methods)
                             {
@@ -343,9 +377,10 @@ namespace Cudafy.Translator
                                     MethodInfo mi = type.GetMethod(med.Name, BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic);
                                     if (mi == null)
                                         continue;
+                                    VerifyMemberName(med.Name);
                                     eKernelMethodType kmt = eKernelMethodType.Device;
                                     kmt = GetKernelMethodType(attr, mi);
-                                    cm.Functions.Add(med.Name, new KernelMethodInfo(type, mi, kmt, isDummy));
+                                    cm.Functions.Add(med.Name, new KernelMethodInfo(type, mi, kmt, isDummy, cm));
                                 }
                             }
                         }
@@ -358,6 +393,9 @@ namespace Cudafy.Translator
             foreach (var oh in CUDALanguage.OptionalHeaders)
                 if (oh.Used)
                     outputSw.WriteLine(oh.IncludeLine);
+            foreach (var oh in CUDALanguage.OptionalFunctions)
+                if (oh.Used)
+                    outputSw.WriteLine(oh.Code);
             //outputSw.WriteLine(@"#include <curand_kernel.h>");
 
             declarationsSw.WriteLine();
@@ -390,6 +428,14 @@ namespace Cudafy.Translator
             return cm;
         }
 
+        private static string[] OpenCLReservedNames = new string[] { "kernel", "global" };
+
+        private static void VerifyMemberName(string name)
+        {
+            if (LanguageSpecifics.Language == eLanguage.OpenCL && OpenCLReservedNames.Any(rn => rn == name))
+                throw new CudafyLanguageException(CudafyLanguageException.csX_IS_A_RESERVED_KEYWORD, name);
+        }
+
         private static eKernelMethodType GetKernelMethodType(eCudafyType? attr, MethodInfo mi)
         {
             eKernelMethodType kmt;
@@ -406,6 +452,66 @@ namespace Cudafy.Translator
             else
                 throw new CudafyFatalException(attr.ToString());
             return kmt;
+        }
+    }
+
+    public class CUDAfyLanguageSpecifics
+    {
+        public eLanguage Language { get; set; }
+
+        public string KernelFunctionModifiers
+        {
+            get
+            {
+                if (Language == eLanguage.Cuda)
+                    return @"extern ""C"" __global__ ";
+                else
+                    return "__kernel ";
+            }
+        }
+
+        public string DeviceFunctionModifiers
+        {
+            get
+            {
+                if (Language == eLanguage.Cuda)
+                    return "__device__ ";
+                else
+                    return " ";
+            }
+        }
+
+        public string MemorySpaceSpecifier
+        {
+            get
+            {
+                if (Language == eLanguage.Cuda)
+                    return "";
+                else
+                    return "global";
+            }
+        }
+
+        public string SharedModifier
+        {
+            get
+            {
+                if (Language == eLanguage.Cuda)
+                    return "__shared__";
+                else
+                    return "__local";
+            }
+        }
+
+        public string ConstantModifier
+        {
+            get
+            {
+                if (Language == eLanguage.Cuda)
+                    return "__constant__";
+                else
+                    return "__constant";
+            }
         }
     }
 }

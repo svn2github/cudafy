@@ -55,7 +55,7 @@ namespace Cudafy.Host
         protected GPGPU(int deviceId = 0)
         {
             _lock = new object();
-
+            _stopWatch = new Stopwatch();
             _deviceMemory = new Dictionary<object, DevicePtrEx>();
             _streams = new Dictionary<int, object>();
 #if !NET35
@@ -150,6 +150,8 @@ namespace Cudafy.Host
             GC.SuppressFinalize(this);
             
         }
+
+        private Stopwatch _stopWatch;
         
         /// <summary>
         /// Internal use.
@@ -745,7 +747,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray">The host array.</param>
         /// <param name="devArray">The device array.</param>
-        public void CopyToConstantMemory<T>(T[] hostArray, T[] devArray)
+        public void CopyToConstantMemory<T>(T[] hostArray, T[] devArray) where T : struct
         {
             int count = hostArray.Length;
             KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, 0, devArray, 0, ref count);
@@ -758,7 +760,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray">The host array.</param>
         /// <param name="devArray">The device array.</param>
-        public void CopyToConstantMemory<T>(T[,] hostArray, T[,] devArray)
+        public void CopyToConstantMemory<T>(T[,] hostArray, T[,] devArray) where T : struct
         {
             int count = hostArray.Length;
             KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, 0, devArray, 0, ref count);
@@ -771,7 +773,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray">The host array.</param>
         /// <param name="devArray">The device array.</param>
-        public void CopyToConstantMemory<T>(T[,,] hostArray, T[,,] devArray)
+        public void CopyToConstantMemory<T>(T[, ,] hostArray, T[, ,] devArray) where T : struct
         {
             int count = hostArray.Length;
             KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, 0, devArray, 0, ref count);
@@ -787,7 +789,7 @@ namespace Cudafy.Host
         /// <param name="devArray">The device array.</param>
         /// <param name="devOffset">The device offset.</param>
         /// <param name="count">The number of element to copy.</param>
-        public void CopyToConstantMemory<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count)
+        public void CopyToConstantMemory<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count) where T : struct
         {
             KernelConstantInfo ci = InitializeCopyToConstantMemory(hostArray, hostOffset, devArray, devOffset, ref count);
             DoCopyToConstantMemory<T>(hostArray, hostOffset, devArray, devOffset, count, ci);
@@ -803,7 +805,7 @@ namespace Cudafy.Host
         /// <param name="devOffset">The dev offset.</param>
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
-        public void CopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId)
+        public void CopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId) where T : struct
         {
             KernelConstantInfo ci = InitializeCopyToConstantMemory(null, hostOffset, devArray, devOffset, ref count);
             DoCopyToConstantMemoryAsync<T>(hostArray, hostOffset, devArray, devOffset, count, ci, streamId);
@@ -820,7 +822,7 @@ namespace Cudafy.Host
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
         /// <param name="stagingPost">The staging post.</param>
-        public void CopyToConstantMemoryAsync<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId, IntPtr stagingPost)
+        public void CopyToConstantMemoryAsync<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId, IntPtr stagingPost) where T : struct
         {
             if (!IsSmartCopyEnabled)
                 throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
@@ -837,7 +839,7 @@ namespace Cudafy.Host
         /// <param name="devOffset">The dev offset.</param>
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
-        public void CopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, T[,] devArray, int devOffset, int count, int streamId)
+        public void CopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, T[,] devArray, int devOffset, int count, int streamId) where T : struct
         {
             KernelConstantInfo ci = InitializeCopyToConstantMemory(null, hostOffset, devArray, devOffset, ref count);
             DoCopyToConstantMemoryAsync<T>(hostArray, hostOffset, devArray, devOffset, count, ci, streamId);
@@ -853,7 +855,7 @@ namespace Cudafy.Host
         /// <param name="devOffset">The dev offset.</param>
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
-        public void CopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, T[,,] devArray, int devOffset, int count, int streamId)
+        public void CopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, T[, ,] devArray, int devOffset, int count, int streamId) where T : struct
         {
             KernelConstantInfo ci = InitializeCopyToConstantMemory(null, hostOffset, devArray, devOffset, ref count);
             DoCopyToConstantMemoryAsync<T>(hostArray, hostOffset, devArray, devOffset, count, ci, streamId);
@@ -959,13 +961,23 @@ namespace Cudafy.Host
         /// <summary>
         /// Starts the timer.
         /// </summary>
-        public abstract void StartTimer();
+        public virtual void StartTimer()
+        {
+            _stopWatch.Start();
+        }
 
         /// <summary>
         /// Stops the timer.
         /// </summary>
         /// <returns>Elapsed time.</returns>
-        public abstract float StopTimer();
+        public virtual float StopTimer()
+        {
+            float time = 0;
+            _stopWatch.Stop();
+            time = (float)_stopWatch.ElapsedMilliseconds;
+            _stopWatch.Reset();
+            return time;
+        }
 
         /// <summary>
         /// Loads module from file.
@@ -973,7 +985,7 @@ namespace Cudafy.Host
         /// <param name="filename">The filename.</param>
         public void LoadModule(string filename)
         {
-            CudafyModule km = CudafyModule.Deserialize(filename);
+            CudafyModule km = string.IsNullOrEmpty(filename) ? null : CudafyModule.Deserialize(filename);
             LoadModule(km);
         }
 
@@ -2107,7 +2119,7 @@ namespace Cudafy.Host
         /// <param name="devOffset">The dev offset.</param>
         /// <param name="count">The count.</param>
         /// <param name="ci">The ci.</param>
-        protected abstract void DoCopyToConstantMemory<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci);
+        protected abstract void DoCopyToConstantMemory<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci) where T : struct;
 
         /// <summary>
         /// Does the copy to constant memory async.
@@ -2120,7 +2132,7 @@ namespace Cudafy.Host
         /// <param name="count">The count.</param>
         /// <param name="ci">The ci.</param>
         /// <param name="streamId">The stream id.</param>
-        protected abstract void DoCopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci, int streamId);
+        protected abstract void DoCopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci, int streamId) where T : struct;
 
 
         /// <summary>
@@ -2132,7 +2144,7 @@ namespace Cudafy.Host
         /// <param name="devArray">The dev array.</param>
         /// <param name="devOffset">The dev offset.</param>
         /// <param name="count">The count.</param>
-        protected abstract void DoCopyToDevice<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count);
+        protected abstract void DoCopyToDevice<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count) where T : struct;
 
         /// <summary>
         /// Does the copy from device.
@@ -2140,7 +2152,7 @@ namespace Cudafy.Host
         /// <typeparam name="T"></typeparam>
         /// <param name="devArray">The dev array.</param>
         /// <param name="hostArray">The host array.</param>
-        protected abstract void DoCopyFromDevice<T>(Array devArray, Array hostArray);
+        protected abstract void DoCopyFromDevice<T>(Array devArray, Array hostArray) where T : struct;
 
         /// <summary>
         /// Does the copy from device.
@@ -2151,9 +2163,9 @@ namespace Cudafy.Host
         /// <param name="hostArray">The host array.</param>
         /// <param name="hostOffset">The host offset.</param>
         /// <param name="count">The count.</param>
-        protected abstract void DoCopyFromDevice<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count);
+        protected abstract void DoCopyFromDevice<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count) where T : struct;
 
-        protected abstract void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId);
+        protected abstract void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId) where T : struct;
 
         /// <summary>
         /// Does the copy to device async.
@@ -2165,9 +2177,9 @@ namespace Cudafy.Host
         /// <param name="devOffset">The dev offset.</param>
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
-        protected abstract void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId);
+        protected abstract void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId) where T : struct;
 
-        protected abstract void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId);
+        protected abstract void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId) where T : struct;
 
         /// <summary>
         /// Does the copy to device async.
@@ -2179,7 +2191,7 @@ namespace Cudafy.Host
         /// <param name="devOffset">The dev offset.</param>
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
-        protected abstract void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, DevicePtrEx devArray, int devOffset, int count, int streamId);
+        protected abstract void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, DevicePtrEx devArray, int devOffset, int count, int streamId) where T : struct;
 
         /// <summary>
         /// Does the copy to device async.
@@ -2192,7 +2204,7 @@ namespace Cudafy.Host
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
         /// <param name="stagingPost">The staging post.</param>
-        protected abstract void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost, bool isConstantMemory = false);
+        protected abstract void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost, bool isConstantMemory = false) where T : struct;
 
 
         /// <summary>
@@ -2205,7 +2217,7 @@ namespace Cudafy.Host
         /// <param name="hostOffset">The host offset.</param>
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
-        protected abstract void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId);
+        protected abstract void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId) where T : struct;
 
         /// <summary>
         /// Performs an asynchronous data transfer.
@@ -2217,7 +2229,7 @@ namespace Cudafy.Host
         /// <param name="hostOffset">The host offset.</param>
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
-        protected abstract void DoCopyFromDeviceAsync<T>(DevicePtrEx devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId);
+        protected abstract void DoCopyFromDeviceAsync<T>(DevicePtrEx devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId) where T : struct;
 
         /// <summary>
         /// Performs an asynchronous data transfer.
@@ -2230,7 +2242,7 @@ namespace Cudafy.Host
         /// <param name="count">The count.</param>
         /// <param name="streamId">The stream id.</param>
         /// <param name="stagingPost">The staging post.</param>
-        protected abstract void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId, IntPtr stagingPost);
+        protected abstract void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId, IntPtr stagingPost) where T : struct;
         
         /// <summary>
         /// Copies to preallocated array on device.
@@ -2238,7 +2250,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray">The host array.</param>
         /// <param name="devArray">The device array.</param>
-        public void CopyToDevice<T>(T[] hostArray, T[] devArray)
+        public void CopyToDevice<T>(T[] hostArray, T[] devArray) where T : struct
         {
             DoCopyToDevice<T>(hostArray, 0, devArray, 0, hostArray.Length);
         }
@@ -2252,7 +2264,7 @@ namespace Cudafy.Host
         /// <param name="devArray">The device array.</param>
         /// <param name="devOffset">The device offset.</param>
         /// <param name="count">The number of elements.</param>
-        public void CopyToDevice<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count)
+        public void CopyToDevice<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count) where T : struct
         {
             DoCopyToDevice<T>(hostArray, hostOffset, devArray, devOffset, count);
         }
@@ -2268,7 +2280,7 @@ namespace Cudafy.Host
         /// <param name="devArray">The device array.</param>
         /// <param name="devOffset">The device offset.</param>
         /// <param name="count">The number of elements.</param>
-        public void CopyToDevice<T>(IntPtr hostArray, int hostOffset, T[] devArray, int devOffset, int count)
+        public void CopyToDevice<T>(IntPtr hostArray, int hostOffset, T[] devArray, int devOffset, int count) where T : struct
         {
             DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, -1);
         }
@@ -2284,7 +2296,7 @@ namespace Cudafy.Host
         /// <param name="count">Number of elements.</param>
         /// <param name="streamId">The stream id.</param>
         /// <param name="stagingPost">The staging post of equal or greater size to count. Use HostAllocate to create.</param>
-        public void CopyToDeviceAsync<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId, IntPtr stagingPost)
+        public void CopyToDeviceAsync<T>(T[] hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId, IntPtr stagingPost) where T : struct
         {
             if (!IsSmartCopyEnabled)
                 throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
@@ -2302,7 +2314,7 @@ namespace Cudafy.Host
         /// <param name="count">Number of elements.</param>
         /// <param name="streamId">The stream id.</param>
         /// <param name="stagingPost">The staging post of equal or greater size to count. Use HostAllocate to create.</param>
-        public void CopyFromDeviceAsync<T>(T[] devArray, int devOffset, T[] hostArray, int hostOffset, int count, int streamId, IntPtr stagingPost)
+        public void CopyFromDeviceAsync<T>(T[] devArray, int devOffset, T[] hostArray, int hostOffset, int count, int streamId, IntPtr stagingPost) where T : struct
         {
             if (!IsSmartCopyEnabled)
                 throw new CudafyHostException(CudafyHostException.csSMART_COPY_IS_NOT_ENABLED);
@@ -2319,7 +2331,7 @@ namespace Cudafy.Host
         /// <param name="devOffset">The device offset.</param>
         /// <param name="count">The number of elements.</param>
         /// <param name="streamId">The stream id.</param>
-        public void CopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId = 0)
+        public void CopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, T[] devArray, int devOffset, int count, int streamId = 0) where T : struct
         {
             DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId);
         }
@@ -2379,7 +2391,7 @@ namespace Cudafy.Host
         /// <param name="devOffset">The device offset.</param>
         /// <param name="count">The number of elements.</param>
         /// <param name="streamId">The stream id.</param>
-        public void CopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, DevicePtrEx devArray, int devOffset, int count, int streamId = 0)
+        public void CopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, DevicePtrEx devArray, int devOffset, int count, int streamId = 0) where T : struct
         {
             DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId);
         }
@@ -2394,7 +2406,7 @@ namespace Cudafy.Host
         /// <param name="devOffset">The device offset.</param>
         /// <param name="count">The number of elements.</param>
         /// <param name="streamId">The stream id.</param>
-        public void CopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, T[,] devArray, int devOffset, int count, int streamId = 0)
+        public void CopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, T[,] devArray, int devOffset, int count, int streamId = 0) where T : struct
         {
             DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId);
         }
@@ -2409,7 +2421,7 @@ namespace Cudafy.Host
         /// <param name="devOffset">The device offset.</param>
         /// <param name="count">The number of elements.</param>
         /// <param name="streamId">The stream id.</param>
-        public void CopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, T[,,] devArray, int devOffset, int count, int streamId = 0)
+        public void CopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, T[, ,] devArray, int devOffset, int count, int streamId = 0) where T : struct
         {
             DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId);
         }
@@ -2425,7 +2437,7 @@ namespace Cudafy.Host
         /// <param name="hostArray">The host array.</param>
         /// <param name="hostOffset">The host offset.</param>
         /// <param name="count">The number of elements.</param>
-        public void CopyFromDevice<T>(T[] devArray, int devOffset, T[] hostArray, int hostOffset, int count)
+        public void CopyFromDevice<T>(T[] devArray, int devOffset, T[] hostArray, int hostOffset, int count) where T : struct
         {
             DoCopyFromDevice<T>(devArray, devOffset, hostArray, hostOffset, count);
         }
@@ -2439,7 +2451,7 @@ namespace Cudafy.Host
         /// <param name="hostArray">The host array.</param>
         /// <param name="hostOffset">The host offset.</param>
         /// <param name="count">The number of elements.</param>
-        public void CopyFromDevice<T>(T[] devArray, int devOffset, IntPtr hostArray, int hostOffset, int count)
+        public void CopyFromDevice<T>(T[] devArray, int devOffset, IntPtr hostArray, int hostOffset, int count) where T : struct
         {
             DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, -1);
         }
@@ -2454,7 +2466,7 @@ namespace Cudafy.Host
         /// <param name="hostOffset">The host offset.</param>
         /// <param name="count">The number of elements.</param>
         /// <param name="streamId">The stream id.</param>
-        public void CopyFromDeviceAsync<T>(T[] devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId = 0)
+        public void CopyFromDeviceAsync<T>(T[] devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId = 0) where T : struct
         {
             DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, streamId);
         }
@@ -2514,7 +2526,7 @@ namespace Cudafy.Host
         /// <param name="hostOffset">The host offset.</param>
         /// <param name="count">The number of elements.</param>
         /// <param name="streamId">The stream id.</param>
-        public void CopyFromDeviceAsync<T>(DevicePtrEx devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId = 0)
+        public void CopyFromDeviceAsync<T>(DevicePtrEx devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId = 0) where T : struct
         {
             DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, streamId);
         }
@@ -2529,7 +2541,7 @@ namespace Cudafy.Host
         /// <param name="hostOffset">The host offset.</param>
         /// <param name="count">The number of elements.</param>
         /// <param name="streamId">The stream id.</param>
-        public void CopyFromDeviceAsync<T>(T[,] devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId = 0)
+        public void CopyFromDeviceAsync<T>(T[,] devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId = 0) where T : struct
         {
             DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, streamId);
         }
@@ -2544,7 +2556,7 @@ namespace Cudafy.Host
         /// <param name="hostOffset">The host offset.</param>
         /// <param name="count">The number of elements.</param>
         /// <param name="streamId">The stream id.</param>
-        public void CopyFromDeviceAsync<T>(T[,,] devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId = 0)
+        public void CopyFromDeviceAsync<T>(T[, ,] devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId = 0) where T : struct
         {
             DoCopyFromDeviceAsync<T>(devArray, devOffset, hostArray, hostOffset, count, streamId);
         }
@@ -2656,7 +2668,7 @@ namespace Cudafy.Host
         /// <param name="devArray">The dev array.</param>
         /// <param name="x">The x.</param>
         /// <returns>Value at index.</returns>
-        public T GetValue<T>(T[] devArray, int x)
+        public T GetValue<T>(T[] devArray, int x) where T : struct
         {
             T[] hostArray = new T[1];
             CopyFromDevice(devArray, x, hostArray, 0, 1);
@@ -2671,7 +2683,7 @@ namespace Cudafy.Host
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
         /// <returns></returns>
-        public T GetValue<T>(T[,] devArray, int x, int y)
+        public T GetValue<T>(T[,] devArray, int x, int y) where T : struct
         {
             T[] hostArray = new T[1];
             var ptrEx = GetDeviceMemory(devArray) as DevicePtrEx;
@@ -2688,7 +2700,7 @@ namespace Cudafy.Host
         /// <param name="y">The y.</param>
         /// <param name="z">The z.</param>
         /// <returns></returns>
-        public T GetValue<T>(T[,,] devArray, int x, int y, int z)
+        public T GetValue<T>(T[, ,] devArray, int x, int y, int z) where T : struct
         {
             T[] hostArray = new T[1];
             var ptrEx = GetDeviceMemory(devArray) as DevicePtrEx;
@@ -3301,7 +3313,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray">The host array.</param>
         /// <param name="devArray">The device array.</param>
-        public void CopyToDevice<T>(T[,] hostArray, T[,] devArray)
+        public void CopyToDevice<T>(T[,] hostArray, T[,] devArray) where T : struct
         {
             DoCopyToDevice<T>(hostArray, 0, devArray, 0, hostArray.Length);
         }
@@ -3313,7 +3325,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray">The host array.</param>
         /// <param name="devArray">The device array.</param>
-        public void CopyToDevice<T>(T[,,] hostArray, T[,,] devArray)
+        public void CopyToDevice<T>(T[, ,] hostArray, T[, ,] devArray) where T : struct
         {
             DoCopyToDevice<T>(hostArray, 0, devArray, 0, hostArray.Length);
         }
@@ -3334,7 +3346,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray">The host array.</param>
         /// <returns>The device array.</returns>
-        public abstract T[] CopyToDevice<T>(T[] hostArray);
+        public abstract T[] CopyToDevice<T>(T[] hostArray) where T : struct;
 
         /// <summary>
         /// Allocates array on device, copies to device and returns pointer.
@@ -3342,7 +3354,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray">The host array.</param>
         /// <returns>The device array.</returns>
-        public abstract T[,] CopyToDevice<T>(T[,] hostArray);
+        public abstract T[,] CopyToDevice<T>(T[,] hostArray) where T : struct;
 
         /// <summary>
         /// Allocates array on device, copies to device and returns pointer.
@@ -3350,7 +3362,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray">The host array.</param>
         /// <returns>The device array.</returns>
-        public abstract T[,,] CopyToDevice<T>(T[,,] hostArray);
+        public abstract T[, ,] CopyToDevice<T>(T[, ,] hostArray) where T : struct;
 
         ///// <summary>
         ///// Copies from device.
@@ -3366,7 +3378,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="devArray">The device array.</param>
         /// <param name="hostData">The host data.</param>
-        public void CopyFromDevice<T>(T[] devArray, out T hostData)
+        public void CopyFromDevice<T>(T[] devArray, out T hostData) where T : struct
         {
             T[] hostArray = new T[1];
             DoCopyFromDevice<T>(devArray, 0, hostArray, 0, 1);
@@ -3379,7 +3391,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="devArray">The device array.</param>
         /// <param name="hostArray">The host array.</param>
-        public void CopyFromDevice<T>(T[] devArray, T[] hostArray)
+        public void CopyFromDevice<T>(T[] devArray, T[] hostArray) where T : struct
         {
             DoCopyFromDevice<T>(devArray, hostArray);
         }
@@ -3390,7 +3402,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="devArray">The device array.</param>
         /// <param name="hostArray">The host array.</param>
-        public void CopyFromDevice<T>(T[,] devArray, T[,] hostArray)
+        public void CopyFromDevice<T>(T[,] devArray, T[,] hostArray) where T : struct
         {
             DoCopyFromDevice<T>(devArray, hostArray);
         }
@@ -3404,7 +3416,7 @@ namespace Cudafy.Host
         /// <param name="hostArray">The host array.</param>
         /// <param name="hostOffset">The host offset.</param>
         /// <param name="count">The number of elements.</param>
-        public void CopyFromDevice<T>(T[,] devArray, int devOffset, T[] hostArray, int hostOffset, int count)
+        public void CopyFromDevice<T>(T[,] devArray, int devOffset, T[] hostArray, int hostOffset, int count) where T : struct
         {
             DoCopyFromDevice<T>(devArray, devOffset, hostArray, hostOffset, count);
         }
@@ -3415,7 +3427,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="devArray">The device array.</param>
         /// <param name="hostArray">The host array.</param>
-        public void CopyFromDevice<T>(T[,,] devArray, T[,,] hostArray)
+        public void CopyFromDevice<T>(T[, ,] devArray, T[, ,] hostArray) where T : struct
         {
             DoCopyFromDevice<T>(devArray, hostArray);
         }
@@ -3593,7 +3605,7 @@ namespace Cudafy.Host
         /// </summary>
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <returns>Device array of length 1.</returns>
-        public virtual T[] Allocate<T>()
+        public virtual T[] Allocate<T>() where T : struct
         {
             return Allocate<T>(1);
         }
@@ -3604,7 +3616,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="x">Length of 1D array.</param>
         /// <returns>Device array of length x.</returns>
-        public abstract T[] Allocate<T>(int x);
+        public abstract T[] Allocate<T>(int x) where T : struct;
 
         /// <summary>
         /// Allocates array on device.
@@ -3613,7 +3625,7 @@ namespace Cudafy.Host
         /// <param name="x">The x dimension.</param>
         /// <param name="y">The y dimension.</param>
         /// <returns>2D device array.</returns>
-        public abstract T[,] Allocate<T>(int x, int y);
+        public abstract T[,] Allocate<T>(int x, int y) where T : struct;
 
         /// <summary>
         /// Allocates array on device.
@@ -3623,7 +3635,7 @@ namespace Cudafy.Host
         /// <param name="y">The y dimension.</param>
         /// <param name="z">The z dimension.</param>
         /// <returns>3D device array.</returns>
-        public abstract T[,,] Allocate<T>(int x, int y, int z);
+        public abstract T[, ,] Allocate<T>(int x, int y, int z) where T : struct;
 
         /// <summary>
         /// Allocates array on device of same size as supplied host array.
@@ -3631,7 +3643,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray">The host array.</param>
         /// <returns>1D device array.</returns>
-        public abstract T[] Allocate<T>(T[] hostArray);
+        public abstract T[] Allocate<T>(T[] hostArray) where T : struct;
 
         /// <summary>
         /// Allocates array on device of same size as supplied host array.
@@ -3639,7 +3651,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray">The host array.</param>
         /// <returns>1D device array.</returns>
-        public abstract T[,] Allocate<T>(T[,] hostArray);
+        public abstract T[,] Allocate<T>(T[,] hostArray) where T : struct;
 
         /// <summary>
         /// Allocates array on device of same size as supplied host array.
@@ -3647,7 +3659,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="hostArray">The host array.</param>
         /// <returns>1D device array.</returns>
-        public abstract T[,,] Allocate<T>(T[,,] hostArray);
+        public abstract T[, ,] Allocate<T>(T[, ,] hostArray) where T : struct;
 
 
         /// <summary>
@@ -4080,5 +4092,13 @@ namespace Cudafy.Host
         }
 
         private List<DevicePtrEx> _children;
+
+        /// <summary>
+        /// Gets a value indicating whether created from cast.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if created from cast; otherwise, <c>false</c>.
+        /// </value>
+        public bool CreatedFromCast { get; protected set; }
     }
 }

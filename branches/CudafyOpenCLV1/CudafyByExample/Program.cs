@@ -11,7 +11,8 @@ using System.Text;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Cudafy;
-
+using Cudafy.Host;
+using Cudafy.Translator;
 namespace CudafyByExample
 {
     class Program
@@ -19,55 +20,64 @@ namespace CudafyByExample
         [STAThread]
         static void Main(string[] args)
         {
-            Console.WriteLine(IntPtr.Size);
-            CudafyModes.CodeGen = eGPUCodeGenerator.CudaC;
-            CudafyModes.Target = eGPUType.Cuda;
+            CudafyModes.Target = eGPUType.OpenCL;
+            CudafyModes.DeviceId = 0;
+            CudafyTranslator.Language = eLanguage.OpenCL;
             try
             {
+                GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
+                Console.WriteLine("Running examples using {0}", gpu.GetDeviceProperties().Name);
+
                 // Chapter 3
-                //Console.WriteLine("\r\nChapter 3");
-                //Console.WriteLine("\r\nhello_world");
-                //hello_world.Execute();
-                //Console.WriteLine("\r\nsimple_kernel");
-                //simple_kernel.Execute();
-                //Console.WriteLine("\r\nsimple_kernel_params");
-                //simple_kernel_params.Execute();
+                Console.WriteLine("\r\nChapter 3");
+                Console.WriteLine("\r\nhello_world");
+                hello_world.Execute();
+                Console.WriteLine("\r\nsimple_kernel");
+                simple_kernel.Execute();
+                Console.WriteLine("\r\nsimple_kernel_params");
+                simple_kernel_params.Execute();
                 Console.WriteLine("\r\nenum_gpu");
                 enum_gpu.Execute();
 
-                //// Chapter 4
-                //Console.WriteLine("\r\nChapter 4");
-                //Console.WriteLine("\r\nadd_loop_cpu");
-                //add_loop_cpu.Execute();
-                //Console.WriteLine("\r\nadd_loop_gpu");
-                //add_loop_gpu.Execute();
-                //Console.WriteLine("\r\nadd_loop_gpu_alt");
-                //add_loop_gpu_alt.Execute();
-                //Console.WriteLine("\r\nadd_loop_long");
-                //add_loop_long.Execute();
-                //Console.WriteLine("\r\njulia (cpu)");
-                //new julia_gui(false).ShowDialog();
-                //Console.WriteLine("\r\njulia (gpu)");
-                //new julia_gui(true).ShowDialog();
+                // Chapter 4
+                Console.WriteLine("\r\nChapter 4");
+                Console.WriteLine("\r\nadd_loop_cpu");
+                add_loop_cpu.Execute();
+                Console.WriteLine("\r\nadd_loop_gpu");
+                add_loop_gpu.Execute();
+                Console.WriteLine("\r\nadd_loop_gpu_alt");
+                add_loop_gpu_alt.Execute();
+                Console.WriteLine("\r\nadd_loop_long");
+                add_loop_long.Execute();
+                Console.WriteLine("\r\njulia (cpu)");
+                new julia_gui(false).ShowDialog();
+                Console.WriteLine("\r\njulia (gpu)");
+                new julia_gui(true).ShowDialog();
 
-                //// Chapter 5
-                //Console.WriteLine("\r\nChapter 5");
-                //Console.WriteLine("\r\nadd_loop_blocks");
-                //add_loop_blocks.Execute();
-                //Console.WriteLine("\r\nadd_loop_long_blocks");
-                //add_loop_long_blocks.Execute();
-                //Console.WriteLine("\r\nripple");
-                //ripple r = new ripple();
-                //r.Execute();
-                //Console.WriteLine("\r\ndot");
-                //dot.Execute();
+                // Chapter 5
+                Console.WriteLine("\r\nChapter 5");
+                Console.WriteLine("\r\nadd_loop_blocks");
+                add_loop_blocks.Execute();
+                Console.WriteLine("\r\nadd_loop_long_blocks");
+                add_loop_long_blocks.Execute();
+                Console.WriteLine("\r\nripple");
+                ripple r = new ripple();
+                r.Execute();
+                Console.WriteLine("\r\ndot");
+                dot.Execute();
 
-                //// Chapter 6
-                //Console.WriteLine("\r\nChapter 6");
-                //Console.WriteLine("\r\nray (no constant memory)");
-                //new ray_gui(false).ShowDialog(); // no const
-                //Console.WriteLine("\r\nray (constant memory)");
-                //new ray_gui(true).ShowDialog();  // const
+                // Chapter 6
+                Console.WriteLine("\r\nChapter 6");
+                Console.WriteLine("\r\nray (OpenCL compatible as well as CUDA)");
+                new ray_gui(ray_gui.eRayVersion.OpenCL).ShowDialog(); 
+                if (CudafyTranslator.Language == eLanguage.Cuda) // CUDA only
+                {
+                    Console.WriteLine("\r\nChapter 6");
+                    Console.WriteLine("\r\nray (no constant memory)");
+                    new ray_gui(ray_gui.eRayVersion.CUDA).ShowDialog(); // no const
+                    Console.WriteLine("\r\nray (constant memory)");
+                    new ray_gui(ray_gui.eRayVersion.CUDA_const).ShowDialog();  // const
+                }
 
                 //// Chapter 9
                 //Console.WriteLine("\r\nChapter 9");

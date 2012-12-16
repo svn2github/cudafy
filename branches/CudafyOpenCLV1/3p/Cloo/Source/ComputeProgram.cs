@@ -239,7 +239,7 @@ namespace Cloo
             CLDeviceHandle[] deviceHandles = ComputeTools.ExtractHandles(devices, out handleCount);
             buildOptions = (options != null) ? options : "";
             buildNotify = notify;
-
+           
             ComputeErrorCode error = CL10.BuildProgram(Handle, handleCount, deviceHandles, options, buildNotify, notifyDataPtr);
             ComputeException.ThrowOnError(error);
         }

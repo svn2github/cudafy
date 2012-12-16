@@ -37,11 +37,18 @@ namespace Cudafy.Translator
 #pragma warning disable 1591
     public class SpecialMember
     {
-        public SpecialMember(string declaringType, string original, Func<MemberReferenceExpression, object, string> func, bool callFunc = true, bool noSemiColon = false)
+        public SpecialMember(string declaringType, string original, Func<MemberReferenceExpression, object, string> func, bool callFunc = true, bool noSemiColon = false) :
+            this(new string[] { declaringType }, original, func, callFunc, noSemiColon)
+        {
+
+        }
+        
+        public SpecialMember(string[] declaringTypes, string original, Func<MemberReferenceExpression, object, string> func, bool callFunc = true, bool noSemiColon = false)
         {
             OriginalName = original;
             //_translation = translation;
-            DeclaringType = declaringType;
+            //DeclaringType = declaringType;
+            DeclaringTypes = declaringTypes;
             Function = func;
             CallFunction = callFunc;
             NoSemicolon = noSemiColon;
@@ -49,7 +56,9 @@ namespace Cudafy.Translator
 
         public bool CallFunction { get; private set; }
 
-        public string DeclaringType { get; private set; }
+        //public string DeclaringType { get; private set; }
+
+        public string[] DeclaringTypes { get; private set; }
         
         public string OriginalName { get; private set; }
 
@@ -75,14 +84,33 @@ namespace Cudafy.Translator
         public string IncludeLine { get; private set; }
         public bool Used { get; set; }
     }
+
+    public class OptionalFunction
+    {
+        public OptionalFunction(string name, string code)
+        {
+            Name = name;
+            Code = code;
+        }
+
+        public string Name { get; private set; }
+        public string Code { get; private set; }
+        public bool Used { get; set; }
+    }
     
     //[Export(typeof(Language))]
     public class CUDALanguage : Language
     {
-        public CUDALanguage()
+        public CUDALanguage(eLanguage language)
         {
-            
+            _language = language;
+            if (language == eLanguage.Cuda)
+                InitializeCUDA();
+            else if (language == eLanguage.OpenCL)
+                InitializeOpenCL();
         }
+
+        private eLanguage _language;
         
         private Predicate<IAstTransform> transformAbortCondition = null;
 
@@ -183,13 +211,26 @@ namespace Cudafy.Translator
                 });
         }
 
-        /// <summary>
-        /// Initializes the <see cref="CUDALanguage"/> class.
-        /// </summary>
-        static CUDALanguage()
+        ///// <summary>
+        ///// Initializes the <see cref="CUDALanguage"/> class.
+        ///// </summary>
+        //static CUDALanguage()
+        //{
+        //    InitializeStatic();
+        //}
+
+        private static void InitializeCUDA()
         {
-            ComputeCapability = new Version(1, 2);
-            SpecialMethods.Add(new SpecialMember("GThread", "InsertCode", new Func<MemberReferenceExpression, object, string>(TranslateInsertCode), false, true)); 
+            ComputeCapability = new Version(1, 3);
+            SpecialMethods.Clear();
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "get_global_size", new Func<MemberReferenceExpression, object, string>(GetOptionalFunctionMemberName)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "get_global_id", new Func<MemberReferenceExpression, object, string>(GetOptionalFunctionMemberName)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "get_local_id", new Func<MemberReferenceExpression, object, string>(GetOptionalFunctionMemberName)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "get_group_id", new Func<MemberReferenceExpression, object, string>(GetOptionalFunctionMemberName)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "get_local_size", new Func<MemberReferenceExpression, object, string>(GetOptionalFunctionMemberName)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "get_num_groups", new Func<MemberReferenceExpression, object, string>(GetOptionalFunctionMemberName)));
+
+            SpecialMethods.Add(new SpecialMember("GThread", "InsertCode", new Func<MemberReferenceExpression, object, string>(TranslateInsertCode), false, true));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "SyncThreads", new Func<MemberReferenceExpression, object, string>(TranslateSyncThreads)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "SyncThreadsCount", new Func<MemberReferenceExpression, object, string>(TranslateSyncThreadsCount)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "All", new Func<MemberReferenceExpression, object, string>(TranslateAll)));
@@ -229,7 +270,7 @@ namespace Cudafy.Translator
 
             SpecialMethods.Add(new SpecialMember("ComplexD", "ctor", new Func<MemberReferenceExpression, object, string>(TranslateComplexDCtor)));
             SpecialMethods.Add(new SpecialMember("ComplexF", "ctor", new Func<MemberReferenceExpression, object, string>(TranslateComplexFCtor)));
-            
+
             //SpecialMethods.Add(new SpecialMember("Debug", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
             //SpecialMethods.Add(new SpecialMember("Console", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
 
@@ -253,7 +294,7 @@ namespace Cudafy.Translator
             SpecialProperties.Add(new SpecialMember("Cudafy.GThread", "warpSize", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
             //
             SpecialProperties.Add(new SpecialMember("System.String", "Length", new Func<MemberReferenceExpression, object, string>(TranslateStringLength)));
-            
+
             SpecialProperties.Add(new SpecialMember("Math", "E", new Func<MemberReferenceExpression, object, string>(TranslateMathE)));
             SpecialProperties.Add(new SpecialMember("Math", "PI", new Func<MemberReferenceExpression, object, string>(TranslateMathPI)));
             SpecialProperties.Add(new SpecialMember("GMath", "E", new Func<MemberReferenceExpression, object, string>(TranslateGMathE)));
@@ -273,6 +314,114 @@ namespace Cudafy.Translator
             OptionalHeaders.Add(new OptionalHeader(csCURAND_KERNEL, @"#include <curand_kernel.h>"));
             OptionalHeaders.Add(new OptionalHeader(csSTDIO, @"#include <stdio.h>"));
             OptionalHeaders.Add(new OptionalHeader(csASSERT, @"#include <assert.h>"));
+
+            OptionalFunctions = new List<OptionalFunction>();
+            OptionalFunctions.Add(new OptionalFunction(csGET_GLOBAL_ID, OptionalStrings.get_global_id));
+            OptionalFunctions.Add(new OptionalFunction(csGET_GLOBAL_SIZE, OptionalStrings.get_global_size));
+            OptionalFunctions.Add(new OptionalFunction(csGET_GROUP_ID, OptionalStrings.get_group_id));
+            OptionalFunctions.Add(new OptionalFunction(csGET_LOCAL_ID, OptionalStrings.get_local_id));
+            OptionalFunctions.Add(new OptionalFunction(csGET_LOCAL_SIZE, OptionalStrings.get_local_size));
+            OptionalFunctions.Add(new OptionalFunction(csGET_NUM_GROUPS, OptionalStrings.get_num_groups)); 
+            DisableSmartArray = false;
+        }
+
+        private static void InitializeOpenCL()
+        {
+            ComputeCapability = new Version(1, 3);
+            SpecialMethods.Clear();
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "get_global_size", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "get_global_id", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "get_local_id", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "get_group_id", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "get_local_size", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "get_num_groups", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "SyncThreads", new Func<MemberReferenceExpression, object, string>(TranslateSyncThreadsOpenCL), false));
+
+            SpecialMethods.Add(new SpecialMember("GThread", "InsertCode", new Func<MemberReferenceExpression, object, string>(TranslateInsertCode), false, true));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "SyncThreads", new Func<MemberReferenceExpression, object, string>(TranslateSyncThreads)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "SyncThreadsCount", new Func<MemberReferenceExpression, object, string>(TranslateSyncThreadsCount)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "All", new Func<MemberReferenceExpression, object, string>(TranslateAll)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "Any", new Func<MemberReferenceExpression, object, string>(TranslateAny)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "Ballot", new Func<MemberReferenceExpression, object, string>(TranslateBallot)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicAdd", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicSub", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicExch", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicAdd", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicMin", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicMax", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicInc", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicDec", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicCAS", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicAnd", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicOr", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicXor", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "curand_init", new Func<MemberReferenceExpression, object, string>(GetCURANDMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "curand", new Func<MemberReferenceExpression, object, string>(GetCURANDMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "curand_log_normal", new Func<MemberReferenceExpression, object, string>(GetCURANDMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "curand_log_normal_double", new Func<MemberReferenceExpression, object, string>(GetCURANDMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "curand_normal", new Func<MemberReferenceExpression, object, string>(GetCURANDMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "curand_normal_double", new Func<MemberReferenceExpression, object, string>(GetCURANDMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "curand_uniform", new Func<MemberReferenceExpression, object, string>(GetCURANDMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "curand_uniform_double", new Func<MemberReferenceExpression, object, string>(GetCURANDMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "skipahead", new Func<MemberReferenceExpression, object, string>(GetCURANDMemberName)));
+            //SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "skipahead_sequence", new Func<MemberReferenceExpression, object, string>(GetCURANDMemberName)));
+
+            SpecialMethods.Add(new SpecialMember("GMath", null, new Func<MemberReferenceExpression, object, string>(TranslateMath)));
+            SpecialMethods.Add(new SpecialMember("Math", null, new Func<MemberReferenceExpression, object, string>(TranslateMath)));
+
+            //SpecialMethods.Add(new SpecialMember("ComplexD", null, new Func<MemberReferenceExpression, object, string>(TranslateComplexD)));
+            //SpecialMethods.Add(new SpecialMember("ComplexF", null, new Func<MemberReferenceExpression, object, string>(TranslateComplexF)));
+
+            //SpecialMethods.Add(new SpecialMember("ArrayType", "GetLength", new Func<MemberReferenceExpression, object, string>(TranslateArrayGetLength), false));
+
+            //SpecialMethods.Add(new SpecialMember("ComplexD", "ctor", new Func<MemberReferenceExpression, object, string>(TranslateComplexDCtor)));
+            //SpecialMethods.Add(new SpecialMember("ComplexF", "ctor", new Func<MemberReferenceExpression, object, string>(TranslateComplexFCtor)));
+
+            ////SpecialMethods.Add(new SpecialMember("Debug", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
+            ////SpecialMethods.Add(new SpecialMember("Console", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
+
+            //SpecialMethods.Add(new SpecialMember("Debug", "Write", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
+            //SpecialMethods.Add(new SpecialMember("Debug", "WriteIf", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
+            //SpecialMethods.Add(new SpecialMember("Debug", "WriteLine", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
+            //SpecialMethods.Add(new SpecialMember("Debug", "WriteLineIf", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
+            //SpecialMethods.Add(new SpecialMember("Debug", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
+            //SpecialMethods.Add(new SpecialMember("Console", "Write", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
+            //SpecialMethods.Add(new SpecialMember("Console", "WriteLine", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
+            //SpecialMethods.Add(new SpecialMember("Console", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
+            //SpecialMethods.Add(new SpecialMember("Debug", "Assert", new Func<MemberReferenceExpression, object, string>(TranslateAssert), false));
+            //SpecialMethods.Add(new SpecialMember("Trace", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
+
+            //SpecialProperties.Add(new SpecialMember("ArrayType", "Length", new Func<MemberReferenceExpression, object, string>(TranslateArrayLength)));
+            //SpecialProperties.Add(new SpecialMember("ArrayType", "LongLength", new Func<MemberReferenceExpression, object, string>(TranslateArrayLength)));
+            //SpecialProperties.Add(new SpecialMember("ArrayType", "IsFixedSize", new Func<MemberReferenceExpression, object, string>(TranslateToTrue)));
+            //SpecialProperties.Add(new SpecialMember("ArrayType", "IsReadOnly", new Func<MemberReferenceExpression, object, string>(TranslateToFalse)));
+            //SpecialProperties.Add(new SpecialMember("ArrayType", "IsSynchronized", new Func<MemberReferenceExpression, object, string>(TranslateToFalse)));
+            //SpecialProperties.Add(new SpecialMember("ArrayType", "Rank", new Func<MemberReferenceExpression, object, string>(TranslateArrayRank)));
+            //SpecialProperties.Add(new SpecialMember("Cudafy.GThread", "warpSize", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+            ////
+            //SpecialProperties.Add(new SpecialMember("System.String", "Length", new Func<MemberReferenceExpression, object, string>(TranslateStringLength)));
+
+            //SpecialProperties.Add(new SpecialMember("Math", "E", new Func<MemberReferenceExpression, object, string>(TranslateMathE)));
+            //SpecialProperties.Add(new SpecialMember("Math", "PI", new Func<MemberReferenceExpression, object, string>(TranslateMathPI)));
+            //SpecialProperties.Add(new SpecialMember("GMath", "E", new Func<MemberReferenceExpression, object, string>(TranslateGMathE)));
+            //SpecialProperties.Add(new SpecialMember("GMath", "PI", new Func<MemberReferenceExpression, object, string>(TranslateGMathPI)));
+
+            //SpecialTypes.Add("ComplexD", new SpecialTypeProps() { Name = "cuDoubleComplex", OptionalHeader = "cuComplex" });
+            //SpecialTypes.Add("ComplexF", new SpecialTypeProps() { Name = "cuFloatComplex", OptionalHeader = "cuComplex" });
+
+            //SpecialTypes.Add("RandStateXORWOW", new SpecialTypeProps() { Name = "curandStateXORWOW", OptionalHeader = csCURAND_KERNEL });
+            //SpecialTypes.Add("RandStateSobol32", new SpecialTypeProps() { Name = "curandStateSobol32", OptionalHeader = csCURAND_KERNEL });
+            //SpecialTypes.Add("RandStateScrambledSobol32", new SpecialTypeProps() { Name = "curandStateScrambledSobol32", OptionalHeader = csCURAND_KERNEL });
+            //SpecialTypes.Add("RandStateSobol64", new SpecialTypeProps() { Name = "curandStateSobol64", OptionalHeader = csCURAND_KERNEL });
+            //SpecialTypes.Add("RandStateScrambledSobol64", new SpecialTypeProps() { Name = "curandStateScrambledSobol64", OptionalHeader = csCURAND_KERNEL });
+
+            OptionalHeaders = new List<OptionalHeader>();
+            //OptionalHeaders.Add(new OptionalHeader("cuComplex", @"#include <cuComplex.h>"));
+            //OptionalHeaders.Add(new OptionalHeader(csCURAND_KERNEL, @"#include <curand_kernel.h>"));
+            //OptionalHeaders.Add(new OptionalHeader(csSTDIO, @"#include <stdio.h>"));
+            //OptionalHeaders.Add(new OptionalHeader(csASSERT, @"#include <assert.h>"));
             DisableSmartArray = false;
         }
 
@@ -282,6 +431,12 @@ namespace Cudafy.Translator
 
         private const string csASSERT = "assert";
 
+        private const string csGET_GLOBAL_ID = "get_global_id";
+        private const string csGET_LOCAL_ID = "get_local_id";
+        private const string csGET_GROUP_ID = "get_group_id";
+        private const string csGET_LOCAL_SIZE = "get_local_size";
+        private const string csGET_GLOBAL_SIZE = "get_global_size";
+        private const string csGET_NUM_GROUPS = "get_num_groups";
         public struct SpecialTypeProps
         {
             public string Name;
@@ -304,7 +459,7 @@ namespace Cudafy.Translator
         {
             declaringType = NormalizeDeclaringType(declaringType);           
             foreach (var item in SpecialProperties)
-                if (item.DeclaringType == declaringType && memberName == item.OriginalName)
+                if (item.DeclaringTypes.Contains(declaringType) && memberName == item.OriginalName)
                     return item;
             return null;
         }
@@ -318,14 +473,14 @@ namespace Cudafy.Translator
         {
             declaringType = NormalizeDeclaringType(declaringType);
             foreach (var item in SpecialMethods)
-                if (item.DeclaringType == declaringType && memberName == item.OriginalName)
+                if (item.DeclaringTypes.Contains(declaringType) && memberName == item.OriginalName)
                     return item;
             // We don't want to take a default method when there is a special property
             var prop = GetSpecialProperty(memberName, declaringType);
             if (prop == null)
             {
                 foreach (var item in SpecialMethods)
-                    if (item.DeclaringType == declaringType && item.OriginalName == null)
+                    if (item.DeclaringTypes.Contains(declaringType) && item.OriginalName == null)
                         return item;
             }
             return prop;
@@ -349,12 +504,34 @@ namespace Cudafy.Translator
         {
             foreach (var oh in OptionalHeaders)
                 oh.Used = false;
+            foreach (var oh in OptionalFunctions)
+                oh.Used = false;
+            _constants.Clear();
             DisableSmartArray = false;
+        }
+        
+        private static List<KernelConstantInfo> _constants = new List<KernelConstantInfo>();
+
+        public static IEnumerable<KernelConstantInfo> GetConstants()
+        {
+            return _constants;
+        }
+
+        public static void AddConstant(KernelConstantInfo kci)
+        {
+            _constants.Add(kci);
         }
 
         private static void UseOptionalHeader(string name)
         {
             var oh = OptionalHeaders.Where(o => o.Name == name).FirstOrDefault();
+            Debug.Assert(oh != null);
+            oh.Used = true;
+        }
+
+        private static void UseOptionalFunction(string name)
+        {
+            var oh = OptionalFunctions.Where(o => o.Name == name).FirstOrDefault();
             Debug.Assert(oh != null);
             oh.Used = true;
         }
@@ -368,10 +545,11 @@ namespace Cudafy.Translator
         public readonly static string csBallot = "Ballot";
         public readonly static string csAllocateShared = "AllocateShared";
 
-        public readonly static List<SpecialMember> SpecialMethods = new List<SpecialMember>();
-        public readonly static List<SpecialMember> SpecialProperties = new List<SpecialMember>();
-        public readonly static Dictionary<string, SpecialTypeProps> SpecialTypes = new Dictionary<string, SpecialTypeProps>();
-        public readonly static List<OptionalHeader> OptionalHeaders;
+        public static List<SpecialMember> SpecialMethods = new List<SpecialMember>();
+        public static List<SpecialMember> SpecialProperties = new List<SpecialMember>();
+        public static Dictionary<string, SpecialTypeProps> SpecialTypes = new Dictionary<string, SpecialTypeProps>();
+        public static List<OptionalHeader> OptionalHeaders;
+        public static List<OptionalFunction> OptionalFunctions;
 
         static string TranslateStringLength(MemberReferenceExpression mre, object data)
         {
@@ -443,6 +621,11 @@ namespace Cudafy.Translator
             return "__syncthreads";
         }
 
+        static string TranslateSyncThreadsOpenCL(MemberReferenceExpression mre, object data)
+        {
+            return "barrier(CLK_LOCAL_MEM_FENCE)";
+        }
+
         static string TranslateSyncThreadsCount(MemberReferenceExpression mre, object data)
         {
             if (ComputeCapability < new Version(2, 0))
@@ -496,6 +679,12 @@ namespace Cudafy.Translator
 
         static string GetMemberName(MemberReferenceExpression mre, object data)
         {
+            return mre.MemberName;
+        }
+
+        static string GetOptionalFunctionMemberName(MemberReferenceExpression mre, object data)
+        {
+            UseOptionalFunction(mre.MemberName);
             return mre.MemberName;
         }
 

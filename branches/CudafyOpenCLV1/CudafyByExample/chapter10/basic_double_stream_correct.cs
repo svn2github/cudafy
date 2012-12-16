@@ -37,7 +37,7 @@ namespace CudafyByExample
         {
             CudafyModule km = CudafyTranslator.Cudafy();
 
-            GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target);
+            GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
             gpu.LoadModule(km);
             
             int[] dev_a0, dev_b0, dev_c0;

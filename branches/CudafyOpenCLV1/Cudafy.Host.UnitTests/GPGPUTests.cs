@@ -63,6 +63,8 @@ namespace Cudafy.Host.UnitTests
             gpu = null;
         }
 
+
+
         //[Test]
         //[ExpectedException(typeof(CudafyHostException), ExpectedMessage=CudafyHostException.csDEVICE_ID_OUT_OF_RANGE)]
         //public void Test_TryCreateOutOfRangeCudaGPU()

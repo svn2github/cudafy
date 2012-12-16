@@ -34,7 +34,7 @@ namespace Cloo
     using System;
     using System.Collections.Generic;
     using System.Runtime.InteropServices;
-
+    using Cloo.Bindings;
     public partial class ComputeCommandQueue
     {
         #region CopyBuffer
@@ -342,6 +342,36 @@ namespace Cloo
                 newEvent.TrackGCHandle(destinationGCHandle);
             }
         }
+/// <summary>
+/// Added by Hybrid DSP
+/// </summary>
+/// <typeparam name="T"></typeparam>
+/// <param name="source"></param>
+/// <param name="destination"></param>
+/// <param name="blocking"></param>
+/// <param name="sourceOffset"></param>
+/// <param name="destinationOffset"></param>
+/// <param name="region"></param>
+/// <param name="events"></param>
+        public void ReadFromBufferEx<T>(ComputeBufferBase<T> source, ref Array destination, bool blocking, long sourceOffset, long destinationOffset, long region, IList<ComputeEventBase> events) where T : struct
+        {
+            GCHandle destinationGCHandle = GCHandle.Alloc(destination, GCHandleType.Pinned);
+            IntPtr destinationOffsetPtr = Marshal.UnsafeAddrOfPinnedArrayElement(destination, (int)destinationOffset);
+
+            if (blocking)
+            {
+                Read(source, blocking, sourceOffset, region, destinationOffsetPtr, events);
+                destinationGCHandle.Free();
+            }
+            else
+            {
+                bool userEventsWritable = (events != null && !events.IsReadOnly);
+                IList<ComputeEventBase> eventList = (userEventsWritable) ? events : Events;
+                Read(source, blocking, sourceOffset, region, destinationOffsetPtr, eventList);
+                ComputeEvent newEvent = (ComputeEvent)eventList[eventList.Count - 1];
+                newEvent.TrackGCHandle(destinationGCHandle);
+            }
+        }
 
         /// <summary>
         /// Enqueues a command to read data from a buffer.
@@ -559,6 +589,68 @@ namespace Cloo
                 bool userEventsWritable = (events != null && !events.IsReadOnly);
                 IList<ComputeEventBase> eventList = (userEventsWritable) ? events : Events;
                 Write(destination, blocking, destinationOffset, region, sourceOffsetPtr, eventList);
+                ComputeEvent newEvent = (ComputeEvent)eventList[eventList.Count - 1];
+                newEvent.TrackGCHandle(sourceGCHandle);
+            }
+        }
+
+        /// <summary>
+        /// Added by Hybrid DSP
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source">The source.</param>
+        /// <param name="destination">The destination.</param>
+        /// <param name="blocking">if set to <c>true</c> [blocking].</param>
+        /// <param name="sourceOffset">The source offset.</param>
+        /// <param name="destinationOffset">The destination offset.</param>
+        /// <param name="region">The region.</param>
+        /// <param name="events">The events.</param>
+        public void WriteToBufferEx<T>(Array source, ComputeBufferBase<T> destination, bool blocking, long sourceOffset, long destinationOffset, long region, IList<ComputeEventBase> events) where T : struct
+        {
+            GCHandle sourceGCHandle = GCHandle.Alloc(source, GCHandleType.Pinned);
+            IntPtr sourceOffsetPtr = Marshal.UnsafeAddrOfPinnedArrayElement(source, (int)sourceOffset);
+
+            if (blocking)
+            {
+                WriteEx<T>(destination.Handle, blocking, destinationOffset, region, sourceOffsetPtr, events);
+                sourceGCHandle.Free();
+            }
+            else
+            {
+                bool userEventsWritable = (events != null && !events.IsReadOnly);
+                IList<ComputeEventBase> eventList = (userEventsWritable) ? events : Events;
+                WriteEx<T>(destination.Handle, blocking, destinationOffset, region, sourceOffsetPtr, eventList);
+                ComputeEvent newEvent = (ComputeEvent)eventList[eventList.Count - 1];
+                newEvent.TrackGCHandle(sourceGCHandle);
+            }
+        }
+
+        /// <summary>
+        /// Added by Hybrid DSP
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source">The source.</param>
+        /// <param name="destination">The destination.</param>
+        /// <param name="blocking">if set to <c>true</c> [blocking].</param>
+        /// <param name="sourceOffset">The source offset.</param>
+        /// <param name="destinationOffset">The destination offset.</param>
+        /// <param name="region">The region.</param>
+        /// <param name="events">The events.</param>
+        public void WriteToBufferEx<T>(Array source, CLMemoryHandle destinationHandle, bool blocking, long sourceOffset, long destinationOffset, long region, IList<ComputeEventBase> events) where T : struct
+        {
+            GCHandle sourceGCHandle = GCHandle.Alloc(source, GCHandleType.Pinned);
+            IntPtr sourceOffsetPtr = Marshal.UnsafeAddrOfPinnedArrayElement(source, (int)sourceOffset);
+
+            if (blocking)
+            {
+                WriteEx<T>(destinationHandle, blocking, destinationOffset, region, sourceOffsetPtr, events);
+                sourceGCHandle.Free();
+            }
+            else
+            {
+                bool userEventsWritable = (events != null && !events.IsReadOnly);
+                IList<ComputeEventBase> eventList = (userEventsWritable) ? events : Events;
+                WriteEx<T>(destinationHandle, blocking, destinationOffset, region, sourceOffsetPtr, eventList);
                 ComputeEvent newEvent = (ComputeEvent)eventList[eventList.Count - 1];
                 newEvent.TrackGCHandle(sourceGCHandle);
             }

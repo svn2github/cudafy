@@ -56,8 +56,8 @@ namespace Cudafy
         /// <param name="type">The type.</param>
         /// <param name="method">The method.</param>
         /// <param name="gpuMethodType">Type of the gpu method.</param>
-        public KernelMethodInfo(Type type, MethodInfo method, eKernelMethodType gpuMethodType)
-            : this(type, method, gpuMethodType, false)
+        public KernelMethodInfo(Type type, MethodInfo method, eKernelMethodType gpuMethodType, CudafyModule parentModule)
+            : this(type, method, gpuMethodType, false, parentModule)
         {
         }
 
@@ -68,13 +68,15 @@ namespace Cudafy
         /// <param name="method">The method.</param>
         /// <param name="gpuMethodType">Type of the gpu method.</param>
         /// <param name="isDummy">if set to <c>true</c> is dummy.</param>
-        public KernelMethodInfo(Type type, MethodInfo method, eKernelMethodType gpuMethodType, bool isDummy)
+        /// <param name="parentModule">Module of which this is a part.</param>
+        public KernelMethodInfo(Type type, MethodInfo method, eKernelMethodType gpuMethodType, bool isDummy, CudafyModule parentModule)
         {
             Type = type;
             Method = method;
             MethodType = gpuMethodType;
             DeserializedChecksum = 0;
             IsDummy = isDummy;
+            ParentModule = parentModule;
         }
 
         /// <summary>
@@ -161,7 +163,7 @@ namespace Cudafy
             return xe;
         }
 
-        internal static KernelMethodInfo Deserialize(XElement xe, string directory = null)
+        internal static KernelMethodInfo Deserialize(XElement xe, CudafyModule parentModule, string directory = null)
         {
             string methodName = xe.GetAttributeValue(csNAME);
             string methodTypeName = xe.GetAttributeValue(csTYPE);
@@ -210,7 +212,7 @@ namespace Cudafy
                 mi = type.GetMethod(methodName);
                 if (mi == null)
                     throw new CudafyException(CudafyException.csCOULD_NOT_FIND_METHOD_X_IN_TYPE_X_IN_ASSEMBLY_X, methodName, typeName, assemblyFullName);
-                kmi = new KernelMethodInfo(type, mi, methodType, isDummy == true ? true : false);                
+                kmi = new KernelMethodInfo(type, mi, methodType, isDummy == true ? true : false, parentModule);                
             }
             kmi.DeserializedChecksum = checksum;
             return kmi;

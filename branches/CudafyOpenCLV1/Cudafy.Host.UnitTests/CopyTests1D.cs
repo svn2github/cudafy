@@ -181,7 +181,7 @@ namespace Cudafy.Host.UnitTests
             GC.Collect();
         }
 
-
+      
 
 
         [Cudafy]

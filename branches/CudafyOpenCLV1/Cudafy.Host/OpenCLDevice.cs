@@ -30,6 +30,7 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Threading;
 using Cloo;
+using Cloo.Bindings;
 namespace Cudafy.Host
 {
     public class OpenCLDevice : GPGPU
@@ -44,6 +45,9 @@ namespace Cudafy.Host
             try
             {
                 _computeDevice = GetComputeDevice(deviceId);
+                _kernels = new List<ComputeKernel>();
+                ComputeContextPropertyList properties = new ComputeContextPropertyList(_computeDevice.Platform);
+                _context = new ComputeContext(new[] { _computeDevice }, properties, null, IntPtr.Zero);
             }
             catch (IndexOutOfRangeException)
             {
@@ -62,6 +66,10 @@ namespace Cudafy.Host
         }
 
         internal static ReadOnlyCollection<ComputeDevice> ComputeDevices;
+
+        private ComputeContext _context;
+
+        private List<ComputeKernel> _kernels;
 
         private ComputeDevice GetComputeDevice(int id)
         {
@@ -113,17 +121,17 @@ namespace Cudafy.Host
         
         public override bool CanAccessPeer(GPGPU peer)
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         protected override void DoCopyDeviceToDevice<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         protected override void DoCopyDeviceToDeviceAsync<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count, int stream)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override void CreateStream(int streamId)
@@ -146,34 +154,141 @@ namespace Cudafy.Host
             throw new NotImplementedException();
         }
 
-        public override void StartTimer()
-        {
-            throw new NotImplementedException();
-        }
 
-        public override float StopTimer()
-        {
-            throw new NotImplementedException();
-        }
+        private string clTestProgramSource = @"
+kernel void VectorAdd(
+    global  read_only int* a,
+    global  read_only int* b,
+    global write_only int* c )
+{
+    int index = get_global_id(0);
+    c[index] = a[index] + b[index];
+}
+";
 
         public override void LoadModule(CudafyModule module, bool unload = true)
         {
-            throw new NotImplementedException();
+            // Create and build the opencl program.
+            Debug.WriteLine(module.CudaSourceCode);
+            ComputeProgram program = new ComputeProgram(_context, module.CudaSourceCode);
+            try
+            {
+                program.Build(null, null, null, IntPtr.Zero);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+                module.CompilerOutput = program.GetBuildLog(_computeDevice);
+                Debug.WriteLine(module.CompilerOutput);
+            }
+
+            if (unload)
+                UnloadModules();
+            else
+                CheckForDuplicateMembers(module);
+                
+            // Create the kernel function and set its arguments.
+            foreach (ComputeKernel kernel in program.CreateAllKernels())
+                _kernels.Add(kernel);
+           
+            // Load constants
+            foreach (var kvp in module.Constants)
+            {
+                if (!kvp.Value.IsDummy)
+                {
+                    int elemSize = MSizeOf(kvp.Value.Information.FieldType.GetElementType());
+                    int totalLength = kvp.Value.GetTotalLength();
+                    ComputeBuffer<byte> a = new ComputeBuffer<byte>(_context, ComputeMemoryFlags.ReadOnly, totalLength * elemSize);
+                    module.Constants[kvp.Key].CudaPointer = a.Handle;
+                }
+            }
+
+            _modules.Add(module);
         }
 
         public override void UnloadModule(CudafyModule module)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            
         }
+
+        public override void UnloadModules()
+        {
+            _kernels.Clear();
+            base.UnloadModules();
+        }
+
+        //private CLDevicePtrEx<T> GetDeviceMemoryCL<T>(object devArray)
+        //{
+        //    return GetDeviceMemory(devArray) as CLDevicePtrEx<Type>
+        //}
 
         protected override void DoLaunch(dim3 gridSize, dim3 blockSize, int streamId, KernelMethodInfo gpuMI, params object[] arguments)
         {
-            throw new NotImplementedException();
+            ComputeKernel kernel = _kernels.Where(k => k.FunctionName == gpuMI.Name).FirstOrDefault();//
+            int totalArgs = arguments.Length;
+            int actualArgCtr = 0;
+            int i = 0;
+            for (i = 0; i < totalArgs; i++, actualArgCtr++)
+            {
+                object arg = arguments[actualArgCtr];
+                if (arg is Array)
+                {
+                    var ptrEx = GetDeviceMemory(arg) as CLDevicePtrExInter;
+                    kernel.SetMemoryArgument(i, ptrEx.Handle);
+                    int[] dims = ptrEx.GetDimensions();
+                    for (int d = 0; d < ptrEx.Dimensions; d++, totalArgs++)
+                        kernel.SetValueArgument(++i, dims[d]);
+
+                }
+                else
+                {
+                    kernel.SetValueArgument(i, MSizeOf(arg.GetType()), arg);
+                }
+            }
+            
+            // Add constants
+            foreach (KeyValuePair<string, KernelConstantInfo> kvp in gpuMI.ParentModule.Constants)
+            {
+                kernel.SetMemoryArgument(i++, (CLMemoryHandle)kvp.Value.CudaPointer);
+            }
+           
+            //foreach(KernelConstantInfo kci in _module)
+
+            // Create the event wait list. An event list is not really needed for this example but it is important to see how it works.
+            // Note that events (like everything else) consume OpenCL resources and creating a lot of them may slow down execution.
+            // For this reason their use should be avoided if possible.
+            ComputeEventList eventList = new ComputeEventList();
+
+            // Create the command queue. This is used to control kernel execution and manage read/write/copy operations.
+            ComputeCommandQueue commands = new ComputeCommandQueue(_context, _computeDevice, ComputeCommandQueueFlags.None);
+
+            // Execute the kernel "count" times. After this call returns, "eventList" will contain an event associated with this command.
+            // If eventList == null or typeof(eventList) == ReadOnlyCollection<ComputeEventBase>, a new event will not be created.
+
+            // Convert from CUDA grid and block size to OpenCL grid size
+            int gridDims = gridSize.ToArray().Length; 
+            int blockDims = blockSize.ToArray().Length;
+            int maxDims = Math.Max(gridDims, blockDims);
+
+            long[] blockSizeArray = blockSize.ToFixedSizeArray(maxDims);
+            long[] gridSizeArray = gridSize.ToFixedSizeArray(maxDims);
+            for(i = 0; i < maxDims; i++)
+                gridSizeArray[i] *= blockSizeArray[i];
+            commands.Execute(kernel, null, gridSizeArray, blockSizeArray, eventList);
+
+            commands.Finish();
         }
 
         protected override void DoCopyToConstantMemory<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci)
         {
-            throw new NotImplementedException();
+            ComputeEventList eventList = new ComputeEventList(); 
+            ComputeCommandQueue commands = new ComputeCommandQueue(_context, _computeDevice, ComputeCommandQueueFlags.None);
+            commands.WriteToBufferEx<T>(hostArray, (CLMemoryHandle)ci.CudaPointer, true, hostOffset, devOffset, count, eventList);
+            commands.Finish();
         }
 
         protected override void DoCopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci, int streamId)
@@ -183,17 +298,25 @@ namespace Cudafy.Host
 
         protected override void DoCopyToDevice<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count)
         {
-            throw new NotImplementedException();
+            ComputeEventList eventList = new ComputeEventList();
+            ComputeCommandQueue commands = new ComputeCommandQueue(_context, _computeDevice, ComputeCommandQueueFlags.None);
+            CLDevicePtrEx<T> ptr = GetDeviceMemory(devArray) as CLDevicePtrEx<T>;
+            commands.WriteToBufferEx(hostArray, ptr.DevPtr, true, hostOffset, devOffset, count, eventList);
+            commands.Finish();
         }
 
         protected override void DoCopyFromDevice<T>(Array devArray, Array hostArray)
         {
-            throw new NotImplementedException();
+            DoCopyFromDevice<T>(devArray, 0, hostArray, 0, -1);
         }
 
         protected override void DoCopyFromDevice<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count)
         {
-            throw new NotImplementedException();
+            ComputeEventList eventList = new ComputeEventList();
+            ComputeCommandQueue commands = new ComputeCommandQueue(_context, _computeDevice, ComputeCommandQueueFlags.None);
+            CLDevicePtrEx<T> ptr = GetDeviceMemory(devArray) as CLDevicePtrEx<T>;
+            commands.ReadFromBufferEx(ptr.DevPtr, ref hostArray, true, devOffset, hostOffset, count < 0 ? ptr.TotalSize : count, eventList);
+            commands.Finish();
         }
 
         protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId)
@@ -253,7 +376,7 @@ namespace Cudafy.Host
 
         public override void HostFreeAll()
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         protected override Array DoCast<T, U>(int offset, Array devArray, int n)
@@ -278,12 +401,15 @@ namespace Cudafy.Host
 
         public override void DestroyStreams()
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         public override T[] CopyToDevice<T>(T[] hostArray)
         {
-            throw new NotImplementedException();
+            T[] devMem = new T[0];      
+            ComputeBuffer<T> a = new ComputeBuffer<T>(_context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, hostArray);
+            AddToDeviceMemory(devMem, new CLDevicePtrEx<T>(a, hostArray.Length, _context));
+            return devMem;
         }
 
         public override T[,] CopyToDevice<T>(T[,] hostArray)
@@ -322,8 +448,11 @@ namespace Cudafy.Host
         }
 
         public override T[] Allocate<T>(int x)
-        {
-            throw new NotImplementedException();
+        {         
+            T[] devMem = new T[0];
+            ComputeBuffer<T> a = new ComputeBuffer<T>(_context, ComputeMemoryFlags.ReadWrite, x);
+            AddToDeviceMemory(devMem, new CLDevicePtrEx<T>(a, x, _context));
+            return devMem;
         }
 
         public override T[,] Allocate<T>(int x, int y)
@@ -338,7 +467,7 @@ namespace Cudafy.Host
 
         public override T[] Allocate<T>(T[] hostArray)
         {
-            throw new NotImplementedException();
+            return Allocate<T>(hostArray.Length);
         }
 
         public override T[,] Allocate<T>(T[,] hostArray)
@@ -358,12 +487,171 @@ namespace Cudafy.Host
 
         public override void Free(object devArray)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         public override void FreeAll()
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
+    }
+
+    public abstract class CLDevicePtrExInter : DevicePtrEx
+    {
+        public abstract CLMemoryHandle Handle { get; }
+    }
+
+    /// <summary>
+    /// Internal use.
+    /// </summary>
+    public class CLDevicePtrEx<T> : CLDevicePtrExInter where T  : struct
+    {
+        //protected CUDevicePtrEx(CUcontext? context)
+        //{
+        //    Context = context;
+        //}
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CUDevicePtrEx"/> class.
+        /// </summary>
+        /// <param name="devPtr">The dev PTR.</param>
+        /// <param name="context">The context.</param>       
+        public CLDevicePtrEx(ComputeBuffer<T> devPtr, ComputeContext context)
+            : this(devPtr, 1, 1, 1, context)
+        {
+            Dimensions = 0;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CUDevicePtrEx"/> class.
+        /// </summary>
+        /// <param name="devPtr">The dev PTR.</param>
+        /// <param name="xSize">Size of the x.</param>
+        /// <param name="context">The context.</param>     
+        public CLDevicePtrEx(ComputeBuffer<T> devPtr, int xSize, ComputeContext context)
+            : this(devPtr, xSize, 1, 1, context)
+        {
+            Dimensions = 1;
+        }
+
+        ///// <summary>
+        ///// Casts the specified pointer.
+        ///// </summary>
+        ///// <typeparam name="T"></typeparam>
+        ///// <param name="ptrEx">The pointer.</param>
+        ///// <param name="offset">The offset.</param>
+        ///// <param name="xSize">Size of the x.</param>
+        ///// <returns></returns>
+        //public CLDevicePtrEx Cast<T>(CUDevicePtrEx ptrEx, int offset, int xSize)
+        //{
+        //    int size = GPGPU.MSizeOf(typeof(T));
+        //    CUdeviceptr ptrOffset = ptrEx.DevPtr + (long)(offset * size);
+        //    CUDevicePtrEx newPtrEx = new CUDevicePtrEx(ptrOffset, xSize, ptrEx.Context);
+        //    newPtrEx.CreatedFromCast = true;
+        //    ptrEx.AddChild(newPtrEx);
+        //    return newPtrEx;
+        //}
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CUDevicePtrEx"/> class.
+        /// </summary>
+        /// <param name="devPtr">The dev PTR.</param>
+        /// <param name="xSize">Size of the x.</param>
+        /// <param name="ySize">Size of the y.</param>
+        /// <param name="context">The context.</param>       
+        public CLDevicePtrEx(ComputeBuffer<T> devPtr, int xSize, int ySize, ComputeContext context)
+            : this(devPtr, xSize, ySize, 1, context)
+        {
+            Dimensions = 2;
+        }
+
+        ///// <summary>
+        ///// Casts the specified pointer.
+        ///// </summary>
+        ///// <typeparam name="T"></typeparam>
+        ///// <param name="ptrEx">The pointer.</param>
+        ///// <param name="offset">The offset.</param>
+        ///// <param name="xSize">Size of the x.</param>
+        ///// <param name="ySize">Size of the y.</param>
+        ///// <returns></returns>
+        //public CLDevicePtrEx Cast<T>(CUDevicePtrEx ptrEx, int offset, int xSize, int ySize)
+        //{
+        //    int size = GPGPU.MSizeOf(typeof(T));
+        //    CUdeviceptr ptrOffset = ptrEx.DevPtr + (long)(offset * size);
+        //    CUDevicePtrEx newPtrEx = new CUDevicePtrEx(ptrOffset, xSize, ySize, ptrEx.Context);
+        //    newPtrEx.CreatedFromCast = true;
+        //    ptrEx.AddChild(newPtrEx);
+        //    return newPtrEx;
+        //}
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CUDevicePtrEx"/> class.
+        /// </summary>
+        /// <param name="devPtr">The dev PTR.</param>
+        /// <param name="xSize">Size of the x.</param>
+        /// <param name="ySize">Size of the y.</param>
+        /// <param name="zSize">Size of the z.</param>
+        /// <param name="context">The context.</param>       
+        public CLDevicePtrEx(ComputeBuffer<T> devPtr, int xSize, int ySize, int zSize, ComputeContext context)
+        {
+            CreatedFromCast = false;
+            DevPtr = devPtr;
+            XSize = xSize;
+            YSize = ySize;
+            ZSize = zSize;
+            Dimensions = 3;
+            Context = context;
+            //OriginalSize = originalSize < 0 ? TotalSize : originalSize;
+        }
+
+        ///// <summary>
+        ///// Casts the specified pointer.
+        ///// </summary>
+        ///// <typeparam name="T"></typeparam>
+        ///// <param name="ptrEx">The pointer.</param>
+        ///// <param name="offset">The offset.</param>
+        ///// <param name="xSize">Size of the x.</param>
+        ///// <param name="ySize">Size of the y.</param>
+        ///// <param name="zSize">Size of the z.</param>
+        ///// <returns></returns>
+        //public CLDevicePtrEx Cast<T>(CUDevicePtrEx ptrEx, int offset, int xSize, int ySize, int zSize)
+        //{
+        //    int size = GPGPU.MSizeOf(typeof(T));
+        //    CUdeviceptr ptrOffset = ptrEx.DevPtr + (long)(offset * size);
+        //    CUDevicePtrEx newPtrEx = new CUDevicePtrEx(ptrOffset, xSize, ySize, zSize, ptrEx.Context);
+        //    newPtrEx.CreatedFromCast = true;
+        //    ptrEx.AddChild(newPtrEx);
+        //    return newPtrEx;
+        //}
+
+
+        /// <summary>
+        /// Gets the dev PTR.
+        /// </summary>
+        public ComputeBuffer<T> DevPtr { get; private set; }
+
+        public override CLMemoryHandle Handle
+        {
+            get
+            {
+                return DevPtr.Handle;
+            }
+        }
+
+        /// <summary>
+        /// Gets the IntPtr in DevPtr.
+        /// </summary>
+        public override IntPtr Pointer
+        {
+            get { return DevPtr.Handle.Value; }
+        }
+
+
+        /// <summary>
+        /// Gets the context.
+        /// </summary>
+        public ComputeContext Context { get; private set; }
+
+
     }
 }

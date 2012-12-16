@@ -222,6 +222,16 @@ namespace Cloo
         }
 
         /// <summary>
+        /// Added by Hybrid DSP
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="memObj"></param>
+        public void SetMemoryArgument(int index, CLMemoryHandle handle)
+        {
+            SetValueArgument<CLMemoryHandle>(index, handle);
+        }
+
+        /// <summary>
         /// Sets a <c>sampler_t</c> argument of the <see cref="ComputeKernel"/>.
         /// </summary>
         /// <param name="index"> The argument index. </param>
@@ -247,6 +257,28 @@ namespace Cloo
                 SetArgument(
                     index,
                     new IntPtr(Marshal.SizeOf(typeof(T))),
+                    gcHandle.AddrOfPinnedObject());
+            }
+            finally
+            {
+                gcHandle.Free();
+            }
+        }
+        /// <summary>
+        /// Added by Hybrid DSP. Sets a value argument of the <see cref="ComputeKernel"/>.
+        /// </summary>
+        /// <typeparam name="T"> The type of the argument. </typeparam>
+        /// <param name="index"> The argument index. </param>
+        /// <param name="data"> The data that is passed as the argument value. </param>
+        /// <remarks> Arguments to the kernel are referred by indices that go from 0 for the leftmost argument to n-1, where n is the total number of arguments declared by the kernel. </remarks>
+        public void SetValueArgument(int index, int objectSize, object data)// where T : struct
+        {
+            GCHandle gcHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
+            try
+            {
+                SetArgument(
+                    index,
+                    new IntPtr(objectSize),
                     gcHandle.AddrOfPinnedObject());
             }
             finally

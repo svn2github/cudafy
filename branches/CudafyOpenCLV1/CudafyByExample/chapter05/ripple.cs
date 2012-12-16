@@ -27,7 +27,7 @@ namespace CudafyByExample
         public void Execute()
         {
             Show();
-            int loops = CudafyModes.Target == eGPUType.Cuda ? 200 : 2;
+            int loops = CudafyModes.Target == eGPUType.Emulator ? 2 : 200;
             int side = ripple_gpu.DIM;
             Bitmap bmp = new Bitmap(side, side, PixelFormat.Format32bppArgb);
             Rectangle rect = new Rectangle(0, 0, bmp.Width, bmp.Height);
@@ -48,7 +48,7 @@ namespace CudafyByExample
                 Refresh();
             }
             ripple.ShutDown();
-            if(CudafyModes.Target != eGPUType.Cuda)
+            if(CudafyModes.Target == eGPUType.Emulator)
                 MessageBox.Show("Click to continue.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
             Close();
         }

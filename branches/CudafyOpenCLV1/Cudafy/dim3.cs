@@ -81,6 +81,39 @@ namespace Cudafy
         public int z { get; private set; }
 
         /// <summary>
+        /// Helper method to transform into an array of dimension sizes.
+        /// </summary>
+        /// <returns></returns>
+        public long[] ToArray()
+        {
+            int dims = 1;
+            if (z > 1)
+                dims = 3;
+            else if (y > 1)
+                dims = 2;
+            long[] array = new long[dims];
+            array[0] = x;
+            if (dims > 1)
+                array[1] = y;
+            if (dims > 2)
+                array[2] = z;
+            return array;
+        }
+
+        public long[] ToFixedSizeArray(int size)
+        {
+            if (size < 1 || size > 3)
+                throw new ArgumentOutOfRangeException("size");
+            long[] array = new long[size];
+            array[0] = x;
+            if (size > 1)
+                array[1] = y;
+            if (size > 2)
+                array[2] = z;
+            return array;
+        }
+
+        /// <summary>
         /// Performs an implicit conversion from <see cref="System.Int32"/> to <see cref="Cudafy.dim3"/>.
         /// </summary>
         /// <param name="dimX">The dim X.</param>

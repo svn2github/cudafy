@@ -44,7 +44,6 @@ namespace Cudafy.Host
         public EmulatedGPU(int deviceId = 0)
             : base(deviceId)
         {
-            _stopWatch = new Stopwatch();
             _hostHandles = new Dictionary<IntPtr, GCHandle>();
             _lock = new object();
             _availableBytesPerfctr = new PerformanceCounter("Memory", "Available Bytes");
@@ -63,7 +62,7 @@ namespace Cudafy.Host
         //    }
         //}
 
-        private Stopwatch _stopWatch;
+        
 #warning Make configurable at EmulatedGPU level
 #pragma warning disable 1591
         /// <summary>
@@ -131,26 +130,7 @@ namespace Cudafy.Host
         {
         }
 
-        /// <summary>
-        /// Starts the timer.
-        /// </summary>
-        public override void StartTimer()
-        {
-            _stopWatch.Start();
-        }
 
-        /// <summary>
-        /// Stops the timer.
-        /// </summary>
-        /// <returns>Elapsed time.</returns>
-        public override float StopTimer()
-        {
-            float time = 0;
-            _stopWatch.Stop();
-            time = (float)_stopWatch.ElapsedMilliseconds;
-            _stopWatch.Reset();
-            return time;
-        }
 
         /// <summary>
         /// Gets the free memory.

@@ -67,6 +67,23 @@ namespace Cudafy
     }
 
     /// <summary>
+    /// Language type.
+    /// </summary>
+    public enum eLanguage
+    {
+
+        /// <summary>
+        /// NVIDIA CUDA C
+        /// </summary> 
+        Cuda,
+
+        /// <summary>
+        /// OpenCL C
+        /// </summary>
+        OpenCL
+    }
+
+    /// <summary>
     /// High level enumerator encapsulation eGPUType and eGPUCodeGenerator.
     /// </summary>
     public enum eCudafyQuickMode
@@ -82,22 +99,34 @@ namespace Cudafy
     }
 
     /// <summary>
-    /// Convenience class for storing three main types of enumerators.
+    /// Convenience class for storing device settings.
     /// </summary>
     public class CudafyModes
     {
         /// <summary>
+        /// Gets or sets the device id.
+        /// </summary>
+        /// <value>
+        /// The device id.
+        /// </value>
+        public static int DeviceId { get; set; }
+        
+        /// <summary>
         /// Target GPU.
         /// </summary>
         public static eGPUType Target;
+
         /// <summary>
         /// Target compiler.
         /// </summary>
         public static eGPUCompiler Compiler;
-        /// <summary>
-        /// Target code generator.
-        /// </summary>
-        public static eGPUCodeGenerator CodeGen;
+
+
+
+        ///// <summary>
+        ///// Target code generator.
+        ///// </summary>
+        //public static eGPUCodeGenerator CodeGen;
 
         /// <summary>
         /// Quick mode.
@@ -115,10 +144,11 @@ namespace Cudafy
         /// </summary>
         static CudafyModes()
         {
-            CodeGen = eGPUCodeGenerator.CudaC;
+            //CodeGen = eGPUCodeGenerator.CudaC;
             Compiler = eGPUCompiler.CudaNvcc;
             Target = eGPUType.Cuda;
             Mode = eCudafyQuickMode.Cuda;
+            DeviceId = 0;
         }
     }
 

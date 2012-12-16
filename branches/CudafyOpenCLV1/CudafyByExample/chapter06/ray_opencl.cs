@@ -11,43 +11,30 @@ using System.Threading;
 using System.Runtime.InteropServices;
 using Cudafy;
 using Cudafy.Host;
-using Cudafy.Types;
 using Cudafy.Translator;
 
 namespace CudafyByExample
-{    
-    public class ray
+{
+    [Cudafy]
+    public struct SphereOpenCL
     {
-        [Cudafy]
-        public struct NestedSphere
-        {
-            public float r;
-            public float b;
-            public float g;
-            public float radius;
-            public float x;
-            public float y;
-            public float z;
+        public float r;
+        public float b;
+        public float g;
+        public float radius;
+        public float x;
+        public float y;
+        public float z;
 
-            public float hit(float ox1, float oy1, ref float n1)
-            {
-                float dx = ox1 - x;
-                float dy = oy1 - y;
-                if (dx * dx + dy * dy < radius * radius)
-                {
-                    float dz = GMath.Sqrt(radius * radius - dx * dx - dy * dy);
-                    n1 = dz / GMath.Sqrt(radius * radius);
-                    return dz + z;
-                }
-                return -2e10f;
-            }
-        }
-        
-        
+
+    }
+
+    public class ray_opencl
+    {
         public const int RAND_MAX = Int32.MaxValue;
         public const float INF = 2e10f;
 
-        public static float rnd( float x ) 
+        public static float rnd(float x)
         {
             float f = x * (float)rand.NextDouble();
             return f;
@@ -58,10 +45,21 @@ namespace CudafyByExample
         public const int SPHERES = 20;
 
         [Cudafy]
-        public static NestedSphere[] s = new NestedSphere[SPHERES];
+        public static float hit(SphereOpenCL s, float ox1, float oy1, ref float n1)
+        {
+            float dx = ox1 - s.x;
+            float dy = oy1 - s.y;
+            if (dx * dx + dy * dy < s.radius * s.radius)
+            {
+                float dz = GMath.Sqrt(s.radius * s.radius - dx * dx - dy * dy);
+                n1 = dz / GMath.Sqrt(s.radius * s.radius);
+                return dz + s.z;
+            }
+            return -2e10f;
+        }
 
         [Cudafy]
-        public static void kernel(GThread thread, byte[] ptr ) 
+        public static void thekernel(GThread thread, SphereOpenCL[] s, byte[] ptr)
         {
             // map from threadIdx/BlockIdx to pixel position
             int x = thread.threadIdx.x + thread.blockIdx.x * thread.blockDim.x;
@@ -70,15 +68,14 @@ namespace CudafyByExample
             float ox = (x - ray_gui.DIM / 2);
             float oy = (y - ray_gui.DIM / 2);
 
-            float   r=0, g=0, b=0;
-            float   maxz = -INF;
-            
-            for(int i=0; i<SPHERES; i++) 
+            float r = 0, g = 0, b = 0;
+            float maxz = -INF;
+            for (int i = 0; i < SPHERES; i++)
             {
                 float n = 0;
-                
-                float   t = s[i].hit( ox, oy, ref n );
-                if (t > maxz) 
+
+                float t = hit(s[i], ox, oy, ref n);
+                if (t > maxz)
                 {
                     float fscale = n;
                     r = s[i].r * fscale;
@@ -99,7 +96,7 @@ namespace CudafyByExample
             CudafyModule km = CudafyModule.TryDeserialize();
             if (km == null || !km.TryVerifyChecksums())
             {
-                km = CudafyTranslator.Cudafy();
+                km = CudafyTranslator.Cudafy(typeof(SphereOpenCL), typeof(ray_opencl));
                 km.TrySerialize();
             }
 
@@ -112,8 +109,11 @@ namespace CudafyByExample
             // allocate memory on the GPU for the bitmap (same size as ptr)
             byte[] dev_bitmap = gpu.Allocate(bitmap);
 
+            // allocate memory for the Sphere dataset
+            SphereOpenCL[] s = gpu.Allocate<SphereOpenCL>(SPHERES);
+
             // allocate temp memory, initialize it, copy to constant memory on the GPU
-            NestedSphere[] temp_s = new NestedSphere[SPHERES]; 
+            SphereOpenCL[] temp_s = new SphereOpenCL[SPHERES];
             for (int i = 0; i < SPHERES; i++)
             {
                 temp_s[i].r = rnd(1.0f);
@@ -126,14 +126,13 @@ namespace CudafyByExample
                 temp_s[i].radius = rnd(100.0f) + 20;
 
             }
-
-            gpu.CopyToConstantMemory(temp_s, s);
+            gpu.CopyToDevice(temp_s, s);
 
             // generate a bitmap from our sphere data
             dim3 grids = new dim3(ray_gui.DIM / 16, ray_gui.DIM / 16);
             dim3 threads = new dim3(16, 16);
-            //gpu.Launch(grids, threads).kernel(dev_bitmap); // Dynamic
-            gpu.Launch(grids, threads, ((Action<GThread, byte[]>)kernel), dev_bitmap); // Strongly typed
+            //gpu.Launch(grids, threads).kernel(s, dev_bitmap); // Dynamic
+            gpu.Launch(grids, threads, ((Action<GThread, SphereOpenCL[], byte[]>)thekernel), s, dev_bitmap); // Strongly typed
 
             // copy our bitmap back from the GPU for display
             gpu.CopyFromDevice(dev_bitmap, bitmap);

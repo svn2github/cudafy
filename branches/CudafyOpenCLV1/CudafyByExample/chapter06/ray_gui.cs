@@ -18,14 +18,18 @@ namespace CudafyByExample
     public partial class ray_gui : Form
     {
         private bool bDONE = false;
-        
-        public ray_gui(bool useConstantMemory)
+
+        public const int DIM = 1024;
+
+        public enum eRayVersion { CUDA, CUDA_const, OpenCL };
+
+        public ray_gui(eRayVersion rayVersion)
         {
             InitializeComponent();
 
-            Text = useConstantMemory ? "ray" : "ray_noconst";
+            Text = rayVersion.ToString();
 
-            int side = useConstantMemory ? ray.DIM : ray_noconst.DIM;
+            int side = DIM;
             Bitmap bmp = new Bitmap(side, side, PixelFormat.Format32bppArgb);
             Rectangle rect = new Rectangle(0, 0, bmp.Width, bmp.Height);
 
@@ -35,10 +39,12 @@ namespace CudafyByExample
             int bytes = bmpData.Stride * bmp.Height;
             byte[] rgbValues = new byte[bytes];
 
-            if (useConstantMemory)
+            if (rayVersion == eRayVersion.CUDA_const)
                 ray.Execute(rgbValues);
-            else
+            else if (rayVersion == eRayVersion.CUDA)
                 ray_noconst.Execute(rgbValues);
+            else
+                ray_opencl.Execute(rgbValues);
 
             // Get the address of the first line.
             IntPtr ptr = bmpData.Scan0;

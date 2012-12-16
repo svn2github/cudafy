@@ -648,7 +648,7 @@ namespace Cudafy
             {
                 foreach (var xe in funcs.Elements(KernelMethodInfo.csCUDAFYKERNELMETHOD))
                 {
-                    KernelMethodInfo kmi = KernelMethodInfo.Deserialize(xe, path);
+                    KernelMethodInfo kmi = KernelMethodInfo.Deserialize(xe, km, path);
                     km.Functions.Add(kmi.Method.Name, kmi);
                 }
             }
@@ -745,9 +745,9 @@ namespace Cudafy
         private List<CompilerOptions> _options;
 
         /// <summary>
-        /// Gets the compiler output.
+        /// Gets or sets the compiler output.
         /// </summary>
-        public string CompilerOutput { get; private set; }
+        public string CompilerOutput { get; set; }
 
         /// <summary>
         /// Gets the last arguments passed to compiler.

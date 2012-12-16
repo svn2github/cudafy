@@ -84,7 +84,7 @@ namespace Cudafy.Host.UnitTests
             double[] control = new double[N];
             mathtest(control);
             for (int i = 0; i < N; i++)
-                Assert.AreEqual(control[i], data[i], 0.00001, "Index={0}", i);
+                Assert.AreEqual(control[i], data[i], 0.00005, "Index={0}", i);
         }
 
         [Test]
@@ -101,7 +101,7 @@ namespace Cudafy.Host.UnitTests
             float[] control = new float[N];
             gmathtest(control);
             for (int i = 0; i < N; i++)
-                Assert.AreEqual(control[i], data[i], 0.00001, "Index={0}", i);
+                Assert.AreEqual(control[i], data[i], 0.00005, "Index={0}", i);
         }
 
         [Cudafy]
