@@ -271,4 +271,22 @@ namespace Cudafy
         /// </summary>
         Private = 4 
     }
+
+
+    /// <summary>
+    /// Use to specify the behaviour of the CudafyDummyAttribute.
+    /// </summary>
+    public enum eCudafyDummyBehaviour
+    {
+        /// <summary>
+        /// Default
+        /// </summary>
+        Default = 0,
+
+
+        /// <summary>
+        /// Do not write the include statements for dummy types in the generated CUDA C file.
+        /// </summary>
+        SuppressInclude = 1
+    }
 }

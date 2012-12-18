@@ -42,15 +42,16 @@ namespace Cudafy.Translator
         private static string csCUDAFYIGNOREATTRIBUTE = typeof(CudafyIgnoreAttribute).Name;
 
 #pragma warning disable 1591
-        public static eCudafyType? GetCudafyType(this ICustomAttributeProvider med, out bool isDummy)
+        public static eCudafyType? GetCudafyType(this ICustomAttributeProvider med, out bool isDummy, out eCudafyDummyBehaviour behaviour)
         {
             bool ignore;
-            return GetCudafyType(med, out isDummy, out ignore);
+            return GetCudafyType(med, out isDummy, out ignore, out behaviour);
         }
 
-        public static eCudafyType? GetCudafyType(this ICustomAttributeProvider med, out bool isDummy, out bool ignore)
+        public static eCudafyType? GetCudafyType(this ICustomAttributeProvider med, out bool isDummy, out bool ignore, out eCudafyDummyBehaviour behaviour)
         {
             isDummy = false;
+            behaviour = eCudafyDummyBehaviour.Default;
             ignore = false;
             if (med is TypeDefinition)
                 med = med as TypeDefinition;
@@ -70,6 +71,8 @@ namespace Cudafy.Translator
                 eCudafyType et = eCudafyType.Auto;
                 if (customAttr.ConstructorArguments.Count() > 0)
                     et = (eCudafyType)customAttr.ConstructorArguments.First().Value;
+                if (customAttr.ConstructorArguments.Count() > 1)
+                    behaviour = (eCudafyDummyBehaviour)customAttr.ConstructorArguments.ElementAt(1).Value;
                 return et;
             }
             return null;

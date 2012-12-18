@@ -407,7 +407,7 @@ namespace Cudafy
         }
 
         /// <summary>
-        /// Gets the dummy includes.
+        /// Gets the dummy function includes.
         /// </summary>
         /// <returns>Strings representing the Cuda include files.</returns>
         public IEnumerable<string> GetDummyIncludes()

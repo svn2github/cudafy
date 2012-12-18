@@ -150,6 +150,7 @@ namespace Cudafy
             xe.SetAttributeValue(csNAME, Name);
             xe.SetAttributeValue(csFIELDNAME, Information.Name);
             xe.SetAttributeValue(csISDUMMY, IsDummy);
+            xe.SetAttributeValue(csDUMMYBEHAVIOUR, Behaviour);
             xe.Add(new XElement(csTYPE, this.Type != null ? this.Type.FullName : string.Empty));
             xe.Add(new XElement(csASSEMBLY, this.Type != null ? this.Type.Assembly.FullName : string.Empty));
             xe.Add(new XElement(csASSEMBLYNAME, this.Type != null ? this.Type.Assembly.GetName().Name : string.Empty));
@@ -163,6 +164,7 @@ namespace Cudafy
             string constantName = xe.GetAttributeValue(csNAME);
             string fieldName = xe.GetAttributeValue(csFIELDNAME);
             bool? isDummy = xe.TryGetAttributeBoolValue(csISDUMMY);
+            bool? doNoIncludeHeader = xe.TryGetAttributeBoolValue(csDUMMYBEHAVIOUR);
             string typeName = xe.Element(csTYPE).Value;
             string assemblyFullName = xe.Element(csASSEMBLY).Value;
             string assemblyName = xe.Element(csASSEMBLYNAME).Value;

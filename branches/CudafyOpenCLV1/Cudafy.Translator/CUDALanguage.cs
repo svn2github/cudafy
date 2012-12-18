@@ -35,6 +35,17 @@ using ICSharpCode.Decompiler.Ast.Transforms;
 namespace Cudafy.Translator
 {
 #pragma warning disable 1591
+    
+    public class SpecialMemberFormatter : SpecialMember
+    {
+        public SpecialMemberFormatter(string declaringType, string original, Func<MemberReferenceExpression, object, string> func, bool callFunc = true, bool noSemiColon = false, System.Reflection.MethodInfo method = null)
+            : base(declaringType, original, func, callFunc, noSemiColon)
+        {
+            Method = method;
+        }
+        public System.Reflection.MethodInfo Method { get; private set; }
+    }
+    
     public class SpecialMember
     {
         public SpecialMember(string declaringType, string original, Func<MemberReferenceExpression, object, string> func, bool callFunc = true, bool noSemiColon = false) :
@@ -108,6 +119,36 @@ namespace Cudafy.Translator
                 InitializeCUDA();
             else if (language == eLanguage.OpenCL)
                 InitializeOpenCL();
+        }
+
+                // key is "Class.Method"
+        private static Dictionary<string, SpecialMemberFormatter> CachedFormatters;
+        private const string FormatterSuffix = "_formatter";
+        /// <summary>
+        /// Initializes the <see cref="CUDALanguage"/> class.
+        /// </summary>
+        static CUDALanguage()
+        {
+            CachedFormatters = new Dictionary<string, SpecialMemberFormatter>();
+            // TO-DO: skip system assemblies
+            foreach (System.Reflection.Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                foreach (System.Type type in assembly.GetTypes())
+                {
+                    foreach (System.Reflection.MethodInfo method in type.GetMethods(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).Where(u => u.Name.EndsWith(FormatterSuffix)))
+                    {
+                        System.Reflection.ParameterInfo[] parameter = method.GetParameters();
+                        if (parameter.Length == 2 && parameter[0].ParameterType.Equals(typeof(Cudafy.eLanguage)) && parameter[1].ParameterType.Equals(typeof(System.String[])) && method.ReturnType.Equals(typeof(System.String)))
+                        {
+                            SpecialMemberFormatter sm = new SpecialMemberFormatter(type.Name, method.Name, new Func<MemberReferenceExpression, object, string>(TranslateFormatterCode), false, false, method);
+                            string key = string.Format("{0}.{1}", type.Name, method.Name.Substring(0, method.Name.Length - FormatterSuffix.Length));
+                            if (CachedFormatters.ContainsKey(key))
+                                throw new CudafyLanguageException(CudafyLanguageException.csMETHOD_X_ALREADY_ADDED_TO_THIS_MODULE, key);
+                            CachedFormatters.Add(key, sm);
+                        }
+                    }
+                }
+            }
         }
 
         private eLanguage _language;
@@ -581,6 +622,29 @@ namespace Cudafy.Translator
         static string TranslateToFalse(MemberReferenceExpression mre, object data)
         {
             return "false";
+        }
+
+        static string TranslateFormatterCode(MemberReferenceExpression mre, object data)
+        {
+            var anl = ((Expression)data).Children.ToList();
+            string value = string.Empty;
+            string key = string.Format("{0}.{1}", mre.Target.ToString(), mre.MemberName);
+            SpecialMemberFormatter formatter = CachedFormatters[key];
+            if (anl.Count > 1)
+            {
+                object[] args = anl.Skip(1).ToArray();
+
+                // too restrictive.
+                //foreach (object o in args)
+                //    if (!(o is IdentifierExpression) && !(o is PrimitiveExpression))
+                //        throw new CudafyLanguageException(CudafyLanguageException.csMETHOD_X_X_ONLY_SUPPORTS_X, mre.Target.ToString(), mre.MemberName + FormatterSuffix, "identifiers and primitives as list of arguments to text formatting");
+
+                string[] str_args = args.Select(k => k.ToString()).ToArray();
+                value = formatter.Method.Invoke(null, new object[] { CudafyTranslator.Language, str_args }).ToString();
+            }
+            else
+                value = formatter.Method.Invoke(null, new object[] { CudafyTranslator.Language }).ToString();
+            return value;
         }
 
         static string TranslateInsertCode(MemberReferenceExpression mre, object data)

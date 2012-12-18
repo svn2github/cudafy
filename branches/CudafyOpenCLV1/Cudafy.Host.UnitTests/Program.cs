@@ -39,8 +39,8 @@ namespace Cudafy.Host.UnitTests
             {
                 CudafyModes.Target = eGPUType.Cuda;
 
-                TempOpenCLVectorAddTest();
-
+                //TempOpenCLVectorAddTest();
+                popcTest();
                 //CURANDTests.Basics();
 
                 //StringTests st = new StringTests();
@@ -79,7 +79,7 @@ namespace Cudafy.Host.UnitTests
             
         }
 
-        const int N = 1024;
+        public const int N = 1024;
 
         static void TempOpenCLTest()
         {
@@ -132,13 +132,56 @@ namespace Cudafy.Host.UnitTests
 
             
         }
+
+        static void popcTest()
+        {
+            var km = CudafyModule.TryDeserialize(typeof(OpenCLTestClass).Name);
+            if (km == null || !km.TryVerifyChecksums())
+            {
+                km = CudafyTranslator.Cudafy(typeof(OpenCLTestClass));
+                km.TrySerialize();
+            }
+            Console.WriteLine(km.CudaSourceCode);
+
+            GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target);
+            gpu.LoadModule(km);
+
+            uint[] v = new uint[N];
+            int[] c = new int[N];
+
+            // allocate the memory on the GPU
+            int[] dev_c = gpu.Allocate<int>(c);
+
+            // fill the array 'v'
+            for (int i = 0; i < N; i++)
+            {
+                v[i] = (uint)i;
+            }
+
+            // copy the array 'v' to the GPU
+            uint[] dev_v = gpu.CopyToDevice(v);
+            gpu.Launch(1, N).popVect(dev_v, dev_c);
+
+            // copy the array 'c' back from the GPU to the CPU
+            gpu.CopyFromDevice(dev_c, c);
+
+            // display the results
+            for (int i = 0; i < N; i++)
+            {
+                //Console.WriteLine("__popc{0} = {1}", v[i], c[i]);
+            }
+
+            // free the memory allocated on the GPU
+            gpu.FreeAll();
+        }
+
     }
 
 
     public class OpenCLTestClass
     {
         [Cudafy]
-        public static int[] ConstantMemory = new int[1024];
+        public static int[] ConstantMemory = new int[Program.N];
         
         [Cudafy]
         public static void VectorAdd(GThread thread,
@@ -146,12 +189,45 @@ namespace Cudafy.Host.UnitTests
                                 int[] b,
                                 int[] c )
         {
-            int[] shared = thread.AllocateShared<int>("shared", 1024);
+            int[] shared = thread.AllocateShared<int>("shared", Program.N);
             int index = thread.threadIdx.x + thread.blockIdx.x * thread.blockDim.x;
             //int index = thread.get_local_id(0);
             c[index] = (a[index] + b[index]) * ConstantMemory[index];
             thread.SyncThreads();
         }
+
+        [Cudafy]
+        public static void popVect(GThread thread, uint[] v, int[] c)
+        {
+            int tid = thread.threadIdx.x;
+            if (tid < Program.N)
+                c[tid] = __popc(v[tid]);
+        }
+
+        [CudafyDummy(eCudafyType.Auto, eCudafyDummyBehaviour.SuppressInclude)]
+        public static int __popc(uint x)
+        {
+            int tot = 0;
+            for (int f = 0; f < 32; f++)
+                tot += (int)((x >> f) & 1);
+            return tot;
+        }
+
+        //private static string __popc_formatter(eGPUType gpuType, params string[] args)
+        //{
+        //    if (args.Length != 1)
+        //        throw new ApplicationException("Invalid number of arguments");
+        //    switch (gpuType)
+        //    {
+        //        case eGPUType.Cuda:
+        //            return string.Format("__popc({0})", args[0]);
+        //        //case eGPUType.OpenCL:
+        //        //    return string.Format("popcount({0})", args[0]);
+        //        default:
+        //            throw new NotImplementedException();
+        //    }
+        //}
+
 
     }
 }

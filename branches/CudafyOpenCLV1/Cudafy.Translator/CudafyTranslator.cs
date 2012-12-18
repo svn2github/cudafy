@@ -298,6 +298,7 @@ namespace Cudafy.Translator
             var codePto = new PlainTextOutput(codeSw);
 
             bool isDummy = false;
+            eCudafyDummyBehaviour behaviour = eCudafyDummyBehaviour.Default;
 
             Dictionary<string, ModuleDefinition> modules = new Dictionary<string,ModuleDefinition>();
 
@@ -336,18 +337,18 @@ namespace Cudafy.Translator
                             continue;
                         Debug.WriteLine(t.FullName);
                         // Types                      
-                        var attr = t.GetCudafyType(out isDummy);
+                        var attr = t.GetCudafyType(out isDummy, out behaviour);
                         if (attr != null)
                         {
                             _cl.DecompileType(t, structsPto, compOpts);
-                            cm.Types.Add(type.FullName.Replace("+", ""), new KernelTypeInfo(type, isDummy));
+                            cm.Types.Add(type.FullName.Replace("+", ""), new KernelTypeInfo(type, isDummy, behaviour));
                         }
                         else if (t.Name == td.Name)
                         {
                             // Fields
                             foreach (var fi in td.Fields)
                             {
-                                attr = fi.GetCudafyType(out isDummy);
+                                attr = fi.GetCudafyType(out isDummy, out behaviour);
                                 if (attr != null)
                                 {
                                     VerifyMemberName(fi.Name);
@@ -366,8 +367,7 @@ namespace Cudafy.Translator
                             // Methods
                             foreach (var med in td.Methods)
                             {
-                                isDummy = false;
-                                attr = med.GetCudafyType(out isDummy);
+                                attr = med.GetCudafyType(out isDummy, out behaviour);
                                 if (attr != null)
                                 {
                                     if (!med.IsStatic)
@@ -380,7 +380,7 @@ namespace Cudafy.Translator
                                     VerifyMemberName(med.Name);
                                     eKernelMethodType kmt = eKernelMethodType.Device;
                                     kmt = GetKernelMethodType(attr, mi);
-                                    cm.Functions.Add(med.Name, new KernelMethodInfo(type, mi, kmt, isDummy, cm));
+                                    cm.Functions.Add(med.Name, new KernelMethodInfo(type, mi, kmt, isDummy, behaviour, cm));
                                 }
                             }
                         }

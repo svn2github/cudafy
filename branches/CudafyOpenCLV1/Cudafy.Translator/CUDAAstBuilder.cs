@@ -277,7 +277,8 @@ namespace Cudafy.Translator
             context.CurrentType = typeDef;
             TypeDeclarationEx astType = new TypeDeclarationEx();
             bool isDummy = false;
-            var cudafyAttr = typeDef.GetCudafyType(out isDummy);
+            eCudafyDummyBehaviour behaviour;
+            var cudafyAttr = typeDef.GetCudafyType(out isDummy, out behaviour);
             astType.CudafyType = cudafyAttr;
             astType.IsDummy = isDummy;
 
@@ -798,7 +799,8 @@ namespace Cudafy.Translator
         {
             bool isDummy = false;
             bool ignore = false;
-            var cudafyAttr = methodDef.GetCudafyType(out isDummy, out ignore);
+            eCudafyDummyBehaviour behaviour;
+            var cudafyAttr = methodDef.GetCudafyType(out isDummy, out ignore, out behaviour);
             if (cudafyAttr == null)
                 cudafyAttr = eCudafyType.Auto;
             
@@ -1113,7 +1115,8 @@ namespace Cudafy.Translator
         {
             FieldDeclarationEx astField = new FieldDeclarationEx();
             bool isDummy;
-            var cudafyAttr = fieldDef.GetCudafyType(out isDummy);
+            eCudafyDummyBehaviour behaviour;
+            var cudafyAttr = fieldDef.GetCudafyType(out isDummy, out behaviour);
             astField.CudafyType = cudafyAttr;
             astField.IsDummy = isDummy;
 
