@@ -513,5 +513,30 @@ namespace Cudafy.Translator
                     return "__constant";
             }
         }
+
+        public string GetAddressSpaceQualifier(eCudafyAddressSpace qualifier)
+        {
+            string addressSpaceQualifier = string.Empty;
+            if (Language == eLanguage.OpenCL)
+            {
+                if ((qualifier & eCudafyAddressSpace.Global) == eCudafyAddressSpace.Global)
+                {
+                    return "global";
+                }
+                else if ((qualifier & eCudafyAddressSpace.Constant) == eCudafyAddressSpace.Constant)
+                {
+                    return "constant";
+                }
+                else if ((qualifier & eCudafyAddressSpace.Shared) == eCudafyAddressSpace.Shared)
+                {
+                    return "local";
+                }
+                else if ((qualifier & eCudafyAddressSpace.Private) == eCudafyAddressSpace.Private)
+                {
+                    return "private";
+                }
+            }
+            return addressSpaceQualifier;
+        }
     }
 }

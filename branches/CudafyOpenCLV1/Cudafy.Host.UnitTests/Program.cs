@@ -112,9 +112,9 @@ namespace Cudafy.Host.UnitTests
                 inputData3[i] = 2;
             }
 
-            GPGPU gpu = CudafyHost.GetDevice(eGPUType.OpenCL, 0);
+            GPGPU gpu = CudafyHost.GetDevice(eGPUType.Cuda, 0);
             Console.WriteLine(gpu.GetDeviceProperties().Name);
-            CudafyTranslator.Language = eLanguage.OpenCL;
+            CudafyTranslator.Language = eLanguage.Cuda;
             var mod = CudafyTranslator.Cudafy(typeof(OpenCLTestClass));
             //mod.CudaSourceCode
             Console.WriteLine(mod.CudaSourceCode);
@@ -142,7 +142,7 @@ namespace Cudafy.Host.UnitTests
         
         [Cudafy]
         public static void VectorAdd(GThread thread,
-                                int[] a,
+                                [CudafyAddressSpace(eCudafyAddressSpace.Global)] int[] a,
                                 int[] b,
                                 int[] c )
         {

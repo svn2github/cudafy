@@ -27,25 +27,25 @@ using System.Text;
 namespace Cudafy
 {
 
-    /// <summary>
-    /// Flag for code generator.
-    /// </summary>
-    [Flags]
-    public enum eGPUCodeGenerator
-    {
-        /// <summary>
-        /// None selected.
-        /// </summary>
-        None = 0,
-        /// <summary>
-        /// Cuda C code.
-        /// </summary>
-        CudaC = 1,
-        /// <summary>
-        /// Generate code for all.
-        /// </summary>
-        All = 255
-    };
+    ///// <summary>
+    ///// Flag for code generator.
+    ///// </summary>
+    //[Flags]
+    //public enum eGPUCodeGenerator
+    //{
+    //    /// <summary>
+    //    /// None selected.
+    //    /// </summary>
+    //    None = 0,
+    //    /// <summary>
+    //    /// Cuda C code.
+    //    /// </summary>
+    //    CudaC = 1,
+    //    /// <summary>
+    //    /// Generate code for all.
+    //    /// </summary>
+    //    All = 255
+    //};
 
     /// <summary>
     /// GPU target type.
@@ -239,5 +239,36 @@ namespace Cudafy
         /// sm_35
         /// </summary>
         sm_35
+    }
+
+    /// <summary>
+    /// OpenCL address space 
+    /// </summary>
+    public enum eCudafyAddressSpace
+    {
+        /// <summary>
+        /// Prevent automatic placement of an address space qualifier.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// Variable is in global memory.
+        /// </summary>
+        Global = 1,
+
+        /// <summary>
+        /// Variable is in constant memory.
+        /// </summary>
+        Constant = 2,
+
+        /// <summary>
+        /// Variable is in shared (local) memory.
+        /// </summary>
+        Shared = 3,
+
+        /// <summary>
+        /// Variable is in private/register memory.
+        /// </summary>
+        Private = 4 
     }
 }

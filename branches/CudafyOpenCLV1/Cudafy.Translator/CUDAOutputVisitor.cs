@@ -31,8 +31,9 @@ using System.Text;
 using ICSharpCode.NRefactory.PatternMatching;
 using ICSharpCode.NRefactory.TypeSystem;
 using ICSharpCode.NRefactory.CSharp;
-
+using Cudafy;
 using CL = Cudafy.Translator.CUDALanguage;
+
 namespace Cudafy.Translator
 {
 #pragma warning disable 1591
@@ -976,6 +977,14 @@ namespace Cudafy.Translator
 		public object VisitMemberReferenceExpression(MemberReferenceExpression mre, object data)
 		{
 			StartNode(mre);
+            if (mre.Target.ToString() == typeof(eCudafyAddressSpace).Name)
+            {
+                eCudafyAddressSpace cudafyQualifier = (eCudafyAddressSpace)Enum.Parse(typeof(eCudafyAddressSpace), mre.MemberName);
+                string parameterQualifier = CudafyTranslator.LanguageSpecifics.GetAddressSpaceQualifier(cudafyQualifier);
+                formatter.WriteIdentifier(parameterQualifier);
+                _lastAddressSpace = cudafyQualifier;
+                return EndNode(mre);
+            }
             bool isGThread = mre.IsThreadIdVar();
             bool isFixedElementField = mre.MemberName == "FixedElementField";
             bool isSpecialProp = !isGThread && mre.IsSpecialProperty();
@@ -987,7 +996,7 @@ namespace Cudafy.Translator
             if (isSpecialMethod)
             {
                 bool noSemicolon = false;
-                string s = mre.TranslateSpecialMethod(data, out noSemicolon);//,out callFunc);
+                string s = mre.TranslateSpecialMethod(data, out noSemicolon);
                 _noSemicolon = noSemicolon;
                 formatter.WriteIdentifier(s);
             }
@@ -1535,21 +1544,22 @@ namespace Cudafy.Translator
 			attribute.Type.AcceptVisitor(this, data);
 			Space(policy.SpaceBeforeMethodCallParentheses);
 			if (attribute.Arguments.Count != 0 || !attribute.GetChildByRole(AstNode.Roles.LPar).IsNull)
-				WriteCommaSeparatedListInParenthesis(attribute.Arguments, policy.SpaceWithinMethodCallParentheses);
+                WriteCommaSeparatedList(attribute.Arguments);//, policy.SpaceWithinMethodCallParentheses);
+				//WriteCommaSeparatedListInParenthesis(attribute.Arguments, policy.SpaceWithinMethodCallParentheses);
 			return EndNode(attribute);
 		}
 		
 		public object VisitAttributeSection(AttributeSection attributeSection, object data)
 		{
 			StartNode(attributeSection);
-			WriteToken("[", AstNode.Roles.LBracket);
-			if (!string.IsNullOrEmpty (attributeSection.AttributeTarget)) {
-				WriteToken(attributeSection.AttributeTarget, AttributeSection.TargetRole);
-				WriteToken(":", AttributeSection.Roles.Colon);
-				Space();
-			}
+			//WriteToken("[", AstNode.Roles.LBracket);
+            //if (!string.IsNullOrEmpty (attributeSection.AttributeTarget)) {
+            //    WriteToken(attributeSection.AttributeTarget, AttributeSection.TargetRole);
+            //    WriteToken(":", AttributeSection.Roles.Colon);
+            //    Space();
+            //}
 			WriteCommaSeparatedList(attributeSection.Attributes.SafeCast<ICSharpCode.NRefactory.CSharp.Attribute, AstNode>());
-			WriteToken("]", AstNode.Roles.RBracket);
+			//WriteToken("]", AstNode.Roles.RBracket);
 			if (attributeSection.Parent is ParameterDeclaration || attributeSection.Parent is TypeParameterDeclaration)
 				Space();
 			else
@@ -2786,6 +2796,8 @@ namespace Cudafy.Translator
             //return EndNode(operatorDeclaration);
 		}
 
+        private eCudafyAddressSpace? _lastAddressSpace = null;
+
         /// <summary>
         /// Visits the parameter declaration.
         /// </summary>
@@ -2796,6 +2808,8 @@ namespace Cudafy.Translator
 		{
 			StartNode(parameterDeclaration);
 			WriteAttributes(parameterDeclaration.Attributes);
+            //foreach(var attr in parameterDeclaration.Attributes)
+            //    attr.
             //switch (parameterDeclaration.ParameterModifier) {
             //    case ParameterModifier.Ref:
             //        WriteKeyword("ref", ParameterDeclaration.ModifierRole);
@@ -2907,8 +2921,8 @@ namespace Cudafy.Translator
 		{
 			StartNode(simpleType);
             var sti = CUDALanguage.TranslateSpecialType(simpleType.Identifier);
-            WriteIdentifier(sti);
-			WriteTypeArguments(simpleType.TypeArguments);
+            //WriteIdentifier(sti);
+			//WriteTypeArguments(simpleType.TypeArguments);
 			return EndNode(simpleType);
 		}
 		
@@ -2932,8 +2946,9 @@ namespace Cudafy.Translator
 		public object VisitComposedType(ComposedType composedType, object data)
 		{
 			StartNode(composedType);//
-            if (composedType.ArraySpecifiers.Count > 0)
+            if (composedType.ArraySpecifiers.Count > 0 && _lastAddressSpace == null)
                 WriteKeyword(CudafyTranslator.LanguageSpecifics.MemorySpaceSpecifier);
+            _lastAddressSpace = null;
             if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL && !(composedType.BaseType is PrimitiveType))
                 WriteKeyword("struct");
 			composedType.BaseType.AcceptVisitor(this, data);

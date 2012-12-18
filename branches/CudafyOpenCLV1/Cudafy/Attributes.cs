@@ -115,4 +115,20 @@ namespace Cudafy
     public class CudafyIgnoreAttribute : Attribute
     {
     }
+
+
+    /// <summary>
+    /// Placed on parameters to indicate the OpenCL address space. Note that if not specified then arrays will
+    /// automatically be marked global. Ignored when translating to CUDA.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public class CudafyAddressSpaceAttribute : Attribute
+    {
+        public CudafyAddressSpaceAttribute(eCudafyAddressSpace qualifier)
+        {
+            Qualifier = qualifier;
+        }
+        
+        public eCudafyAddressSpace Qualifier { get; private set; }
+    }
 }
