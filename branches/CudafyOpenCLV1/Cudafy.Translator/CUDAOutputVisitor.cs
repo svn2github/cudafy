@@ -2921,8 +2921,8 @@ namespace Cudafy.Translator
 		{
 			StartNode(simpleType);
             var sti = CUDALanguage.TranslateSpecialType(simpleType.Identifier);
-            //WriteIdentifier(sti);
-			//WriteTypeArguments(simpleType.TypeArguments);
+            WriteIdentifier(sti);
+            WriteTypeArguments(simpleType.TypeArguments);
 			return EndNode(simpleType);
 		}
 		
