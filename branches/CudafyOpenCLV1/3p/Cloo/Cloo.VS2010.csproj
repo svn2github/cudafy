@@ -102,6 +102,7 @@
     <Compile Include="Source\ComputeSampler.cs" />
     <Compile Include="Source\ComputeSubBuffer.cs" />
     <Compile Include="Source\ComputeUserEvent.cs" />
+    <Compile Include="Source\HDSPUtils.cs" />
     <Compile Include="Source\SysIntX2.cs" />
     <Compile Include="Source\SysIntX3.cs" />
     <Compile Include="Source\ComputeTools.cs" />

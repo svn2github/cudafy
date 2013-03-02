@@ -23,7 +23,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 using Cudafy.Host;
+using Cudafy.Atomics;
+using Cudafy.IntegerIntrinsics;
 using Cudafy.UnitTests;
 using NUnit.Framework;
 using Cudafy.Translator;
@@ -37,11 +40,20 @@ namespace Cudafy.Host.UnitTests
 
         protected GPGPU _gpu;
 
+        public bool SupportsDouble { get; private set; }
+
         [TestFixtureSetUp]
         public virtual void SetUp()
         {
-            _cm = CudafyTranslator.Cudafy(this);
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
+            var types = new List<Type>();
+            types.Add(this.GetType());
+            types.Add(typeof(MathSingleTest));
+            SupportsDouble = _gpu.GetDeviceProperties().SupportsDoublePrecision;
+            if (SupportsDouble)
+                types.Add(typeof(MathDoubleTest));
+            _cm = CudafyTranslator.Cudafy(_gpu.GetArchitecture(), types.ToArray());
+            Debug.WriteLine(_cm.CudaSourceCode);
             _gpu.LoadModule(_cm);
         }
 
@@ -73,8 +85,13 @@ namespace Cudafy.Host.UnitTests
         [Test]
         public void Test_Math()
         {
+            if (!SupportsDouble)
+            {
+                Console.WriteLine("Device does not support double precision, skipping test...");
+                return;
+            }
             double[] data = new double[N];
-            double[] dev_data = _gpu.CopyToDevice(data); 
+            double[] dev_data = _gpu.CopyToDevice(data);
 #if !NET35
             _gpu.Launch().mathtest(dev_data);
 #else
@@ -82,7 +99,7 @@ namespace Cudafy.Host.UnitTests
 #endif
             _gpu.CopyFromDevice(dev_data, data);
             double[] control = new double[N];
-            mathtest(control);
+            MathDoubleTest.mathtest(control);
             for (int i = 0; i < N; i++)
                 Assert.AreEqual(control[i], data[i], 0.00005, "Index={0}", i);
         }
@@ -99,16 +116,123 @@ namespace Cudafy.Host.UnitTests
 #endif
             _gpu.CopyFromDevice(dev_data, data);
             float[] control = new float[N];
-            gmathtest(control);
+            MathSingleTest.gmathtest(control);
             for (int i = 0; i < N; i++)
                 Assert.AreEqual(control[i], data[i], 0.00005, "Index={0}", i);
         }
 
+        [Test]
+        public void Test_atomicsUInt32()
+        {
+            uint[] input = new uint[N];
+            uint[] output = new uint[N];
+            uint[] dev_input = _gpu.CopyToDevice(input);
+            uint[] dev_output = _gpu.CopyToDevice(output);
+            _gpu.Launch(1, 1, "atomicsTestUInt32", dev_input, dev_output);
+            _gpu.CopyFromDevice(dev_input, input);
+            _gpu.CopyFromDevice(dev_output, output);
+
+            uint[] inputControl = new uint[N];
+            uint[] outputControl = new uint[N];
+            atomicsTestUInt32(new GThread(0, 0, new GBlock(new GGrid(1), 1, 0, 0)), inputControl, outputControl);
+            for (int i = 0; i < N; i++)
+                Assert.AreEqual(inputControl[i], input[i], "Input Index={0}", i);
+            for (int i = 0; i < N; i++)
+                Assert.AreEqual(outputControl[i], output[i], "Output Index={0}", i);
+            _gpu.FreeAll();
+        }
+
+        [Test]
+        public void Test_integerIntrinsicsInt32()
+        {
+            int[] input = new int[N];
+            int[] output = new int[N];
+            int[] dev_input = _gpu.CopyToDevice(input);
+            int[] dev_output = _gpu.CopyToDevice(output);
+            _gpu.Launch(1, 1, "integerIntrinsicsInt32", dev_input, dev_output);
+            _gpu.CopyFromDevice(dev_input, input);
+            _gpu.CopyFromDevice(dev_output, output);
+
+            int[] inputControl = new int[N];
+            int[] outputControl = new int[N];
+            integerIntrinsicsInt32(new GThread(0, 0, new GBlock(new GGrid(1), 1, 0, 0)), inputControl, outputControl);
+            for (int i = 0; i < N; i++)
+                Assert.AreEqual(outputControl[i], output[i], "Output Index={0}", i);
+            _gpu.FreeAll();
+        }
+
+        [Cudafy]
+        public static void integerIntrinsicsInt32(GThread thread, int[] input, int[] output)
+        {
+            int i = 0;
+            int x = 0;
+            output[i++] = thread.popcount((uint)0x55555555);// 16
+            output[i++] = thread.clz(0x1FFFE00);            // 7
+            output[i++] = (int)thread.mul24((int)0x00000042, (int)0x00000042);
+            output[i++] = (int)thread.umul24((uint)0x00000042, (uint)0x00000042);
+            output[i++] = (int)thread.mulhi(0x0AFFEEDD, 0x0DEEFFAA);
+            output[i++] = (int)thread.umulhi((uint)0x0AFFEEDD, (uint)0x0DEEFFAA);
+        }
+
+        [Test]
+        public void Test_integerIntrinsicsInt64()
+        {
+            long[] input = new long[N];
+            long[] output = new long[N];
+            long[] dev_input = _gpu.CopyToDevice(input);
+            long[] dev_output = _gpu.CopyToDevice(output);
+            _gpu.Launch(1, 1, "integerIntrinsicsInt64", dev_input, dev_output);
+            _gpu.CopyFromDevice(dev_input, input);
+            _gpu.CopyFromDevice(dev_output, output);
+
+            long[] inputControl = new long[N];
+            long[] outputControl = new long[N];
+            integerIntrinsicsInt64(new GThread(0, 0, new GBlock(new GGrid(1), 1, 0, 0)), inputControl, outputControl);
+            for (int i = 0; i < N; i++)
+                Assert.AreEqual(outputControl[i], output[i], "Output Index={0}", i);
+            _gpu.FreeAll();
+        }
+
+        [Cudafy]
+        public static void integerIntrinsicsInt64(GThread thread, long[] input, long[] output)
+        {
+            int i = 0;
+            int x = 0;
+            output[i++] = thread.popcountll(0x5555555555555555);  // 32
+            output[i++] = thread.clzll(0x1FFFFFFFFF000);          // 15
+            output[i++] = (long)thread.umul64hi(0x0FFFFFFFFF000, 0x0555555555555555);
+            output[i++] = (long)thread.mul64hi(0x0FFFFFFFFF000, 0x0555555555555555);
+        }
+
+
+        [Cudafy]
+        public static void atomicsTestUInt32(GThread thread, uint[] input, uint[] output)
+        {
+            int i = 0;
+            int x = 0;
+            output[i++] = thread.atomicAdd(ref input[x], 42); // 42
+            output[i++] = thread.atomicSub(ref input[x], 21); // 21
+            output[i++] = thread.atomicIncEx(ref input[x]);   // 22
+            output[i++] = thread.atomicIncEx(ref input[x]);   // 23
+            output[i++] = thread.atomicMax(ref input[x], 50); // 50
+            output[i++] = thread.atomicMin(ref input[x], 40); // 40
+            output[i++] = thread.atomicOr(ref input[x], 16);  // 56
+            output[i++] = thread.atomicAnd(ref input[x], 15); // 8
+            output[i++] = thread.atomicXor(ref input[x], 15); // 7
+            output[i++] = thread.atomicExch(ref input[x], 88);// 88
+            output[i++] = thread.atomicCAS(ref input[x], 88, 123);// 123
+            output[i++] = thread.atomicCAS(ref input[x], 321, 222);// 123
+            output[i++] = thread.atomicDecEx(ref input[x]);   // 122
+        }
+    }
+
+    public class MathDoubleTest
+    {
         [Cudafy]
         public static void mathtest(double[] c)
         {
             int i = 0;
-            c[i++] = Math.Abs(-42.3);
+            c[i++] = Math.Abs((int)-42.3);
             c[i++] = Math.Acos(42.3);
             c[i++] = Math.Asin(42.3);
             c[i++] = Math.Atan(42.3);
@@ -133,12 +257,16 @@ namespace Cudafy.Host.UnitTests
             c[i++] = Math.Tanh(8.1);
             c[i++] = Math.Truncate(10.14334325);
         }
+    }
+
+    public class MathSingleTest
+    {
 
         [Cudafy]
         public static void gmathtest(float[] c)
         {
             int i = 0;
-            c[i++] = GMath.Abs(-42.3F);
+            c[i++] = GMath.Abs((long)-42.3F);
             c[i++] = GMath.Acos(42.3F);
             c[i++] = GMath.Asin(42.3F);
             c[i++] = GMath.Atan(42.3F);

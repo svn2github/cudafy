@@ -19,10 +19,11 @@ namespace CudafyByExample
         {          
             int i = 0;
 
-            foreach (GPGPUProperties prop in CudafyHost.GetDeviceProperties(eGPUType.OpenCL))// CudafyModes.Target))
+            foreach (GPGPUProperties prop in CudafyHost.GetDeviceProperties(CudafyModes.Target))
             {
                 Console.WriteLine("   --- General Information for device {0} ---", i);
                 Console.WriteLine("Name:  {0}", prop.Name);
+                Console.WriteLine("Platform Name:  {0}", prop.PlatformName);
                 Console.WriteLine("Device Id:  {0}", prop.DeviceId);
                 Console.WriteLine("Compute capability:  {0}.{1}", prop.Capability.Major, prop.Capability.Minor);
                 Console.WriteLine("Clock rate: {0}", prop.ClockRate);

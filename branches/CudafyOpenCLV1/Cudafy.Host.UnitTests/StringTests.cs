@@ -48,10 +48,10 @@ namespace Cudafy.Host.UnitTests
         {
             CudafyTranslator.GenerateDebug = true;
             _cm = CudafyModule.TryDeserialize();
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
             if (_cm == null || !_cm.TryVerifyChecksums())
             {
-                _cm = CudafyTranslator.Cudafy(eArchitecture.sm_20);
+                _cm = CudafyTranslator.Cudafy(_gpu.GetArchitecture(), this.GetType(), (_gpu is OpenCLDevice) ? null  : typeof(StringConstClass));
                 _cm.TrySerialize();
             }
             _gpu.LoadModule(_cm);
@@ -82,9 +82,9 @@ namespace Cudafy.Host.UnitTests
         public static void TransferUnicodeChar(char a, char[] c)
         {
             c[0] = a;
-            Console.WriteLine("hello from your gpu!");
-            Debug.Assert(c[0] == a);
-            Debug.Assert(c[0] == a, null, "%d == %d is not true!", c[0], a);
+            //Console.WriteLine("hello from your gpu!");
+            //Debug.Assert(c[0] == a);
+            //Debug.Assert(c[0] == a, null, "%d == %d is not true!", c[0], a);
         }
 
         [Test]
@@ -106,7 +106,7 @@ namespace Cudafy.Host.UnitTests
         [Cudafy]
         public static void TransferUnicodeCharArray(char[] a, char[] c)
         {
-            for(int i = 0; i < a.Length; i++)
+            for (int i = 0; i < a.Length; i++)
                 c[i] = a[i];
         }
 
@@ -130,7 +130,7 @@ namespace Cudafy.Host.UnitTests
         public static void TransferASCIIArray(byte[] a, byte[] c)
         {
             for (int i = 0; i < a.Length; i++)
-                c[i] = a[i];         
+                c[i] = a[i];
         }
 
 
@@ -146,7 +146,7 @@ namespace Cudafy.Host.UnitTests
             string c = new string(host_c);
             _gpu.FreeAll();
             Assert.AreEqual(a, c);
-            Debug.WriteLine(c);               
+            Debug.WriteLine(c);
         }
 
         [Cudafy]
@@ -180,13 +180,13 @@ namespace Cudafy.Host.UnitTests
         {
             string string2Search = "I believe it costs €155,95 in Düsseldorf";
             char[] string2Search_dev = _gpu.CopyToDevice(string2Search);
-            
+
             char char2Find = '€';
 
             int pos = -1;
             int[] pos_dev = _gpu.Allocate<int>();
 
-            _gpu.Launch(1, 1, "StringSearchv"+version.ToString(), string2Search_dev, char2Find, pos_dev);
+            _gpu.Launch(1, 1, "StringSearchv" + version.ToString(), string2Search_dev, char2Find, pos_dev);
             _gpu.CopyFromDevice(pos_dev, out pos);
             _gpu.FreeAll();
             Assert.Greater(pos, 0);
@@ -230,41 +230,37 @@ namespace Cudafy.Host.UnitTests
         [Test]
         public void TestStaticString()
         {
-            char[] dev_c = _gpu.Allocate<char>(constString.Length);
-            char[] host_c = new char[constString.Length];
-
-            _gpu.Launch(1, 1, "StringConst", dev_c);
-            _gpu.CopyFromDevice(dev_c, host_c);
-            string c = new string(host_c);
+            if (_gpu is OpenCLDevice)
+            {
+                Console.WriteLine("Device not supporting const string, so skip.");
+                return;
+            }
+            char[] dev_ca = _gpu.Allocate<char>(StringConstClass.constString.Length);
+            char[] host_ca = new char[StringConstClass.constString.Length];
+            char[] dev_cb = _gpu.Allocate<char>(StringConstClass.constString.Length);
+            char[] host_cb = new char[StringConstClass.constString.Length];
+            char[] dev_cc = _gpu.Allocate<char>(StringConstClass.constString.Length);
+            char[] host_cc = new char[StringConstClass.constString.Length];
+            _gpu.Launch(1, 1, "StringConst", dev_ca, dev_cb, dev_cc);
+            _gpu.CopyFromDevice(dev_ca, host_ca);
+            _gpu.CopyFromDevice(dev_cb, host_cb);
+            _gpu.CopyFromDevice(dev_cc, host_cc);
+            string ca = new string(host_ca);
             _gpu.FreeAll();
-            Assert.AreEqual(constString, c);
-            Debug.WriteLine(c);
+            Assert.AreEqual(StringConstClass.constString, ca, "ca");
+            Debug.WriteLine(ca);
+            string cb = new string(host_cb);
+            _gpu.FreeAll();
+            Assert.AreEqual(StringConstClass.constString, cb, "cb");
+            Debug.WriteLine(cb);
+            string cc = new string(host_cc);
+            _gpu.FreeAll();
+            Assert.AreEqual(StringConstClass.constString, cc, "cc");
+            Debug.WriteLine(cc);
         }
 
 
-        public const string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-        public const string constString = "悪霊退散！悪霊退散！怨霊、";
-        [Cudafy]
-        public static void StringConst(char[] ca)
-        {
-            int x = 0;
-            foreach (char c in constString)
-                ca[x++] = c;
 
-            string myString = constString;
-            for (int i = 0; i < myString.Length; i++)
-                ca[i] = myString[i];
-
-            int len = PassString(constString);
-            for (int i = 0; i < len; i++)
-                ca[i] = myString[i];
-        }
-
-        [Cudafy]
-        public static int PassString(string text)
-        {
-            return text.Length;
-        }
 
 
         public void TestSetUp()
@@ -275,6 +271,33 @@ namespace Cudafy.Host.UnitTests
         public void TestTearDown()
         {
           
+        }
+    }
+
+    public class StringConstClass
+    {
+        public const string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        public const string constString = "悪霊退悪霊退散怨霊abcdefghijklmn";//"";//// 
+        [Cudafy]
+        public static void StringConst(char[] ca, char[] cb, char[] cc)
+        {
+            int x = 0;
+            foreach (char c in constString)
+                ca[x++] = c;
+
+            string myString = constString;
+            for (int i = 0; i < myString.Length; i++)
+                cb[i] = myString[i];
+
+            int len = PassString(constString);
+            for (int i = 0; i < len; i++)
+                cc[i] = myString[i];
+        }
+
+        [Cudafy]
+        public static int PassString(string text)
+        {
+            return text.Length;
         }
     }
 }

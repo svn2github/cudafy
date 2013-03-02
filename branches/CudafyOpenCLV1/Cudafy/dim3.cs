@@ -54,18 +54,33 @@ namespace Cudafy
             this.z = 1;
         }
 
-        ///// <summary>
-        ///// Initializes a new instance of the <see cref="dim3"/> class.
-        ///// </summary>
-        ///// <param name="x">The x value.</param>
-        ///// <param name="y">The y value.</param>
-        ///// <param name="z">The z value.</param>
-        //public dim3(int x, int y, int z)
-        //{
-        //    this.x = x;
-        //    this.y = y;
-        //    this.z = z;
-        //}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="dim3"/> class.
+        /// </summary>
+        /// <param name="dimensions">The dimensions.</param>
+        public dim3(long[] dimensions)
+        {
+            int len = dimensions.Length;
+            if (len > 0)
+                x = (int)dimensions[0];
+            if (len > 1)
+                y = (int)dimensions[1];
+            if (len > 2)
+                z = (int)dimensions[2];
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="dim3"/> class.
+        /// </summary>
+        /// <param name="x">The x value.</param>
+        /// <param name="y">The y value.</param>
+        /// <param name="z">The z value.</param>
+        public dim3(long x, long y, long z)
+        {
+            this.x = (int)x;
+            this.y = (int)y;
+            this.z = (int)z;
+        }
 
         /// <summary>
         /// Gets the x.

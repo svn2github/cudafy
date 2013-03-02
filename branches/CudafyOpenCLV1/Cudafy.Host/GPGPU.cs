@@ -54,6 +54,7 @@ namespace Cudafy.Host
         /// <param name="deviceId">The device id.</param>
         protected GPGPU(int deviceId = 0)
         {
+            _hostHandles = new Dictionary<IntPtr, GCHandle>();
             _lock = new object();
             _stopWatch = new Stopwatch();
             _deviceMemory = new Dictionary<object, DevicePtrEx>();
@@ -358,7 +359,7 @@ namespace Cudafy.Host
         /// <param name="dst"></param>
         /// <param name="dstOffset"></param>
         /// <param name="count"></param>
-        public virtual void CopyDeviceToDevice<T>(T[] src, int srcOffset, GPGPU peer, T[] dst, int dstOffset, int count)
+        public virtual void CopyDeviceToDevice<T>(T[] src, int srcOffset, GPGPU peer, T[] dst, int dstOffset, int count) where T : struct
         {
             DoCopyDeviceToDevice<T>(src, srcOffset, peer, dst, dstOffset, count);
         }
@@ -373,7 +374,7 @@ namespace Cudafy.Host
         /// <param name="dst">Destination array.</param>
         /// <param name="dstOffset">Destination offset.</param>
         /// <param name="count">Number of samples.</param>
-        public virtual void CopyDeviceToDeviceAsync<T>(T[] src, int srcOffset, GPGPU peer, T[] dst, int dstOffset, int count, int stream)
+        public virtual void CopyDeviceToDeviceAsync<T>(T[] src, int srcOffset, GPGPU peer, T[] dst, int dstOffset, int count, int stream) where T : struct
         {
             DoCopyDeviceToDeviceAsync<T>(src, srcOffset, peer, dst, dstOffset, count, stream);
         }
@@ -389,7 +390,7 @@ namespace Cudafy.Host
         /// <param name="dstDevArray">The DST dev array.</param>
         /// <param name="dstOffet">The DST offet.</param>
         /// <param name="count">The count.</param>
-        protected abstract void DoCopyDeviceToDevice<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count);
+        protected abstract void DoCopyDeviceToDevice<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count) where T : struct;
 
         /// <summary>
         /// Does copy to peer asynchronously.
@@ -402,7 +403,7 @@ namespace Cudafy.Host
         /// <param name="dstOffet">The DST offet.</param>
         /// <param name="count">The count.</param>
         /// <param name="stream">Stream id.</param>
-        protected abstract void DoCopyDeviceToDeviceAsync<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count, int stream);
+        protected abstract void DoCopyDeviceToDeviceAsync<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count, int stream) where T : struct;
 
         /// <summary>
         /// Gets a value indicating whether this instance has multithreading enabled.
@@ -2567,14 +2568,32 @@ namespace Cudafy.Host
         /// <param name="streamId">The stream id.</param>
         public abstract void SynchronizeStream(int streamId = 0);
 
+        ///// <summary>
+        ///// Performs a default host memory allocation.
+        ///// </summary>
+        ///// <typeparam name="T">Blittable type.</typeparam>
+        ///// <param name="x">The number of elements.</param>
+        ///// <returns>Pointer to allocated memory.</returns>
+        ///// <remarks>Remember to free this memory with HostFree.</remarks>
+        //public abstract IntPtr HostAllocate<T>(int x);
+
+
+
+
+
         /// <summary>
         /// Performs a default host memory allocation.
         /// </summary>
-        /// <typeparam name="T">Blittable type.</typeparam>
-        /// <param name="x">The number of elements.</param>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="x">The x size.</param>
+        /// <param name="y">The y size.</param>
+        /// <param name="z">The z size.</param>
         /// <returns>Pointer to allocated memory.</returns>
         /// <remarks>Remember to free this memory with HostFree.</remarks>
-        public abstract IntPtr HostAllocate<T>(int x);
+        public IntPtr HostAllocate<T>(int x, int y, int z)
+        {
+            return HostAllocate<T>(x * y * z);
+        }
 
         /// <summary>
         /// Performs a default host memory allocation.
@@ -2592,28 +2611,77 @@ namespace Cudafy.Host
         /// <summary>
         /// Performs a default host memory allocation.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="x">The x size.</param>
-        /// <param name="y">The y size.</param>
-        /// <param name="z">The z size.</param>
-        /// <returns>Pointer to allocated memory.</returns>
-        /// <remarks>Remember to free this memory with HostFree.</remarks>
-        public IntPtr HostAllocate<T>(int x, int y, int z)
+        /// <returns>
+        /// Pointer to allocated memory.
+        /// </returns>
+        public virtual IntPtr HostAllocate<T>(int x)
         {
-            return HostAllocate<T>(x * y * z);
+            int bytes = MSizeOf(typeof(T)) * x;
+            byte[] buffer = new byte[bytes];
+            GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+            IntPtr intPtr = handle.AddrOfPinnedObject();
+            _hostHandles.Add(intPtr, handle);
+            return intPtr;
         }
+
+        protected Dictionary<IntPtr, GCHandle> _hostHandles;
 
         /// <summary>
         /// Frees memory allocated by HostAllocate.
         /// </summary>
-        /// <param name="ptr">The pointer to free.</param>
+        /// <param name="ptr">The pointer.</param>
         /// <exception cref="CudafyHostException">Pointer not found.</exception>
-        public abstract void HostFree(IntPtr ptr);
+        public virtual void HostFree(IntPtr ptr)
+        {
+            lock (_lock)
+            {
+                if (_hostHandles.ContainsKey(ptr))
+                {
+                    GCHandle handle = _hostHandles[ptr];
+                    handle.Free();
+                    _hostHandles.Remove(ptr);
+                }
+                else
+                    throw new CudafyHostException(CudafyHostException.csPOINTER_NOT_FOUND);
+            }
+        }
 
         /// <summary>
         /// Frees all memory allocated by HostAllocate.
         /// </summary>
-        public abstract void HostFreeAll();
+        public virtual void HostFreeAll()
+        {
+            lock (_lock)
+            {
+                foreach (var v in _hostHandles)
+                {
+                    GCHandle handle = v.Value;
+                    try
+                    {
+                        handle.Free();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex);
+                    }
+                }
+                _hostHandles.Clear();
+            }
+        }
+
+        ///// <summary>
+        ///// Frees memory allocated by HostAllocate.
+        ///// </summary>
+        ///// <param name="ptr">The pointer to free.</param>
+        ///// <exception cref="CudafyHostException">Pointer not found.</exception>
+        //public abstract void HostFree(IntPtr ptr);
+
+        ///// <summary>
+        ///// Frees all memory allocated by HostAllocate.
+        ///// </summary>
+        //public abstract void HostFreeAll();
 
 
 //
@@ -3438,7 +3506,7 @@ namespace Cudafy.Host
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="srcDevArray">The source device array.</param>
         /// <param name="dstDevArray">The destination device array.</param>
-        public abstract void CopyOnDevice<T>(T[] srcDevArray, T[] dstDevArray);
+        public abstract void CopyOnDevice<T>(T[] srcDevArray, T[] dstDevArray) where T : struct;
 
         /// <summary>
         /// Copies between preallocated arrays on device.
@@ -3449,7 +3517,7 @@ namespace Cudafy.Host
         /// <param name="dstDevArray">The destination device array.</param>
         /// <param name="dstOffset">The destination offet.</param>
         /// <param name="count">The number of element.</param>
-        public void CopyOnDevice<T>(T[] srcDevArray, int srcOffset, T[] dstDevArray, int dstOffset, int count)
+        public void CopyOnDevice<T>(T[] srcDevArray, int srcOffset, T[] dstDevArray, int dstOffset, int count) where T : struct
         {
             DoCopyOnDevice<T>(srcDevArray, srcOffset, dstDevArray, dstOffset, count);
         }
@@ -3463,7 +3531,7 @@ namespace Cudafy.Host
         /// <param name="dstDevArray">The destination device array.</param>
         /// <param name="dstOffset">The destination offet.</param>
         /// <param name="count">The number of element.</param>
-        public void CopyOnDevice<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffset, int count)
+        public void CopyOnDevice<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffset, int count) where T : struct
         {
             DoCopyOnDevice<T>(srcDevArray, srcOffset, dstDevArray, dstOffset, count);
         }
@@ -3478,7 +3546,7 @@ namespace Cudafy.Host
         /// <param name="dstOffset">The destination offet.</param>
         /// <param name="count">The number of element.</param>
         /// <param name="streamId">Stream id.</param>
-        public void CopyOnDeviceAsync<T>(T[] srcDevArray, int srcOffset, T[] dstDevArray, int dstOffset, int count, int streamId)
+        public void CopyOnDeviceAsync<T>(T[] srcDevArray, int srcOffset, T[] dstDevArray, int dstOffset, int count, int streamId) where T : struct
         {
             DoCopyOnDeviceAsync<T>(srcDevArray, srcOffset, dstDevArray, dstOffset, count, streamId);
         }
@@ -3493,7 +3561,7 @@ namespace Cudafy.Host
         /// <param name="dstOffset">The destination offet.</param>
         /// <param name="count">The number of element.</param>
         /// <param name="streamId">Stream id.</param>
-        public void CopyOnDeviceAsync<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffset, int count, int streamId)
+        public void CopyOnDeviceAsync<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffset, int count, int streamId) where T : struct
         {
             DoCopyOnDeviceAsync<T>(srcDevArray, srcOffset, dstDevArray, dstOffset, count, streamId);
         }
@@ -3507,7 +3575,7 @@ namespace Cudafy.Host
         /// <param name="dstDevArray">The destination device array.</param>
         /// <param name="dstOffset">The destination offet.</param>
         /// <param name="count">The number of element.</param>
-        public void CopyOnDevice<T>(T[,] srcDevArray, int srcOffset, T[,] dstDevArray, int dstOffset, int count)
+        public void CopyOnDevice<T>(T[,] srcDevArray, int srcOffset, T[,] dstDevArray, int dstOffset, int count) where T : struct
         {
             DoCopyOnDevice<T>(srcDevArray, srcOffset, dstDevArray, dstOffset, count);
         }
@@ -3521,12 +3589,12 @@ namespace Cudafy.Host
         /// <param name="dstDevArray">The destination device array.</param>
         /// <param name="dstOffset">The destination offet.</param>
         /// <param name="count">The number of element.</param>
-        public void CopyOnDevice<T>(T[,,] srcDevArray, int srcOffset, T[,,] dstDevArray, int dstOffset, int count)
+        public void CopyOnDevice<T>(T[, ,] srcDevArray, int srcOffset, T[, ,] dstDevArray, int dstOffset, int count) where T : struct
         {
             DoCopyOnDevice<T>(srcDevArray, srcOffset, dstDevArray, dstOffset, count);
         }
 
-        public void CopyOnDeviceAsync<T>(T[, ,] srcDevArray, int srcOffset, T[, ,] dstDevArray, int dstOffset, int count, int streamId)
+        public void CopyOnDeviceAsync<T>(T[, ,] srcDevArray, int srcOffset, T[, ,] dstDevArray, int dstOffset, int count, int streamId) where T : struct
         {
             DoCopyOnDeviceAsync<T>(srcDevArray, srcOffset, dstDevArray, dstOffset, count, streamId);
         }
@@ -3540,13 +3608,13 @@ namespace Cudafy.Host
         /// <param name="dstDevArray">The destination device array.</param>
         /// <param name="dstOffet">The destination offet.</param>
         /// <param name="count">The number of element.</param>
-        protected abstract void DoCopyOnDevice<T>(Array srcDevArray, int srcOffset, Array dstDevArray, int dstOffet, int count);
+        protected abstract void DoCopyOnDevice<T>(Array srcDevArray, int srcOffset, Array dstDevArray, int dstOffet, int count) where T : struct;
 
-        protected abstract void DoCopyOnDevice<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffet, int count);
+        protected abstract void DoCopyOnDevice<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffet, int count) where T : struct;
 
-        protected abstract void DoCopyOnDeviceAsync<T>(Array srcDevArray, int srcOffset, Array dstDevArray, int dstOffet, int count, int streamId);
+        protected abstract void DoCopyOnDeviceAsync<T>(Array srcDevArray, int srcOffset, Array dstDevArray, int dstOffet, int count, int streamId) where T : struct;
 
-        protected abstract void DoCopyOnDeviceAsync<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffet, int count, int streamId);
+        protected abstract void DoCopyOnDeviceAsync<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffet, int count, int streamId) where T : struct;
 
         internal SmartStage[] _smartInputStages = new SmartStage[0];
 
@@ -3571,6 +3639,17 @@ namespace Cudafy.Host
         /// 	<c>true</c> if this instance is smart copy enabled; otherwise, <c>false</c>.
         /// </value>
         public virtual bool IsSmartCopyEnabled { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether device supports smart copy.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if supports smart copy; otherwise, <c>false</c>.
+        /// </value>
+        public virtual bool SupportsSmartCopy
+        {
+            get { return true; }
+        }
 
         private bool _wasMultithreadingEnabled = false;
 
@@ -3667,7 +3746,7 @@ namespace Cudafy.Host
         /// </summary>
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="devArray">The device array.</param>
-        public void Set<T>(T[] devArray)
+        public void Set<T>(T[] devArray) where T : struct
         {
             DoSet<T>(devArray);
         }
@@ -3677,7 +3756,7 @@ namespace Cudafy.Host
         /// </summary>
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="devArray">The device array.</param>
-        public void Set<T>(T[,] devArray)
+        public void Set<T>(T[,] devArray) where T : struct
         {
             DoSet<T>(devArray);
         }
@@ -3687,7 +3766,7 @@ namespace Cudafy.Host
         /// </summary>
         /// <typeparam name="T">Blittable type.</typeparam>
         /// <param name="devArray">The device array.</param>
-        public void Set<T>(T[,,] devArray)
+        public void Set<T>(T[, ,] devArray) where T : struct
         {
             DoSet<T>(devArray);
         }
@@ -3699,7 +3778,7 @@ namespace Cudafy.Host
         /// <param name="devArray">The device array.</param>
         /// <param name="offset">The offset.</param>
         /// <param name="count">The number of elements.</param>
-        public void Set<T>(T[] devArray, int offset, int count)
+        public void Set<T>(T[] devArray, int offset, int count) where T : struct
         {
             DoSet<T>(devArray, offset, count);
         }
@@ -3711,7 +3790,7 @@ namespace Cudafy.Host
         /// <param name="devArray">The device array.</param>
         /// <param name="offset">The offset.</param>
         /// <param name="count">The number of elements.</param>
-        public void Set<T>(T[,] devArray, int offset, int count)
+        public void Set<T>(T[,] devArray, int offset, int count) where T : struct
         {
             DoSet<T>(devArray, offset, count);
         }
@@ -3723,7 +3802,7 @@ namespace Cudafy.Host
         /// <param name="devArray">The device array.</param>
         /// <param name="offset">The offset.</param>
         /// <param name="count">The number of elements.</param>
-        public void Set<T>(T[, ,] devArray, int offset, int count)
+        public void Set<T>(T[, ,] devArray, int offset, int count) where T : struct
         {
             DoSet<T>(devArray, offset, count);
         }
@@ -3736,7 +3815,7 @@ namespace Cudafy.Host
         /// <param name="devArray">The dev array.</param>
         /// <param name="offset">The offset.</param>
         /// <param name="count">The count.</param>
-        protected abstract void DoSet<T>(Array devArray, int offset = 0, int count = 0);
+        protected abstract void DoSet<T>(Array devArray, int offset = 0, int count = 0) where T : struct;
 
         /// <summary>
         /// Frees the specified data array on device.
@@ -3812,6 +3891,8 @@ namespace Cudafy.Host
             return _deviceMemory[data];
         }
 
+
+#warning OpenCL might change this
         /// <summary>
         /// Gets the size of the type specified. Note that this differs from Marshal.SizeOf for System.Char (it returns 2 instead of 1).
         /// </summary>

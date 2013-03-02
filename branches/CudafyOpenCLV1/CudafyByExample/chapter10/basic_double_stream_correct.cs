@@ -19,7 +19,7 @@ namespace CudafyByExample
         public const int FULL_DATA_SIZE =  (N*20);
 
         [Cudafy]
-        public static void kernel(GThread thread, int[] a, int[] b, int[] c)
+        public static void thekernel(GThread thread, int[] a, int[] b, int[] c)
         {
             int idx = thread.threadIdx.x + thread.blockIdx.x * thread.blockDim.x;
             if (idx < N) 
@@ -73,10 +73,10 @@ namespace CudafyByExample
                 gpu.CopyToDeviceAsync(host_bPtr, i, dev_b0, 0, N, 2);
                 gpu.CopyToDeviceAsync(host_aPtr, i + N, dev_a1, 0, N, 1);
                 gpu.CopyToDeviceAsync(host_bPtr, i + N, dev_b1, 0, N, 2);
-                //gpu.LaunchAsync(N / 256, 256, 1, "kernel", dev_a0, dev_b0, dev_c0);
-                //gpu.LaunchAsync(N / 256, 256, 2, "kernel", dev_a1, dev_b1, dev_c1);
-                gpu.Launch(N / 256, 256, 1).kernel(dev_a0, dev_b0, dev_c0);
-                gpu.Launch(N / 256, 256, 2).kernel(dev_a1, dev_b1, dev_c1);
+                gpu.LaunchAsync(N / 256, 256, 1, "thekernel", dev_a0, dev_b0, dev_c0);
+                gpu.LaunchAsync(N / 256, 256, 2, "thekernel", dev_a1, dev_b1, dev_c1);
+                //gpu.Launch(N / 256, 256, 1).kernel(dev_a0, dev_b0, dev_c0);
+                //gpu.Launch(N / 256, 256, 2).kernel(dev_a1, dev_b1, dev_c1);
                 gpu.CopyFromDeviceAsync(dev_c0, 0, host_cPtr, i, N, 1);
                 gpu.CopyFromDeviceAsync(dev_c1, 0, host_cPtr, i + N, N, 2);
             }

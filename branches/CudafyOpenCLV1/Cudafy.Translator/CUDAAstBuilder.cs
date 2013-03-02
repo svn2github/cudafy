@@ -560,7 +560,7 @@ namespace Cudafy.Translator
                 case "Int32":
                     return new PrimitiveType("int");
                 case "Int64":
-                    return new PrimitiveType("long long");
+                    return new PrimitiveType(CudafyTranslator.LanguageSpecifics.Int64Translation);
                 case "Byte":
                     return new PrimitiveType("unsigned char");//"byte");
                 case "UInt16":
@@ -568,7 +568,7 @@ namespace Cudafy.Translator
                 case "UInt32":
                     return new PrimitiveType("unsigned int");//"uint");
                 case "UInt64":
-                    return new PrimitiveType("unsigned long long");//"ulong");
+                    return new PrimitiveType(CudafyTranslator.LanguageSpecifics.UInt64Translation);//"ulong");
                 case "String":
                     //throw new NotSupportedException("String");
                     return new PrimitiveType("unsigned short*") { OriginalType = "String" };

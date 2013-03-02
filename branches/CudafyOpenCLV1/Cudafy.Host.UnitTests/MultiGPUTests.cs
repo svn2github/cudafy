@@ -243,6 +243,11 @@ namespace Cudafy.Host.UnitTests
         [Test]
         public void Test_SingleThreadGPUtoGPU()
         {
+            if (!_gpu0.CanAccessPeer(_gpu1))
+            {
+                Console.WriteLine("Device not supporting this, so skip.");
+                return;
+            }
             Random r = new Random();
             for (int i = 0; i < _uintBufferIn0.Length; i++)
                 _uintBufferIn0[i] = (uint)r.Next(Int32.MaxValue);

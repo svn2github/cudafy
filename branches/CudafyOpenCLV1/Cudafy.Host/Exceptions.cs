@@ -83,6 +83,8 @@ namespace Cudafy.Host
         public const string csSMART_COPY_IS_NOT_ENABLED = "Smart copy is not enabled.";
         public const string csCUDA_EXCEPTION_X = "CUDA.NET exception: {0}.";
         public const string csCUDA_EXCEPTION_X_X = "CUDA.NET exception: {0} ({1}).";
+        public const string csOPENCL_EXCEPTION_X = "OpenCL exception: {0}.";
+        public const string csOPENCL_EXCEPTION_X_X = "OpenCL exception: {0} ({1}).";
         public const string csDUPLICATE_X_NAME = "Module already loaded containing a duplicate {0} name.";
         public const string csPEER_ACCESS_ALREADY_ENABLED = "Peer access already enabled";
         public const string csPEER_ACCESS_WAS_NOT_ENABLED = "Peer access was not enabled";

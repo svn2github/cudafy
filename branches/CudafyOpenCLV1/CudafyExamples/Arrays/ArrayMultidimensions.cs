@@ -175,7 +175,7 @@ namespace CudafyExamples.Arrays
                 while (z < ZSIZE)
                 {
                     result[x * YSIZE * ZSIZE + y * ZSIZE + z] = Constant3D[x, y, z] * Constant3D.Rank;
-                    Debug.WriteLine(string.Format("Index {0} = {1}", x * YSIZE * ZSIZE + y * ZSIZE + z, Constant3D[x, y, z] * Constant3D.Rank));
+                    //Debug.WriteLine(string.Format("Index {0} = {1}", x * YSIZE * ZSIZE + y * ZSIZE + z, Constant3D[x, y, z] * Constant3D.Rank));
                     z++;
                 }
                 z = 0;

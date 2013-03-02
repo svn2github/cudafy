@@ -28,7 +28,7 @@ namespace Cudafy.Atomics
 {
 
     /// <summary>
-    /// Extension class containing atomic functions. See the NVidia Cuda documentation for more information.
+    /// Extension class containing atomic functions. See the NVIDIA CUDA documentation for more information.
     /// </summary>
     public static class AtomicFunctions
     {
@@ -55,6 +55,14 @@ namespace Cudafy.Atomics
             }
         }
 
+
+        /// <summary>
+        /// Not supported by OpenCL.
+        /// </summary>
+        /// <param name="thread">The thread.</param>
+        /// <param name="address">The address.</param>
+        /// <param name="val">The value.</param>
+        /// <returns></returns>
         public static float atomicAdd(this GThread thread, ref float address, float val)
         {
             lock (thread.gridDim)
@@ -171,6 +179,45 @@ namespace Cudafy.Atomics
 
         #region Inc, Dec, CAS
 
+        /// <summary>
+        /// Supported by both CUDA and OpenCL.
+        /// </summary>
+        /// <param name="thread">The thread.</param>
+        /// <param name="address">The address.</param>
+        /// <returns></returns>
+        public static uint atomicIncEx(this GThread thread, ref uint address)
+        {
+            lock (thread.gridDim)
+            {
+                uint old = address;
+                address = old + 1;
+                return old;
+            }
+        }
+
+        /// <summary>
+        /// Supported by both CUDA and OpenCL.
+        /// </summary>
+        /// <param name="thread">The thread.</param>
+        /// <param name="address">The address.</param>
+        /// <returns></returns>
+        public static uint atomicDecEx(this GThread thread, ref uint address)
+        {
+            lock (thread.gridDim)
+            {
+                uint old = address;
+                address = old - 1;
+                return old;
+            }
+        }
+
+        /// <summary>
+        /// Not supported by OpenCL.
+        /// </summary>
+        /// <param name="thread">The thread.</param>
+        /// <param name="address">The address.</param>
+        /// <param name="val">The val.</param>
+        /// <returns></returns>
         public static uint atomicInc(this GThread thread, ref uint address, uint val)
         {
             lock (thread.gridDim)
@@ -181,6 +228,13 @@ namespace Cudafy.Atomics
             }
         }
 
+        /// <summary>
+        /// Not supported by OpenCL.
+        /// </summary>
+        /// <param name="thread">The thread.</param>
+        /// <param name="address">The address.</param>
+        /// <param name="val">The val.</param>
+        /// <returns></returns>
         public static uint atomicDec(this GThread thread, ref uint address, uint val)
         {
             lock (thread.gridDim)

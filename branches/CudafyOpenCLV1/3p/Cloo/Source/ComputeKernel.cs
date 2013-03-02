@@ -256,7 +256,7 @@ namespace Cloo
             {
                 SetArgument(
                     index,
-                    new IntPtr(Marshal.SizeOf(typeof(T))),
+                    new IntPtr(HDSPUtils.SizeOf(typeof(T))),
                     gcHandle.AddrOfPinnedObject());
             }
             finally

@@ -21,7 +21,7 @@ namespace CudafyByExample
 
         public const int DIM = 1024;
 
-        public enum eRayVersion { CUDA, CUDA_const, OpenCL };
+        public enum eRayVersion { CUDA, CUDA_const, OpenCL, OpenCL_const };
 
         public ray_gui(eRayVersion rayVersion)
         {
@@ -43,6 +43,8 @@ namespace CudafyByExample
                 ray.Execute(rgbValues);
             else if (rayVersion == eRayVersion.CUDA)
                 ray_noconst.Execute(rgbValues);
+            else if (rayVersion == eRayVersion.OpenCL_const)
+                ray_opencl_const.Execute(rgbValues);
             else
                 ray_opencl.Execute(rgbValues);
 

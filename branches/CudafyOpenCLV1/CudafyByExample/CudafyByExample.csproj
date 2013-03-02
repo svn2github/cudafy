@@ -155,6 +155,7 @@
     <Compile Include="chapter05\ripple_gpu.cs" />
     <Compile Include="chapter06\ray_noconst.cs" />
     <Compile Include="chapter06\ray_opencl.cs" />
+    <Compile Include="chapter06\ray_opencl_const.cs" />
     <Compile Include="chapter09\hist_gpu_shmem_atomics.cs" />
     <Compile Include="chapter10\basic_double_stream_correct.cs" />
     <Compile Include="chapter10\copy_timed.cs" />

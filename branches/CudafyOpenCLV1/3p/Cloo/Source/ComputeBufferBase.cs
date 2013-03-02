@@ -76,7 +76,7 @@ namespace Cloo
             SetID(Handle.Value);
 
             Size = (long)GetInfo<CLMemoryHandle, ComputeMemoryInfo, IntPtr>(Handle, ComputeMemoryInfo.Size, CL10.GetMemObjectInfo);
-            Count = Size / Marshal.SizeOf(typeof(T));
+            Count = Size / HDSPUtils.SizeOf(typeof(T));
 
             Trace.WriteLine("Create " + this + " in Thread(" + Thread.CurrentThread.ManagedThreadId + ").", "Information");
         }

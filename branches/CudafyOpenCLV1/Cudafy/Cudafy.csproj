@@ -118,6 +118,7 @@
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
@@ -133,6 +134,7 @@
     <Compile Include="Exceptions.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\Atomics.cs" />
+    <Compile Include="Extensions\IntegerIntrinsics.cs" />
     <Compile Include="Extensions\Rand.cs" />
     <Compile Include="GBlock.cs" />
     <Compile Include="GGrid.cs" />
@@ -158,7 +160,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties Reactor_Output="" Reactor_Configuration="" Reactor_Project="" Reactor_Commands="" Reactor_Enabled="1" />
+      <UserProperties Reactor_Enabled="1" Reactor_Commands="" Reactor_Project="" Reactor_Configuration="" Reactor_Output="" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

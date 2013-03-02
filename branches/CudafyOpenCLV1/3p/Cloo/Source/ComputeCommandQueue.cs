@@ -189,7 +189,7 @@ namespace Cloo
         /// <param name="events"> A collection of events that need to complete before this particular command can be executed. If <paramref name="events"/> is not <c>null</c> a new event identifying this command is attached to the end of the collection. </param>
         public void Copy<T>(ComputeBufferBase<T> source, ComputeBufferBase<T> destination, long sourceOffset, long destinationOffset, long region, ICollection<ComputeEventBase> events) where T : struct
         {
-            int sizeofT = Marshal.SizeOf(typeof(T));
+            int sizeofT = HDSPUtils.SizeOf(typeof(T));
 
             int eventWaitListSize;
             CLEventHandle[] eventHandles = ComputeTools.ExtractHandles(events, out eventWaitListSize);
@@ -220,7 +220,7 @@ namespace Cloo
         /// <remarks> Requires OpenCL 1.1. </remarks>
         public void Copy<T>(ComputeBufferBase<T> source, ComputeBufferBase<T> destination, SysIntX3 sourceOffset, SysIntX3 destinationOffset, SysIntX3 region, long sourceRowPitch, long sourceSlicePitch, long destinationRowPitch, long destinationSlicePitch, ICollection<ComputeEventBase> events) where T : struct
         {
-            int sizeofT = Marshal.SizeOf(typeof(T));
+            int sizeofT = HDSPUtils.SizeOf(typeof(T));
 
             sourceOffset.X = new IntPtr(sizeofT * sourceOffset.X.ToInt64());
             destinationOffset.X = new IntPtr(sizeofT * destinationOffset.X.ToInt64());
@@ -250,7 +250,7 @@ namespace Cloo
         /// <param name="events"> A collection of events that need to complete before this particular command can be executed. If <paramref name="events"/> is not <c>null</c> or read-only a new <see cref="ComputeEvent"/> identifying this command is created and attached to the end of the collection. </param>
         public void Copy<T>(ComputeBufferBase<T> source, ComputeImage destination, long sourceOffset, SysIntX3 destinationOffset, SysIntX3 region, ICollection<ComputeEventBase> events) where T : struct
         {
-            int sizeofT = Marshal.SizeOf(typeof(T));
+            int sizeofT = HDSPUtils.SizeOf(typeof(T));
 
             int eventWaitListSize;
             CLEventHandle[] eventHandles = ComputeTools.ExtractHandles(events, out eventWaitListSize);
@@ -275,7 +275,7 @@ namespace Cloo
         /// <param name="events"> A collection of events that need to complete before this particular command can be executed. If <paramref name="events"/> is not <c>null</c> or read-only a new <see cref="ComputeEvent"/> identifying this command is created and attached to the end of the collection. </param>
         public void Copy<T>(ComputeImage source, ComputeBufferBase<T> destination, SysIntX3 sourceOffset, long destinationOffset, SysIntX3 region, ICollection<ComputeEventBase> events) where T : struct
         {
-            int sizeofT = Marshal.SizeOf(typeof(T));
+            int sizeofT = HDSPUtils.SizeOf(typeof(T));
 
             int eventWaitListSize;
             CLEventHandle[] eventHandles = ComputeTools.ExtractHandles(events, out eventWaitListSize);
@@ -384,7 +384,7 @@ namespace Cloo
         /// <remarks> If <paramref name="blocking"/> is <c>true</c> this method will not return until the command completes. If <paramref name="blocking"/> is <c>false</c> this method will return immediately after the command is enqueued. </remarks>
         public IntPtr Map<T>(ComputeBufferBase<T> buffer, bool blocking, ComputeMemoryMappingFlags flags, long offset, long region, ICollection<ComputeEventBase> events) where T : struct
         {
-            int sizeofT = Marshal.SizeOf(typeof(T));
+            int sizeofT = HDSPUtils.SizeOf(typeof(T));
 
             int eventWaitListSize;
             CLEventHandle[] eventHandles = ComputeTools.ExtractHandles(events, out eventWaitListSize);
@@ -444,7 +444,7 @@ namespace Cloo
         /// <remarks> If <paramref name="blocking"/> is <c>true</c> this method will not return until the command completes. If <paramref name="blocking"/> is <c>false</c> this method will return immediately after the command is enqueued. </remarks>
         public void Read<T>(ComputeBufferBase<T> source, bool blocking, long offset, long region, IntPtr destination, ICollection<ComputeEventBase> events) where T : struct
         {
-            int sizeofT = Marshal.SizeOf(typeof(T));
+            int sizeofT = HDSPUtils.SizeOf(typeof(T));
 
             int eventWaitListSize;
             CLEventHandle[] eventHandles = ComputeTools.ExtractHandles(events, out eventWaitListSize);
@@ -476,7 +476,7 @@ namespace Cloo
         /// <remarks> Requires OpenCL 1.1. </remarks>
         private void Read<T>(ComputeBufferBase<T> source, bool blocking, SysIntX3 sourceOffset, SysIntX3 destinationOffset, SysIntX3 region, long sourceRowPitch, long sourceSlicePitch, long destinationRowPitch, long destinationSlicePitch, IntPtr destination, ICollection<ComputeEventBase> events) where T : struct
         {
-            int sizeofT = Marshal.SizeOf(typeof(T));
+            int sizeofT = HDSPUtils.SizeOf(typeof(T));
 
             sourceOffset.X = new IntPtr(sizeofT * sourceOffset.X.ToInt64());
             destinationOffset.X = new IntPtr(sizeofT * destinationOffset.X.ToInt64());
@@ -589,7 +589,7 @@ namespace Cloo
         /// <remarks> If <paramref name="blocking"/> is <c>true</c> this method will not return until the command completes. If <paramref name="blocking"/> is <c>false</c> this method will return immediately after the command is enqueued. </remarks>
         public void Write<T>(ComputeBufferBase<T> destination, bool blocking, long destinationOffset, long region, IntPtr source, ICollection<ComputeEventBase> events) where T : struct
         {
-            int sizeofT = Marshal.SizeOf(typeof(T));
+            int sizeofT = HDSPUtils.SizeOf(typeof(T));
 
             int eventWaitListSize;
             CLEventHandle[] eventHandles = ComputeTools.ExtractHandles(events, out eventWaitListSize);
@@ -615,7 +615,7 @@ namespace Cloo
         /// <param name="events">The events.</param>
         public void WriteEx<T>(CLMemoryHandle destinationHandle, bool blocking, long destinationOffset, long region, IntPtr source, ICollection<ComputeEventBase> events) where T : struct
         {
-            int sizeofT = Marshal.SizeOf(typeof(T));
+            int sizeofT = HDSPUtils.SizeOf(typeof(T));
 
             int eventWaitListSize;
             CLEventHandle[] eventHandles = ComputeTools.ExtractHandles(events, out eventWaitListSize);
@@ -647,7 +647,7 @@ namespace Cloo
         /// <remarks> Requires OpenCL 1.1. </remarks>
         private void Write<T>(ComputeBufferBase<T> destination, bool blocking, SysIntX3 sourceOffset, SysIntX3 destinationOffset, SysIntX3 region, long destinationRowPitch, long destinationSlicePitch, long sourceRowPitch, long sourceSlicePitch, IntPtr source, ICollection<ComputeEventBase> events) where T : struct
         {
-            int sizeofT = Marshal.SizeOf(typeof(T));
+            int sizeofT = HDSPUtils.SizeOf(typeof(T));
 
             sourceOffset.X = new IntPtr(sizeofT * sourceOffset.X.ToInt64());
             destinationOffset.X = new IntPtr(sizeofT * destinationOffset.X.ToInt64());

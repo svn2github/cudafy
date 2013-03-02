@@ -128,7 +128,7 @@ namespace Cloo
             IntPtr bufferSizeRet;
             error = getInfoDelegate(handle, paramName, IntPtr.Zero, IntPtr.Zero, out bufferSizeRet);
             ComputeException.ThrowOnError(error);
-            buffer = new QueriedType[bufferSizeRet.ToInt64() / Marshal.SizeOf(typeof(QueriedType))];
+            buffer = new QueriedType[bufferSizeRet.ToInt64() / HDSPUtils.SizeOf(typeof(QueriedType))];
             GCHandle gcHandle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
             try
             {
@@ -162,7 +162,7 @@ namespace Cloo
             IntPtr bufferSizeRet;
             error = getInfoDelegate(mainHandle, secondHandle, paramName, IntPtr.Zero, IntPtr.Zero, out bufferSizeRet);
             ComputeException.ThrowOnError(error);
-            buffer = new QueriedType[bufferSizeRet.ToInt64() / Marshal.SizeOf(typeof(QueriedType))];
+            buffer = new QueriedType[bufferSizeRet.ToInt64() / HDSPUtils.SizeOf(typeof(QueriedType))];
             GCHandle gcHandle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
             try
             {
@@ -211,7 +211,7 @@ namespace Cloo
             try
             {
                 IntPtr sizeRet;
-                ComputeErrorCode error = getInfoDelegate(handle, paramName, (IntPtr)Marshal.SizeOf(result), gcHandle.AddrOfPinnedObject(), out sizeRet);
+                ComputeErrorCode error = getInfoDelegate(handle, paramName, (IntPtr)HDSPUtils.SizeOf(result.GetType()), gcHandle.AddrOfPinnedObject(), out sizeRet);
                 ComputeException.ThrowOnError(error);
             }
             finally
@@ -243,7 +243,7 @@ namespace Cloo
             try
             {
                 IntPtr sizeRet;
-                ComputeErrorCode error = getInfoDelegate(mainHandle, secondHandle, paramName, new IntPtr(Marshal.SizeOf(result)), gcHandle.AddrOfPinnedObject(), out sizeRet);
+                ComputeErrorCode error = getInfoDelegate(mainHandle, secondHandle, paramName, new IntPtr(HDSPUtils.SizeOf(result.GetType())), gcHandle.AddrOfPinnedObject(), out sizeRet);
                 ComputeException.ThrowOnError(error);
             }
             finally

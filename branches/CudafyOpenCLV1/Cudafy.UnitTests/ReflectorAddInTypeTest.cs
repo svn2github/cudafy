@@ -106,7 +106,7 @@ namespace Cudafy.UnitTests
         [SetUp]
         public void SetUp()
         {
-            _cm = CudafyTranslator.Cudafy(typeof(RelectorAddInTypeTests), typeof(Sphere));
+            _cm = CudafyTranslator.Cudafy(typeof(Sphere), typeof(RelectorAddInTypeTests));
         }
 
         [TearDown]
@@ -152,6 +152,8 @@ namespace Cudafy.UnitTests
             var mod = CudafyTranslator.Cudafy(typeof(StructWithBool));
             mod.Serialize("TestStructWithBoolean");
         }
+
+
 
         public const int DIM = 1024;
         public const int RAND_MAX = Int32.MaxValue;

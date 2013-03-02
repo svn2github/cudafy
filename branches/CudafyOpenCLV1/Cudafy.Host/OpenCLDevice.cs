@@ -31,11 +31,47 @@ using System.Diagnostics;
 using System.Threading;
 using Cloo;
 using Cloo.Bindings;
+using System.Security;
 namespace Cudafy.Host
 {
+    [SuppressUnmanagedCodeSecurity]
+    public class CL11_ex : CL11
+    {
+        /// <summary>
+        /// See the OpenCL specification.
+        /// </summary>
+        [DllImport(libName, EntryPoint = "clEnqueueFillBuffer")]
+        public extern static ComputeErrorCode EnqueueFillBuffer(
+            CLCommandQueueHandle command_queue,
+            CLMemoryHandle buffer,
+            IntPtr pattern,
+            IntPtr pattern_size,
+            IntPtr offset,
+            IntPtr size,
+            Int32 num_events_in_wait_list,
+            [MarshalAs(UnmanagedType.LPArray)] CLEventHandle[] event_wait_list,
+            [Out, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)] CLEventHandle[] new_event
+            );
+
+        [DllImport(libName, EntryPoint = "clEnqueueCopyBuffer")]
+        public extern static ComputeErrorCode EnqueueCopyBuffer(
+            CLCommandQueueHandle command_queue,
+            CLMemoryHandle src_buffer,
+            CLMemoryHandle dst_buffer,
+            IntPtr src_offset,
+            IntPtr dst_offset,
+            IntPtr cb,
+            Int32 num_events_in_wait_list,
+            [MarshalAs(UnmanagedType.LPArray)] CLEventHandle[] event_wait_list,
+            [Out, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)] CLEventHandle[] new_event);
+
+    }
+
     public class OpenCLDevice : GPGPU
     {
-                /// <summary>
+        #region constructors
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="CudaGPU"/> class.
         /// </summary>
         /// <param name="deviceId">The device id.</param>
@@ -45,9 +81,13 @@ namespace Cudafy.Host
             try
             {
                 _computeDevice = GetComputeDevice(deviceId);
+                OpenCLVersion = _computeDevice.OpenCLCVersion;
+                _memsetArray = new byte[OpenCLVersion.Minor < 2 ? 128 * 1024 : 0];
                 _kernels = new List<ComputeKernel>();
                 ComputeContextPropertyList properties = new ComputeContextPropertyList(_computeDevice.Platform);
                 _context = new ComputeContext(new[] { _computeDevice }, properties, null, IntPtr.Zero);
+                _defaultSynchronousQueue = new ComputeCommandQueue(_context, _computeDevice, ComputeCommandQueueFlags.None); // default synchronous stream
+                _streams.Add(0, _defaultSynchronousQueue);
             }
             catch (IndexOutOfRangeException)
             {
@@ -65,11 +105,34 @@ namespace Cudafy.Host
             ComputeDevices = new ReadOnlyCollection<ComputeDevice>(tempComputeDevices);
         }
 
+        #endregion constructors
+
+        #region fields & props
+
         internal static ReadOnlyCollection<ComputeDevice> ComputeDevices;
 
         private ComputeContext _context;
 
         private List<ComputeKernel> _kernels;
+
+        private ComputeDevice _computeDevice;
+
+        private ComputeCommandQueue _defaultSynchronousQueue;
+
+        private readonly Version OpenCLVersion;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether device supports smart copy.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if supports smart copy; otherwise, <c>false</c>.
+        /// </value>
+        public override bool SupportsSmartCopy
+        {
+            get { return false; }
+        }
+
+        #endregion fields & props
 
         private ComputeDevice GetComputeDevice(int id)
         {
@@ -78,81 +141,296 @@ namespace Cudafy.Host
             return ComputeDevices[id];
         }
 
-        private ComputeDevice _computeDevice;
-
+        #region GetDeviceProperties
 
         public override GPGPUProperties GetDeviceProperties(bool useAdvanced = true)
         {
-            return GetDeviceProperties(_computeDevice, DeviceId);
+            return GetDeviceProperties(_computeDevice, DeviceId, useAdvanced);
         }
 
-        internal static GPGPUProperties GetDeviceProperties(ComputeDevice computeDevice, int deviceId)
+#warning TODO implement "useAdvanced"
+        internal static GPGPUProperties GetDeviceProperties(ComputeDevice computeDevice, int deviceId, bool useAdvanced = true)
         {
             GPGPUProperties props = new GPGPUProperties();
             props.Capability = computeDevice.Version;
             props.ClockRate = (int)computeDevice.MaxClockFrequency;
             props.DeviceId = deviceId;
-            props.DeviceOverlap = false;//TODO
+            props.DeviceOverlap = true;
             props.ECCEnabled = computeDevice.ErrorCorrectionSupport;
-            props.HighPerformanceDriver = false;
+            props.HighPerformanceDriver = false; 
             props.Integrated = computeDevice.Type != ComputeDeviceTypes.Cpu;
             props.IsSimulated = false;
-            props.KernelExecTimeoutEnabled = false;// TODO
-            props.MaxGridSize = new dim3(1);//TODO
+            props.KernelExecTimeoutEnabled = true;// TODO 
+            
             props.MaxThreadsPerBlock = (int)computeDevice.MaxWorkGroupSize;//CHECK
             props.MaxThreadsPerMultiProcessor = 1; //TODO
-            props.MaxThreadsSize = new dim3(1);//TODO
-            props.MemoryPitch = 1;//TODO
+            props.MaxThreadsSize = new dim3(computeDevice.MaxWorkItemSizes.ToArray());
+            props.MaxGridSize = new dim3(0x80000000 / props.MaxThreadsSize.x, 0x80000000 / props.MaxThreadsSize.y, 0x80000000 / props.MaxThreadsSize.z);
+            props.MemoryPitch = Int32.MaxValue;//TODO
             props.MultiProcessorCount = (int)computeDevice.MaxComputeUnits;
             props.Name = computeDevice.Name;
-            props.PciBusID = 1;//TODO
-            props.PciDeviceID = 1;//TODO
-            props.RegistersPerBlock = 1;//TODO
+            props.PlatformName = computeDevice.Platform.Name;
+            props.PciBusID = 0;//TODO
+            props.PciDeviceID = 0;//TODO
+            props.RegistersPerBlock = 64 * 1024; // TODO
             props.SharedMemoryPerBlock = (int)computeDevice.LocalMemorySize;//CHECK
-            props.TextureAlignment = 1;//TODO
+            props.TextureAlignment = 0;//TODO
             props.TotalConstantMemory = (int)computeDevice.MaxConstantBufferSize;
             props.TotalGlobalMem = computeDevice.GlobalMemorySize;
             props.TotalMemory = (ulong)props.TotalConstantMemory + (ulong)props.TotalGlobalMem;
             props.UseAdvanced = true;
             props.WarpSize = 32;// TODO
+            props.SupportsDoublePrecision = computeDevice.NativeVectorWidthDouble > 0;
             return props;
         }
 
-        
+        #endregion GetDeviceProperties
+
         public override bool CanAccessPeer(GPGPU peer)
         {
-            return false;
+            OpenCLDevice OCL_peer = peer as OpenCLDevice;
+            if (OCL_peer == null)
+                return false;
+            return (OCL_peer._context.Handle.Value == _context.Handle.Value); // self is the only allowed peer
         }
+
+        private void HandleOpenCLException(ComputeException ex)
+        {
+            string addInfo = string.Empty;
+#warning TODO - all cases
+            //switch (ex.ComputeErrorCode)
+            //{
+            //    case ComputeErrorCode.OutOfHostMemory:
+            //        break;
+            //    default:
+            //        break;
+            //}
+            if (string.IsNullOrEmpty(addInfo))
+                throw new CudafyHostException(ex, CudafyHostException.csOPENCL_EXCEPTION_X, ex.ComputeErrorCode);
+            else
+                throw new CudafyHostException(ex, CudafyHostException.csOPENCL_EXCEPTION_X_X, ex.ComputeErrorCode, addInfo);
+        }
+
+        #region GetStream
+
+        /// <summary>
+        /// Gets the ComputeCommandQueue object identified by streamId.
+        /// </summary>
+        /// <param name="streamId">The stream id.</param>
+        /// <param name="flags">Extra flags for queue creation.</param>
+        /// <returns>ComputeCommandQueue object.</returns>
+        public virtual object GetStream(int streamId, ComputeCommandQueueFlags flags)
+        {
+            lock (_lock)
+            {
+                ComputeCommandQueue clStr = null;
+                if (streamId > 0)
+                {
+                    if (!_streams.ContainsKey(streamId))
+                    {
+                        clStr = CreateStream(streamId, flags);
+                    }
+                    else
+                    {
+                        clStr = (ComputeCommandQueue)_streams[streamId];
+                    }
+                }
+                else if (!_streams.ContainsKey(0))
+                    throw new CudafyHostException(CudafyHostException.csOPENCL_EXCEPTION_X_X, "Default queue not initialized");
+                else
+                    clStr = (ComputeCommandQueue)_streams[0];
+
+                return clStr;
+            }
+        }
+
+        /// <summary>
+        /// Gets the ComputeCommandQueue object identified by streamId.
+        /// </summary>
+        /// <param name="streamId">The stream id.</param>
+        /// <returns>ComputeCommandQueue object.</returns>
+        public override object GetStream(int streamId)
+        {
+            return GetStream(streamId, ComputeCommandQueueFlags.None);
+        }
+
+        #endregion GetStream
+
+        #region CreateStream
+
+        /// <summary>
+        /// Explicitly creates a stream.
+        /// </summary>
+        /// <param name="streamId">The stream id.</param>
+        public override void CreateStream(int streamId)
+        {
+            CreateStream(streamId, ComputeCommandQueueFlags.None);
+        }
+
+        /// <summary>
+        /// Explicitly creates a stream.
+        /// </summary>
+        /// <param name="streamId">The stream id.</param>
+        /// <param name="flags">Extra flags for queue creation.</param>
+        /// <returns>Command queue.</returns>
+        public ComputeCommandQueue CreateStream(int streamId, ComputeCommandQueueFlags flags)
+        {
+            ComputeCommandQueue clStr = null;
+            lock (_lock)
+            {
+                if (streamId < 0)
+                    throw new ArgumentOutOfRangeException("streamId must be greater than or equal to zero");
+                if (_streams.ContainsKey(streamId))
+                    throw new CudafyHostException(CudafyHostException.csSTREAM_X_ALREADY_SET, streamId);
+        
+                try
+                {
+                    clStr = new ComputeCommandQueue(_context, _computeDevice, flags);
+                }
+                catch (ComputeException ex)
+                {
+                    HandleOpenCLException(ex);
+                }
+               // var props = GetDeviceProperties();
+               // Console.WriteLine(string.Format("Platform {0}, Device {1}, CreateStream {2}", props.PlatformName, props.Name, streamId));
+                _streams.Add(streamId, clStr);
+            }
+            return clStr;
+        }
+
+        #endregion CreateStream
+
+        #region DestroyStream
+
+        public override void DestroyStream(int streamId)
+        {
+            lock (_lock)
+            {
+                if (!_streams.ContainsKey(streamId))
+                    throw new CudafyHostException(CudafyHostException.csSTREAM_X_NOT_SET, streamId);
+
+                ComputeCommandQueue clStr = (ComputeCommandQueue)_streams[streamId];
+                //clStr.Finish();
+                //var props = GetDeviceProperties();
+                //Console.WriteLine(string.Format("Platform {0}, Device {1}, DestroyStream {2}", props.PlatformName, props.Name, streamId));
+                _streams.Remove(streamId);
+                clStr.Dispose(); // release unmanaged resources
+            }
+        }
+
+        public override void DestroyStreams()
+        {
+            foreach (int streamId in _streams.Keys.ToList())
+                DestroyStream(streamId);
+        }
+
+        #endregion DestroyStream
+
+        #region DoCopyDeviceToDevice
 
         protected override void DoCopyDeviceToDevice<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count)
         {
-            throw new NotSupportedException();
+            DoCopyDeviceToDevice<T>(srcDevArray, (long)srcOffset, peer, dstDevArray, (long)dstOffet, (long)count);
         }
+
+        protected void DoCopyDeviceToDevice<T>(Array srcDevArray, long srcOffset, GPGPU peer, Array dstDevArray, long dstOffet, long count) where T : struct
+        {
+            if (!CanAccessPeer(peer))
+                throw new NotSupportedException("Device to Device copy not supported between different contexts.");
+            CLDevicePtrEx<T> ptr_source = GetDeviceMemory(srcDevArray) as CLDevicePtrEx<T>;
+            CLDevicePtrEx<T> ptr_dest = peer.GetDeviceMemory(dstDevArray) as CLDevicePtrEx<T>;
+            int sizeofT = HDSPUtils.SizeOf(typeof(T));
+            ComputeErrorCode error = CL11_ex.EnqueueCopyBuffer(
+                _defaultSynchronousQueue.Handle, ptr_source.Handle, ptr_dest.Handle, new IntPtr(srcOffset), new IntPtr(dstOffet), new IntPtr(count * sizeofT), 0, null, null);
+#warning TODO Throw a CUDAfy exception instead
+            ComputeException.ThrowOnError(error);
+            _defaultSynchronousQueue.Finish();
+        }
+
+        #endregion DoCopyDeviceToDevice
+
+        #region DoCopyDeviceToDeviceAsync
 
         protected override void DoCopyDeviceToDeviceAsync<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count, int stream)
         {
-            throw new NotSupportedException();
+            DoCopyDeviceToDeviceAsync<T>(srcDevArray, (long)srcOffset, peer, dstDevArray, (long)dstOffet, (long)count, stream);
         }
 
-        public override void CreateStream(int streamId)
+        protected void DoCopyDeviceToDeviceAsync<T>(Array srcDevArray, long srcOffset, GPGPU peer, Array dstDevArray, long dstOffet, long count, int stream) where T : struct
         {
-            throw new NotImplementedException();
+            if (!CanAccessPeer(peer))
+                throw new NotSupportedException("Device to Device copy not supported between different contexts.");
+            ComputeCommandQueue queue = (ComputeCommandQueue)GetStream(stream);
+            CLDevicePtrEx<T> ptr_source = GetDeviceMemory(srcDevArray) as CLDevicePtrEx<T>;
+            CLDevicePtrEx<T> ptr_dest = peer.GetDeviceMemory(dstDevArray) as CLDevicePtrEx<T>;
+            int sizeofT = HDSPUtils.SizeOf(typeof(T));
+            ComputeErrorCode error = CL11_ex.EnqueueCopyBuffer(
+                queue.Handle, ptr_source.Handle, ptr_dest.Handle, new IntPtr(srcOffset), new IntPtr(dstOffet), new IntPtr(count * sizeofT), 0, null, null);
+#warning TODO Throw a CUDAfy exception instead
+            ComputeException.ThrowOnError(error);
+            if (stream <= 0)
+                queue.Finish();
         }
 
+        #endregion DoCopyDeviceToDeviceAsync
+
+        /// <summary>
+        /// Gets the free memory available on device. Note that this is very approximate and does not
+        /// take into account any other applications including OS graphics that may be using the device.
+        /// It merely subtracts all allocated memory from the TotalMemory.
+        /// </summary>
+        /// <value>
+        /// The free memory.
+        /// </value>
         public override ulong FreeMemory
         {
-            get { throw new NotImplementedException(); }
+            get 
+            { 
+                long totalMemory = (long)_computeDevice.GlobalMemorySize; 
+                // Add up all memory currently used and subtract
+                foreach (CLDevicePtrExInter mem in GetDeviceMemories())
+                {
+                    long size = mem.TotalSize * mem.ElementSize;
+                    totalMemory -= size;
+                }
+                return (ulong)totalMemory;
+            }
         }
 
         public override ulong TotalMemory
         {
-            get { throw new NotImplementedException(); }
+            get { return (ulong)_computeDevice.GlobalMemorySize; }
         }
 
         public override void Synchronize()
         {
-            throw new NotImplementedException();
+            foreach (int streamId in _streams.Keys)
+                SynchronizeStream(streamId);
         }
+
+        public override void SynchronizeStream(int streamId = 0)
+        {
+            ComputeCommandQueue queue = (ComputeCommandQueue)GetStream(streamId);
+            queue.Finish();
+        }
+
+        public void FlushStream(int streamId = 0)
+        {
+            ComputeCommandQueue queue = (ComputeCommandQueue)GetStream(streamId);
+            queue.Flush();
+        }
+
+        public override void EnableSmartCopy()
+        {
+            throw new NotSupportedException("smart copy");
+        }
+
+        public override void DisableSmartCopy()
+        {
+            throw new NotSupportedException("smart copy");
+        }
+
+        
 
 
         private string clTestProgramSource = @"
@@ -165,10 +443,10 @@ kernel void VectorAdd(
     c[index] = a[index] + b[index];
 }
 ";
-
         public override void LoadModule(CudafyModule module, bool unload = true)
         {
-            // Create and build the opencl program.
+            // Create and build the opencl program.//
+           // module.CudaSourceCode = module.CudaSourceCode.Replace("\r\n", "\n");
             Debug.WriteLine(module.CudaSourceCode);
             ComputeProgram program = new ComputeProgram(_context, module.CudaSourceCode);
             try
@@ -189,11 +467,11 @@ kernel void VectorAdd(
                 UnloadModules();
             else
                 CheckForDuplicateMembers(module);
-                
+
             // Create the kernel function and set its arguments.
             foreach (ComputeKernel kernel in program.CreateAllKernels())
                 _kernels.Add(kernel);
-           
+
             // Load constants
             foreach (var kvp in module.Constants)
             {
@@ -202,6 +480,7 @@ kernel void VectorAdd(
                     int elemSize = MSizeOf(kvp.Value.Information.FieldType.GetElementType());
                     int totalLength = kvp.Value.GetTotalLength();
                     ComputeBuffer<byte> a = new ComputeBuffer<byte>(_context, ComputeMemoryFlags.ReadOnly, totalLength * elemSize);
+                    module.Constants[kvp.Key].Handle = a;
                     module.Constants[kvp.Key].CudaPointer = a.Handle;
                 }
             }
@@ -212,7 +491,6 @@ kernel void VectorAdd(
         public override void UnloadModule(CudafyModule module)
         {
             //throw new NotImplementedException();
-            
         }
 
         public override void UnloadModules()
@@ -220,11 +498,6 @@ kernel void VectorAdd(
             _kernels.Clear();
             base.UnloadModules();
         }
-
-        //private CLDevicePtrEx<T> GetDeviceMemoryCL<T>(object devArray)
-        //{
-        //    return GetDeviceMemory(devArray) as CLDevicePtrEx<Type>
-        //}
 
         protected override void DoLaunch(dim3 gridSize, dim3 blockSize, int streamId, KernelMethodInfo gpuMI, params object[] arguments)
         {
@@ -244,66 +517,96 @@ kernel void VectorAdd(
                         kernel.SetValueArgument(++i, dims[d]);
 
                 }
+                else if (arg is Char)
+                {
+                    byte[] ba = Encoding.Unicode.GetBytes(new char[] { (char)arg });
+                    ushort shrt = BitConverter.ToUInt16(ba, 0);
+                    kernel.SetValueArgument(i, 2, shrt);
+                }
                 else
                 {
                     kernel.SetValueArgument(i, MSizeOf(arg.GetType()), arg);
                 }
             }
-            
+
             // Add constants
             foreach (KeyValuePair<string, KernelConstantInfo> kvp in gpuMI.ParentModule.Constants)
             {
-                kernel.SetMemoryArgument(i++, (CLMemoryHandle)kvp.Value.CudaPointer);
+                CLMemoryHandle clm = (CLMemoryHandle)kvp.Value.CudaPointer;
+                Debug.Assert(clm.IsValid);
+                kernel.SetMemoryArgument(i++, clm);
             }
-           
-            //foreach(KernelConstantInfo kci in _module)
 
-            // Create the event wait list. An event list is not really needed for this example but it is important to see how it works.
-            // Note that events (like everything else) consume OpenCL resources and creating a lot of them may slow down execution.
-            // For this reason their use should be avoided if possible.
-            ComputeEventList eventList = new ComputeEventList();
-
-            // Create the command queue. This is used to control kernel execution and manage read/write/copy operations.
-            ComputeCommandQueue commands = new ComputeCommandQueue(_context, _computeDevice, ComputeCommandQueueFlags.None);
-
-            // Execute the kernel "count" times. After this call returns, "eventList" will contain an event associated with this command.
-            // If eventList == null or typeof(eventList) == ReadOnlyCollection<ComputeEventBase>, a new event will not be created.
+            bool isSynch = (streamId <= 0);
+            ComputeCommandQueue queue = isSynch ?
+                _defaultSynchronousQueue :
+                (ComputeCommandQueue)GetStream(streamId);
 
             // Convert from CUDA grid and block size to OpenCL grid size
-            int gridDims = gridSize.ToArray().Length; 
+            int gridDims = gridSize.ToArray().Length;
             int blockDims = blockSize.ToArray().Length;
             int maxDims = Math.Max(gridDims, blockDims);
 
             long[] blockSizeArray = blockSize.ToFixedSizeArray(maxDims);
             long[] gridSizeArray = gridSize.ToFixedSizeArray(maxDims);
-            for(i = 0; i < maxDims; i++)
+            for (i = 0; i < maxDims; i++)
                 gridSizeArray[i] *= blockSizeArray[i];
-            commands.Execute(kernel, null, gridSizeArray, blockSizeArray, eventList);
+            queue.Execute(kernel, null, gridSizeArray, blockSizeArray, null);
 
-            commands.Finish();
+            if (isSynch)
+                queue.Finish();
         }
+
+        #region DoCopyToConstantMemory
 
         protected override void DoCopyToConstantMemory<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci)
         {
-            ComputeEventList eventList = new ComputeEventList(); 
-            ComputeCommandQueue commands = new ComputeCommandQueue(_context, _computeDevice, ComputeCommandQueueFlags.None);
-            commands.WriteToBufferEx<T>(hostArray, (CLMemoryHandle)ci.CudaPointer, true, hostOffset, devOffset, count, eventList);
-            commands.Finish();
+            DoCopyToConstantMemory<T>(hostArray, (long)hostOffset, devArray, (long)devOffset, (long)count, ci);
         }
+
+        protected void DoCopyToConstantMemory<T>(Array hostArray, long hostOffset, Array devArray, long devOffset, long count, KernelConstantInfo ci) where T : struct
+        {
+            _defaultSynchronousQueue.WriteToBufferEx<T>(hostArray, (CLMemoryHandle)ci.CudaPointer, true, hostOffset, devOffset, count, null);
+            _defaultSynchronousQueue.Finish();
+        }
+
+        #endregion DoCopyToConstantMemory
+
+        #region DoCopyToConstantMemoryAsync
 
         protected override void DoCopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci, int streamId)
         {
-            throw new NotImplementedException();
+            DoCopyToConstantMemoryAsync<T>(hostArray, (long)hostOffset, devArray, (long)devOffset, (long)count, ci, streamId);
         }
+
+        protected void DoCopyToConstantMemoryAsync<T>(IntPtr hostArray, long hostOffset, Array devArray, long devOffset, long count, KernelConstantInfo ci, int streamId) where T : struct
+        {
+            ComputeCommandQueue queue = (ComputeCommandQueue)GetStream(streamId);
+            IntPtr hostArrOffset = hostArray.AddOffset<T>(hostOffset);
+            queue.WriteEx<T>((CLMemoryHandle)ci.CudaPointer, false, devOffset, count, hostArrOffset, null);
+            if (streamId <= 0)
+                queue.Finish();
+        }
+
+        #endregion DoCopyToConstantMemoryAsync
+
+        #region DoCopyToDevice
 
         protected override void DoCopyToDevice<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count)
         {
-            ComputeEventList eventList = new ComputeEventList();
-            ComputeCommandQueue commands = new ComputeCommandQueue(_context, _computeDevice, ComputeCommandQueueFlags.None);
-            CLDevicePtrEx<T> ptr = GetDeviceMemory(devArray) as CLDevicePtrEx<T>;
-            commands.WriteToBufferEx(hostArray, ptr.DevPtr, true, hostOffset, devOffset, count, eventList);
-            commands.Finish();
+            DoCopyToDevice<T>(hostArray, (long)hostOffset, devArray, (long)devOffset, (long)count);
         }
+
+        protected void DoCopyToDevice<T>(Array hostArray, long hostOffset, Array devArray, long devOffset, long count) where T : struct
+        {
+            CLDevicePtrEx<T> ptr = GetDeviceMemory(devArray) as CLDevicePtrEx<T>;
+            _defaultSynchronousQueue.WriteToBufferEx(hostArray, ptr.DevPtr, true, hostOffset, devOffset, count, null);
+            _defaultSynchronousQueue.Finish();
+        }
+
+        #endregion DoCopyToDevice
+
+        #region DoCopyFromDevice
 
         protected override void DoCopyFromDevice<T>(Array devArray, Array hostArray)
         {
@@ -312,76 +615,160 @@ kernel void VectorAdd(
 
         protected override void DoCopyFromDevice<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count)
         {
-            ComputeEventList eventList = new ComputeEventList();
-            ComputeCommandQueue commands = new ComputeCommandQueue(_context, _computeDevice, ComputeCommandQueueFlags.None);
-            CLDevicePtrEx<T> ptr = GetDeviceMemory(devArray) as CLDevicePtrEx<T>;
-            commands.ReadFromBufferEx(ptr.DevPtr, ref hostArray, true, devOffset, hostOffset, count < 0 ? ptr.TotalSize : count, eventList);
-            commands.Finish();
+            DoCopyFromDevice<T>(devArray, (long)devOffset, hostArray, (long)hostOffset, (long)count);
         }
-
-        protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId)
+        protected void DoCopyFromDevice<T>(Array devArray, long devOffset, Array hostArray, long hostOffset, long count) where T : struct
         {
-            throw new NotImplementedException();
+            CLDevicePtrEx<T> ptr = GetDeviceMemory(devArray) as CLDevicePtrEx<T>;
+            _defaultSynchronousQueue.ReadFromBufferEx(ptr.DevPtr, ref hostArray, true, devOffset, hostOffset, count < 0 ? ptr.TotalSize : count, null);
+            _defaultSynchronousQueue.Finish();
         }
 
+        #endregion DoCopyFromDevice
+
+        #region DoCopyToDeviceAsync
         protected override void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId)
         {
-            throw new NotImplementedException();
+            DoCopyToDeviceAsync<T>(hostArray, (long)hostOffset, devArray, (long)devOffset, (long)count, streamId);
         }
 
         protected override void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId)
         {
-            throw new NotImplementedException();
+            DoCopyToDeviceAsync<T>(hostArray, (long)hostOffset, devArray, (long)devOffset, (long)count, streamId);
         }
 
         protected override void DoCopyToDeviceAsync<T>(IntPtr hostArray, int hostOffset, DevicePtrEx devArray, int devOffset, int count, int streamId)
         {
-            throw new NotImplementedException();
+            DoCopyToDeviceAsync<T>(hostArray, (long)hostOffset, devArray, (long)devOffset, (long)count, streamId);
         }
 
         protected override void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost, bool isConstantMemory = false)
         {
-            throw new NotImplementedException();
+            DoCopyToDeviceAsync<T>(hostArray, (long)hostOffset, devArray, (long)devOffset, (long)count, streamId, stagingPost, isConstantMemory);
+        }
+
+        protected void DoCopyToDeviceAsync<T>(IntPtr hostArray, long hostOffset, Array devArray, long devOffset, long count, int streamId) where T : struct
+        {
+            ComputeCommandQueue queue = (ComputeCommandQueue)GetStream(streamId);
+            IntPtr hostArrPlusOffset = hostArray.AddOffset<T>(hostOffset);
+            CLDevicePtrEx<T> ptr = GetDeviceMemory(devArray) as CLDevicePtrEx<T>;
+            queue.WriteEx<T>(ptr.DevPtr.Handle, false, devOffset, count, hostArrPlusOffset, null);
+            if (streamId <= 0)
+                queue.Finish();
+        }
+
+        protected void DoCopyToDeviceAsync<T>(Array hostArray, long hostOffset, Array devArray, long devOffset, long count, int streamId) where T : struct
+        {
+            ComputeCommandQueue queue = (ComputeCommandQueue)GetStream(streamId);
+            CLDevicePtrEx<T> ptr = GetDeviceMemory(devArray) as CLDevicePtrEx<T>;
+            queue.WriteToBufferEx(hostArray, ptr.DevPtr, false, hostOffset, devOffset, count, null);
+            if (streamId <= 0)
+                queue.Finish();
+        }
+
+        protected void DoCopyToDeviceAsync<T>(IntPtr hostArray, long hostOffset, DevicePtrEx devArray, long devOffset, long count, int streamId) where T : struct
+        {
+            CLDevicePtrEx<T> ptr = devArray as CLDevicePtrEx<T>;
+            if (ptr == null)
+                throw new CudafyHostException(CudafyHostException.csCUDA_EXCEPTION_X, "Invalid device Array. Must be of type CLDevicePtrEx<T>.");
+            ComputeCommandQueue queue = (ComputeCommandQueue)GetStream(streamId);
+            IntPtr hostArrPlusOffset = hostArray.AddOffset<T>(hostOffset);
+            queue.Write<T>(ptr.DevPtr, false, devOffset, count, hostArrPlusOffset, null);
+            if (streamId <= 0)
+                queue.Finish();
+        }
+
+        protected void DoCopyToDeviceAsync<T>(Array hostArray, long hostOffset, Array devArray, long devOffset, long count, int streamId, IntPtr stagingPost, bool isConstantMemory = false) where T : struct
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion DoCopyToDeviceAsync
+
+        #region DoCopyFromDeviceAsync
+
+        protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId)
+        {
+            DoCopyFromDeviceAsync<T>(devArray, (long)devOffset, hostArray, (long)hostOffset, (long)count, streamId);
         }
 
         protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId)
         {
-            throw new NotImplementedException();
+            DoCopyFromDeviceAsync<T>(devArray, (long)devOffset, hostArray, (long)hostOffset, (long)count, streamId);
         }
 
         protected override void DoCopyFromDeviceAsync<T>(DevicePtrEx devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId)
         {
-            throw new NotImplementedException();
+            DoCopyFromDeviceAsync<T>(devArray, (long)devOffset, hostArray, (long)hostOffset, (long)count, streamId);
         }
 
         protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, Array hostArray, int hostOffset, int count, int streamId, IntPtr stagingPost)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
-        public override void SynchronizeStream(int streamId = 0)
+        protected void DoCopyFromDeviceAsync<T>(Array devArray, long devOffset, Array hostArray, long hostOffset, long count, int streamId) where T : struct
         {
-            throw new NotImplementedException();
+            ComputeCommandQueue queue = (ComputeCommandQueue)GetStream(streamId);
+            CLDevicePtrEx<T> ptr = GetDeviceMemory(devArray) as CLDevicePtrEx<T>;
+            queue.ReadFromBufferEx(ptr.DevPtr, ref hostArray, false, devOffset, hostOffset, count, null);
+            if (streamId <= 0)
+                queue.Finish();
         }
 
-        public override IntPtr HostAllocate<T>(int x)
+        protected void DoCopyFromDeviceAsync<T>(Array devArray, long devOffset, IntPtr hostArray, long hostOffset, long count, int streamId) where T : struct
         {
-            throw new NotImplementedException();
+            ComputeCommandQueue queue = (ComputeCommandQueue)GetStream(streamId);
+            IntPtr hostArrPlusOffset = hostArray.AddOffset<T>(hostOffset);
+            CLDevicePtrEx<T> ptr = GetDeviceMemory(devArray) as CLDevicePtrEx<T>;
+            queue.Read(ptr.DevPtr, false, devOffset, count, hostArrPlusOffset, null);
+            if (streamId <= 0)
+                queue.Finish();
         }
 
-        public override void HostFree(IntPtr ptr)
+        protected void DoCopyFromDeviceAsync<T>(DevicePtrEx devArray, long devOffset, IntPtr hostArray, long hostOffset, long count, int streamId) where T : struct
         {
-            throw new NotImplementedException();
+            CLDevicePtrEx<T> ptr = devArray as CLDevicePtrEx<T>;
+            if (ptr == null)
+                throw new CudafyHostException(CudafyHostException.csCUDA_EXCEPTION_X, "Invalid device Array. Must be of type CLDevicePtrEx<T>.");
+            ComputeCommandQueue queue = (ComputeCommandQueue)GetStream(streamId);
+            IntPtr hostArrPlusOffset = hostArray.AddOffset<T>(hostOffset);
+            queue.Read(ptr.DevPtr, false, devOffset, count, hostArrPlusOffset, null);
+            if (streamId <= 0)
+                queue.Finish();
         }
 
-        public override void HostFreeAll()
-        {
-            //throw new NotImplementedException();
-        }
+        #endregion DoCopyFromDeviceAsync
+
+        // OpenCL doesn't provide a mechanism for merely allocating properly-alligned pinned memory on the host. Such buffers need to be created by the developer.
+        // While it may be tempting to implement here that mechanism (outside OpenCL) using the windows api, the fact is that different gpu implementations
+        // will probably require different memory allignments on the host to be efficient, and may or may not allow write-combined memory, and who knows 
+        // which other details are hardware dependent?
+        #region Host mem Allocation
+
+        //public override IntPtr HostAllocate<T>(int x)
+        //{
+        //    throw new NotSupportedException();
+        //}
+
+        //public override void HostFree(IntPtr ptr)
+        //{
+        //    throw new NotSupportedException();
+        //}
+
+        //public override void HostFreeAll()
+        //{
+        //    //throw new NotSupportedException();
+        //}
+
+        #endregion Host mem Allocation
+
+        // in OpenCL, a handle to device memory isn't necessarily a pointer. It could be anything. Host-side pointer arithmetic on device objects should be discouraged.
+        #region DoCast
 
         protected override Array DoCast<T, U>(int offset, Array devArray, int n)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         protected override Array DoCast<T, U>(int offset, Array devArray, int x, int y)
@@ -394,117 +781,309 @@ kernel void VectorAdd(
             throw new NotImplementedException();
         }
 
-        public override void DestroyStream(int streamId)
-        {
-            throw new NotImplementedException();
-        }
+        #endregion DoCast
 
-        public override void DestroyStreams()
-        {
-            //throw new NotImplementedException();
-        }
-
+        #region CopyToDevice
         public override T[] CopyToDevice<T>(T[] hostArray)
         {
-            T[] devMem = new T[0];      
+            T[] devMem = new T[0];
             ComputeBuffer<T> a = new ComputeBuffer<T>(_context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, hostArray);
-            AddToDeviceMemory(devMem, new CLDevicePtrEx<T>(a, hostArray.Length, _context));
+            AddToDeviceMemory(devMem, new CLDevicePtrEx<T>(a, (int)hostArray.LongLength, _context));
             return devMem;
         }
 
         public override T[,] CopyToDevice<T>(T[,] hostArray)
         {
-            throw new NotImplementedException();
+            // We're using Marshal.SizeOf since the host buffer will be pinned and marshalled onto the OpenCL API. Is this correct?
+#warning test it thoroughly, since the pinned mem layout may include unused bytes for array edge padding
+            long hostBuffLen = hostArray.GetLongLength(0) * hostArray.GetLongLength(1);//MSizeOf(typeof(T)) * 
+            T[,] devMem = new T[0, 0];
+            ComputeBuffer<T> a;
+            GCHandle dataPtr = GCHandle.Alloc(hostArray, GCHandleType.Pinned);
+            try
+            {
+                a = new ComputeBuffer<T>(_context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, hostBuffLen, dataPtr.AddrOfPinnedObject());
+            }
+            finally
+            {
+                dataPtr.Free();
+            }
+            AddToDeviceMemory(devMem, new CLDevicePtrEx<T>(a, (int)hostArray.GetLongLength(0), (int)hostArray.GetLongLength(1), _context));
+            return devMem;
         }
 
         public override T[, ,] CopyToDevice<T>(T[, ,] hostArray)
         {
-            throw new NotImplementedException();
+            // We're using Marshal.SizeOf since the host buffer will be pinned and marshalled onto the OpenCL API. Is this correct?
+#warning test it thoroughly, since the pinned mem layout may include unused bytes for array edge padding
+            long hostBuffLen = hostArray.GetLongLength(0) * hostArray.GetLongLength(1) * hostArray.GetLongLength(2);
+            T[, ,] devMem = new T[0, 0, 0];//MSizeOf(typeof(T)) * 
+            ComputeBuffer<T> a;
+            GCHandle dataPtr = GCHandle.Alloc(hostArray, GCHandleType.Pinned);
+            try
+            {
+                a = new ComputeBuffer<T>(_context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, hostBuffLen, dataPtr.AddrOfPinnedObject());
+            }
+            finally
+            {
+                dataPtr.Free();
+            }
+            AddToDeviceMemory(devMem, new CLDevicePtrEx<T>(a, (int)hostArray.GetLongLength(0), (int)hostArray.GetLongLength(1), (int)hostArray.GetLongLength(2), _context));
+            return devMem;
         }
+
+        #endregion CopyToDevice
+
+        #region CopyOnDevice
 
         public override void CopyOnDevice<T>(T[] srcDevArray, T[] dstDevArray)
         {
-            throw new NotImplementedException();
+            CLDevicePtrEx<T> ptr_src = GetDeviceMemory(srcDevArray) as CLDevicePtrEx<T>;
+            CLDevicePtrEx<T> ptr_dst = GetDeviceMemory(dstDevArray) as CLDevicePtrEx<T>;
+            if (ptr_src.XSize != ptr_dst.XSize)
+                throw new CudafyHostException(CudafyHostException.csCUDA_EXCEPTION_X, "array sizes differ");
+            _defaultSynchronousQueue.Copy<T>(ptr_src.DevPtr, ptr_dst.DevPtr, 0, 0, ptr_src.XSize, null);
+            _defaultSynchronousQueue.Finish();
         }
 
         protected override void DoCopyOnDevice<T>(Array srcDevArray, int srcOffset, Array dstDevArray, int dstOffet, int count)
         {
-            throw new NotImplementedException();
+            DoCopyOnDevice<T>(srcDevArray, (long)srcOffset, dstDevArray, (long)dstOffet, (long)count);
+        }
+        protected void DoCopyOnDevice<T>(Array srcDevArray, long srcOffset, Array dstDevArray, long dstOffet, long count) where T : struct
+        {
+            CLDevicePtrEx<T> ptr_src = GetDeviceMemory(srcDevArray) as CLDevicePtrEx<T>;
+            CLDevicePtrEx<T> ptr_dst = GetDeviceMemory(dstDevArray) as CLDevicePtrEx<T>;
+            _defaultSynchronousQueue.Copy<T>(ptr_src.DevPtr, ptr_dst.DevPtr, srcOffset, dstOffet, count, null);
+            _defaultSynchronousQueue.Finish();
         }
 
         protected override void DoCopyOnDevice<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffet, int count)
         {
-            throw new NotImplementedException();
+            DoCopyOnDevice<T>(srcDevArray, (long)srcOffset, dstDevArray, (long)dstOffet, (long)count);
         }
+        protected void DoCopyOnDevice<T>(DevicePtrEx srcDevArray, long srcOffset, DevicePtrEx dstDevArray, long dstOffet, long count) where T : struct
+        {
+            CLDevicePtrEx<T> ptr_src = srcDevArray as CLDevicePtrEx<T>;
+            CLDevicePtrEx<T> ptr_dst = dstDevArray as CLDevicePtrEx<T>;
+            if (ptr_dst == null || ptr_src == null)
+                throw new CudafyHostException(CudafyHostException.csCUDA_EXCEPTION_X, "Invalid device Array. Must be of type CLDevicePtrEx<T>.");
+            _defaultSynchronousQueue.Copy<T>(ptr_src.DevPtr, ptr_dst.DevPtr, srcOffset, dstOffet, count, null);
+            _defaultSynchronousQueue.Finish();
+        }
+
+        #endregion CopyOnDevice
+
+        #region CopyOnDeviceAsync
 
         protected override void DoCopyOnDeviceAsync<T>(Array srcDevArray, int srcOffset, Array dstDevArray, int dstOffet, int count, int streamId)
         {
-            throw new NotImplementedException();
+            DoCopyOnDeviceAsync<T>(srcDevArray, (long)srcOffset, dstDevArray, (long)dstOffet, (long)count, streamId);
+        }
+
+        protected void DoCopyOnDeviceAsync<T>(Array srcDevArray, long srcOffset, Array dstDevArray, long dstOffet, long count, int streamId) where T : struct
+        {
+            ComputeCommandQueue queue = (ComputeCommandQueue)GetStream(streamId);
+            CLDevicePtrEx<T> ptr_src = GetDeviceMemory(srcDevArray) as CLDevicePtrEx<T>;
+            CLDevicePtrEx<T> ptr_dst = GetDeviceMemory(dstDevArray) as CLDevicePtrEx<T>;
+            queue.Copy<T>(ptr_src.DevPtr, ptr_dst.DevPtr, srcOffset, dstOffet, count, null);
+            if (streamId <= 0)
+                queue.Finish();
         }
 
         protected override void DoCopyOnDeviceAsync<T>(DevicePtrEx srcDevArray, int srcOffset, DevicePtrEx dstDevArray, int dstOffet, int count, int streamId)
         {
-            throw new NotImplementedException();
+            DoCopyOnDeviceAsync<T>(srcDevArray, (long)srcOffset, dstDevArray, (long)dstOffet, (long)count, streamId);
         }
 
+        protected void DoCopyOnDeviceAsync<T>(DevicePtrEx srcDevArray, long srcOffset, DevicePtrEx dstDevArray, long dstOffet, long count, int streamId) where T : struct
+        {
+            ComputeCommandQueue queue = (ComputeCommandQueue)GetStream(streamId);
+            CLDevicePtrEx<T> ptr_src = srcDevArray as CLDevicePtrEx<T>;
+            CLDevicePtrEx<T> ptr_dst = dstDevArray as CLDevicePtrEx<T>;
+            if (ptr_dst == null || ptr_src == null)
+                throw new CudafyHostException(CudafyHostException.csCUDA_EXCEPTION_X, "Invalid device Array. Must be of type CLDevicePtrEx<T>.");
+            queue.Copy<T>(ptr_src.DevPtr, ptr_dst.DevPtr, srcOffset, dstOffet, count, null);
+            if (streamId <= 0)
+                queue.Finish();
+        }
+
+        #endregion CopyOnDeviceAsync
+
         public override T[] Allocate<T>(int x)
-        {         
+        {
+            return Allocate<T>((long)x);
+        }
+        public T[] Allocate<T>(long x, ComputeMemoryFlags flags = ComputeMemoryFlags.ReadWrite) where T : struct
+        {
             T[] devMem = new T[0];
-            ComputeBuffer<T> a = new ComputeBuffer<T>(_context, ComputeMemoryFlags.ReadWrite, x);
-            AddToDeviceMemory(devMem, new CLDevicePtrEx<T>(a, x, _context));
+            ComputeBuffer<T> a = new ComputeBuffer<T>(_context, flags, x);
+            AddToDeviceMemory(devMem, new CLDevicePtrEx<T>(a, (int)x, _context));
             return devMem;
         }
 
         public override T[,] Allocate<T>(int x, int y)
         {
-            throw new NotImplementedException();
+            return Allocate<T>((long)x, (long)y);
         }
-
+        public T[,] Allocate<T>(long x, long y, ComputeMemoryFlags flags = ComputeMemoryFlags.ReadWrite) where T : struct
+        {
+            T[,] devMem = new T[0, 0];
+            ComputeBuffer<T> a = new ComputeBuffer<T>(_context, flags, x * y);
+            AddToDeviceMemory(devMem, new CLDevicePtrEx<T>(a, (int)x, (int)y, _context));
+            return devMem;
+        }
         public override T[, ,] Allocate<T>(int x, int y, int z)
         {
-            throw new NotImplementedException();
+            return Allocate<T>((long)x, (long)y, (long)z);
+        }
+        public T[, ,] Allocate<T>(long x, long y, long z, ComputeMemoryFlags flags = ComputeMemoryFlags.ReadWrite) where T : struct
+        {
+            T[,,] devMem = new T[0, 0, 0];
+            ComputeBuffer<T> a = new ComputeBuffer<T>(_context, flags, x * y * z);
+            AddToDeviceMemory(devMem, new CLDevicePtrEx<T>(a, (int)x, (int)y, (int)z, _context));
+            return devMem;
         }
 
         public override T[] Allocate<T>(T[] hostArray)
         {
-            return Allocate<T>(hostArray.Length);
+            return Allocate<T>(hostArray.LongLength);
         }
 
         public override T[,] Allocate<T>(T[,] hostArray)
         {
-            throw new NotImplementedException();
+            return Allocate<T>(hostArray.GetLongLength(0), hostArray.GetLongLength(1));
         }
 
         public override T[, ,] Allocate<T>(T[, ,] hostArray)
         {
-            throw new NotImplementedException();
+            return Allocate<T>(hostArray.GetLongLength(0), hostArray.GetLongLength(1), hostArray.GetLongLength(2));
         }
+
+        #region DoSet
+
+
+        /// <summary>
+        /// Gets or sets the size of the array used for Set operations in OpenCL 1.0 and 1.1 devices.
+        /// </summary>
+        /// <value>
+        /// The size of the memset array.
+        /// </value>
+        public int MemsetArraySize
+        {
+            get { return _memsetArray.Length; }
+            set 
+            {
+                if (value != _memsetArray.Length)
+                    _memsetArray = new byte[value];
+            }
+        }
+
+        private byte[] _memsetArray;
 
         protected override void DoSet<T>(Array devArray, int offset = 0, int count = 0)
         {
-            throw new NotImplementedException();
+            DoSet<T>(devArray, (long)offset, (long)count);
         }
+
+        protected void DoSet<T>(Array devArray, long offset = 0, long count = 0) where T : struct
+        {
+            CLDevicePtrEx<T> ptr = GetDeviceMemory(devArray) as CLDevicePtrEx<T>;
+            long totalSize = ptr.TotalSize;
+            long elemSize = MSizeOf(typeof(T));
+            
+            if (count == 0)
+                count = totalSize;
+            long countBytes = count * elemSize;
+            if (offset < 0 || offset >= totalSize)
+                throw new IndexOutOfRangeException("offset");
+            long offsetBytes = offset * elemSize;
+            if (OpenCLVersion.Minor > 1)
+            {
+                int[] fillBuff = new int[] { 0 };
+                GCHandle handle_fillBuff = GCHandle.Alloc(fillBuff, GCHandleType.Pinned);
+                ComputeErrorCode error;
+                try
+                {
+                    error = CL11_ex.EnqueueFillBuffer(
+                        _defaultSynchronousQueue.Handle, ptr.Handle, handle_fillBuff.AddrOfPinnedObject(), new IntPtr(1), new IntPtr(offsetBytes), new IntPtr(countBytes), 0, null, null);
+                }
+                finally
+                {
+                    handle_fillBuff.Free();
+                }
+#warning TODO Throw a CUDAfy exception instead
+                ComputeException.ThrowOnError(error);
+            }
+            else
+            {
+                GCHandle sourceGCHandle = GCHandle.Alloc(_memsetArray, GCHandleType.Pinned);
+                try
+                {
+                    IntPtr _ptrHostBuff = sourceGCHandle.AddrOfPinnedObject();
+                    long sizeofT = Marshal.SizeOf(typeof(T));
+                    long len0hostBuffT = _memsetArray.Length / sizeofT;
+                    long maxScanIx = Math.Min(totalSize, offset + count);
+                    for (long k = offset; k < maxScanIx; k += len0hostBuffT)
+                    {
+                        long patchSize = Math.Min(len0hostBuffT, maxScanIx - k);
+                        _defaultSynchronousQueue.WriteEx<T>(ptr.DevPtr.Handle, false, k, patchSize, _ptrHostBuff, null);
+                    }
+                }
+                finally
+                {
+                    sourceGCHandle.Free();
+                }
+            }
+            _defaultSynchronousQueue.Finish();
+        }
+
+        #endregion DoSet
 
         public override void Free(object devArray)
         {
-            //throw new NotImplementedException();
+            if (devArray == null)
+                throw new ArgumentNullException("devArray is null");
+            CLDevicePtrExInter ptr_src = GetDeviceMemory(devArray) as CLDevicePtrExInter;
+            ptr_src.DevPtr_base.Dispose();
+            RemoveFromDeviceMemoryEx(ptr_src);
         }
 
         public override void FreeAll()
         {
-            //throw new NotImplementedException();
+            lock (_lock)
+            {
+                foreach (CLDevicePtrExInter ptrEx in GetDeviceMemories())
+                {
+                    ptrEx.DevPtr_base.Dispose();
+                }
+                ClearDeviceMemory();
+            }
         }
     }
 
     public abstract class CLDevicePtrExInter : DevicePtrEx
     {
         public abstract CLMemoryHandle Handle { get; }
+
+        /// <summary>
+        /// stores the dev PTR in its base form without generic types.
+        /// </summary>
+        public ComputeMemory DevPtr_base { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the size of the element.
+        /// </summary>
+        /// <value>
+        /// The size of the element.
+        /// </value>
+        public int ElementSize { get; protected set; }
     }
 
     /// <summary>
     /// Internal use.
     /// </summary>
-    public class CLDevicePtrEx<T> : CLDevicePtrExInter where T  : struct
+    public class CLDevicePtrEx<T> : CLDevicePtrExInter where T : struct
     {
         //protected CUDevicePtrEx(CUcontext? context)
         //{
@@ -522,6 +1101,7 @@ kernel void VectorAdd(
             Dimensions = 0;
         }
 
+#warning array lengths should be in long, everywhere.
         /// <summary>
         /// Initializes a new instance of the <see cref="CUDevicePtrEx"/> class.
         /// </summary>
@@ -601,6 +1181,8 @@ kernel void VectorAdd(
             ZSize = zSize;
             Dimensions = 3;
             Context = context;
+            ElementSize = GPGPU.MSizeOf(typeof(T));
+
             //OriginalSize = originalSize < 0 ? TotalSize : originalSize;
         }
 
@@ -624,11 +1206,20 @@ kernel void VectorAdd(
         //    return newPtrEx;
         //}
 
-
         /// <summary>
         /// Gets the dev PTR.
         /// </summary>
-        public ComputeBuffer<T> DevPtr { get; private set; }
+        public ComputeBuffer<T> DevPtr
+        {
+            get
+            {
+                return (ComputeBuffer<T>)DevPtr_base;
+            }
+            protected set 
+            {
+                DevPtr_base = value;
+            }
+        }
 
         public override CLMemoryHandle Handle
         {

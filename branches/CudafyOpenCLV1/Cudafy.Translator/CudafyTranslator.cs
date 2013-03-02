@@ -64,9 +64,11 @@ namespace Cudafy.Translator
         private static IEnumerable<Type> GetWithNestedTypes(Type[] types)
         {
             List<Type> typesList = new List<Type>();
-            foreach (var type in types.Distinct())
+            foreach (Type type in types.Distinct())
             {
-                foreach (var nestedType in GetNestedTypes(type))
+                if (type == null)
+                    continue;
+                foreach (Type nestedType in GetNestedTypes(type))
                     typesList.Add(nestedType);
                 typesList.Add(type);
             }
@@ -256,8 +258,9 @@ namespace Cudafy.Translator
                 km.GenerateDebug = GenerateDebug;
                 km.Compile(eGPUCompiler.CudaNvcc, false);
             }
-            if (types.Length > 0)
-                km.Name = types[types.Length - 1].Name;
+            Type lastType = types.Last(t => t != null);
+            if(lastType != null)
+                km.Name = lastType.Name;
             return km;
         }
 
@@ -363,7 +366,7 @@ namespace Cudafy.Translator
                                 }
                             }
 #warning TODO Only Global Methods can be called from host
-#warning For OpenCL may need to do Methods once all Constants have been handled
+#warning TODO For OpenCL may need to do Methods once all Constants have been handled
                             // Methods
                             foreach (var med in td.Methods)
                             {
@@ -390,6 +393,15 @@ namespace Cudafy.Translator
 
             codeSw.Flush();
 
+            if (CudafyTranslator.Language == eLanguage.OpenCL)
+            {
+                outputSw.WriteLine("#if defined(cl_khr_fp64)");
+                outputSw.WriteLine("#pragma OPENCL EXTENSION cl_khr_fp64: enable");
+                outputSw.WriteLine("#elif defined(cl_amd_fp64)");
+                outputSw.WriteLine("#pragma OPENCL EXTENSION cl_amd_fp64: enable");
+                outputSw.WriteLine("#endif");
+            }
+
             foreach (var oh in CUDALanguage.OptionalHeaders)
                 if (oh.Used)
                     outputSw.WriteLine(oh.IncludeLine);
@@ -397,6 +409,7 @@ namespace Cudafy.Translator
                 if (oh.Used)
                     outputSw.WriteLine(oh.Code);
             //outputSw.WriteLine(@"#include <curand_kernel.h>");
+
 
             declarationsSw.WriteLine();
             declarationsSw.Flush();
@@ -537,6 +550,28 @@ namespace Cudafy.Translator
                 }
             }
             return addressSpaceQualifier;
+        }
+
+        public string Int64Translation
+        {
+            get
+            {
+                if (Language == eLanguage.Cuda)
+                    return "long long";
+                else
+                    return "long";
+            }
+        }
+
+        public string UInt64Translation
+        {
+            get
+            {
+                if (Language == eLanguage.Cuda)
+                    return "unsigned long long";
+                else
+                    return "ulong";
+            }
         }
     }
 }

@@ -81,5 +81,22 @@ namespace Cudafy.Translator
                 result = gridDim.z;
             return result;
         }";
+        public const string popCount =
+    @"#if __OPENCL_VERSION__ <= CL_VERSION_1_1
+    int popcount(unsigned int x){
+    int c = 0;
+    for (; x > 0; x &= x -1) c++;
+    return c;}
+    #endif";
+
+        public const string popCountll =
+    @"#if __OPENCL_VERSION__ <= CL_VERSION_1_1
+    int popcountll(long x){
+    int c = 0;
+    for (; x > 0; x &= x -1) c++;
+    return c;}
+    #else
+    #define popcountll popcount
+    #endif";
     }
 }

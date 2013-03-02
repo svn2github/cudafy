@@ -43,8 +43,7 @@ namespace Cudafy.Host
         /// <param name="deviceId">The device id.</param>
         public EmulatedGPU(int deviceId = 0)
             : base(deviceId)
-        {
-            _hostHandles = new Dictionary<IntPtr, GCHandle>();
+        {            
             _lock = new object();
             _availableBytesPerfctr = new PerformanceCounter("Memory", "Available Bytes");
         }
@@ -210,6 +209,10 @@ namespace Cudafy.Host
             Dictionary<Array, EmuDevicePtrEx> dic;
             object[] pList = BuildParameterList2(mi, arguments, out dic);
             //object[] pListCopy = new object[0];
+            if (gridSize.z > 1)
+                throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, "3D grid sizes");
+            if (blockSize.z > 1)
+                throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, "3D block sizes");
             for (int x = 0; x < gridSize.x; x++)
             {
                 for (int y = 0; y < gridSize.y; y++)
@@ -913,7 +916,7 @@ namespace Cudafy.Host
             Array.Copy(srcPtrEx.DevPtr, srcPtrEx.Offset + srcOffset, dstPtrEx.DevPtr, dstPtrEx.Offset + dstOffet, count);
         }
 
-        protected override void DoCopyDeviceToDeviceAsync<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count, int stream)
+        protected override void DoCopyDeviceToDeviceAsync<T>(Array srcDevArray, int srcOffset, GPGPU peer, Array dstDevArray, int dstOffet, int count, int stream) 
         {
             DoCopyDeviceToDevice<T>(srcDevArray, srcOffset, peer, dstDevArray, dstOffet, count);
         }
@@ -948,67 +951,7 @@ namespace Cudafy.Host
             _streams.Clear();
         }
 
-        /// <summary>
-        /// Performs a default host memory allocation.
-        /// </summary>
-        /// <typeparam name="T">Blittable type.</typeparam>
-        /// <param name="x">The x size.</param>
-        /// <returns>
-        /// Pointer to allocated memory.
-        /// </returns>
-        public override IntPtr HostAllocate<T>(int x)
-        {
-            int bytes = MSizeOf(typeof(T)) * x;
-            byte[] buffer = new byte[bytes];
-            GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-            IntPtr intPtr = handle.AddrOfPinnedObject();
-            _hostHandles.Add(intPtr, handle);
-            return intPtr;
-        }
-
-        private Dictionary<IntPtr, GCHandle> _hostHandles;
-
-        /// <summary>
-        /// Frees memory allocated by HostAllocate.
-        /// </summary>
-        /// <param name="ptr">The pointer.</param>
-        /// <exception cref="CudafyHostException">Pointer not found.</exception>
-        public override void HostFree(IntPtr ptr)
-        {
-            lock (_lock)
-            {
-                if (_hostHandles.ContainsKey(ptr))
-                {
-                    GCHandle handle = _hostHandles[ptr];
-                    handle.Free();
-                }
-                else
-                    throw new CudafyHostException(CudafyHostException.csPOINTER_NOT_FOUND);
-            }
-        }
-
-        /// <summary>
-        /// Frees all memory allocated by HostAllocate.
-        /// </summary>
-        public override void HostFreeAll()
-        {
-            lock (_lock)
-            {
-                foreach (var v in _hostHandles)
-                {
-                    GCHandle handle = v.Value;
-                    try
-                    {
-                        handle.Free();
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine(ex);
-                    }
-                }
-                _hostHandles.Clear();
-            }
-        }
+ 
 #pragma warning restore 1591
 
 

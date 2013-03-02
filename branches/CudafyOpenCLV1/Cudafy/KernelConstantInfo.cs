@@ -50,6 +50,14 @@ namespace Cudafy
         }
 
         /// <summary>
+        /// Gets or sets a handle that can be arbitrarily used to prevent garbage collection.
+        /// </summary>
+        /// <value>
+        /// The handle.
+        /// </value>
+        public object Handle { get; set; }
+
+        /// <summary>
         /// Gets or sets the cuda pointer.
         /// </summary>
         /// <value>
@@ -164,7 +172,7 @@ namespace Cudafy
             string constantName = xe.GetAttributeValue(csNAME);
             string fieldName = xe.GetAttributeValue(csFIELDNAME);
             bool? isDummy = xe.TryGetAttributeBoolValue(csISDUMMY);
-            bool? doNoIncludeHeader = xe.TryGetAttributeBoolValue(csDUMMYBEHAVIOUR);
+            string behaviourStr = xe.TryGetAttributeValue(csDUMMYBEHAVIOUR);  
             string typeName = xe.Element(csTYPE).Value;
             string assemblyFullName = xe.Element(csASSEMBLY).Value;
             string assemblyName = xe.Element(csASSEMBLYNAME).Value;

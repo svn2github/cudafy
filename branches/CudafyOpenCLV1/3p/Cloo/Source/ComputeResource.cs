@@ -74,7 +74,7 @@ namespace Cloo
         ~ComputeResource()
         {
             Trace.WriteLine(ToString() + " leaked!", "Warning");
-            Dispose(false);
+           // Dispose(false);
         }
 
         #endregion

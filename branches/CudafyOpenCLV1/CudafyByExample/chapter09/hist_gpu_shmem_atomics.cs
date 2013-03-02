@@ -63,7 +63,7 @@ namespace CudafyByExample
             CudafyModule km = CudafyTranslator.Cudafy();
 
             GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
-            if (gpu.GetDeviceProperties().Capability < new Version(1, 2))
+            if (gpu is CudaGPU && gpu.GetDeviceProperties().Capability < new Version(1, 2))
             {
                 Console.WriteLine("Compute capability 1.2 or higher required for atomics.");
                 return -1;

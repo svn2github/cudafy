@@ -208,6 +208,22 @@ namespace Cudafy.Translator
 			}
 		}
 
+        void WriteCommaSeparatedList(IEnumerable<string> list, bool isFirst = true)
+        {
+            foreach (string s in list)
+            {
+                if (isFirst)
+                {
+                    isFirst = false;
+                }
+                else
+                {
+                    formatter.WriteToken(",");
+                }
+                formatter.WriteKeyword(s);
+            }
+        }
+
         bool IsIgnored(AstNode node)
         {
             var ie = node as IdentifierExpression;
@@ -253,22 +269,36 @@ namespace Cudafy.Translator
             {
                 foreach (var kci in CUDALanguage.GetConstants())
                 {
-                    string keyword = kci.Information.FieldType.GetElementType().Name;
+                    var elemType = kci.Information.FieldType.GetElementType();
+                    string keyword = elemType.Name;
                     var primitiveType = CUDAAstBuilder.ConvertToPrimitiveType(keyword) as PrimitiveType;
                     string name = primitiveType.Keyword;
-                    WriteKeyword(string.Format(", __constant {0}* {1}", name, kci.Name));
+                    string structType = elemType.IsPrimitive ? "" : "struct";
+                    WriteKeyword(string.Format(", {0} {1} {2}* {3}", CudafyTranslator.LanguageSpecifics.ConstantModifier, structType, name, kci.Name));
                 }
             }
         }
 		
-		void WriteCommaSeparatedListInParenthesis(IEnumerable<AstNode> list, bool spaceWithin)
+		void WriteCommaSeparatedListInParenthesis(IEnumerable<AstNode> list, bool spaceWithin, string[] additionalArguments = null, bool writeConstants = false)
 		{
 			LPar();
 			if (list.Any()) {
 				Space(spaceWithin);
 				WriteCommaSeparatedList(list);
+                if (additionalArguments != null)
+                    WriteCommaSeparatedList(additionalArguments, list.Count() == 0);
 				Space(spaceWithin);
 			}
+            if (writeConstants && CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
+            {
+                foreach (var kci in CUDALanguage.GetConstants())
+                {
+                    //string keyword = kci.Information.FieldType.GetElementType().Name;
+                    //var primitiveType = CUDAAstBuilder.ConvertToPrimitiveType(keyword) as PrimitiveType;
+                    //string name = primitiveType.Keyword;
+                    WriteKeyword(string.Format(", {0}", kci.Name));
+                }
+            }
 			RPar();
 		}
 
@@ -932,7 +962,7 @@ namespace Cudafy.Translator
             this.DisableSmartArray = CUDALanguage.DisableSmartArray;
 			Space(policy.SpaceBeforeMethodCallParentheses);
             if(sm == null || sm.CallFunction)
-			    WriteCommaSeparatedListInParenthesis(invocationExpression.Arguments, policy.SpaceWithinMethodCallParentheses);
+			    WriteCommaSeparatedListInParenthesis(invocationExpression.Arguments, policy.SpaceWithinMethodCallParentheses, (sm != null ? sm.AdditionalLiteralParams : null), sm == null);
             CUDALanguage.DisableSmartArray = false;
 			return EndNode(invocationExpression);
 		}
@@ -1287,7 +1317,7 @@ namespace Cudafy.Translator
 					return "\\v";
 				default:
 					//if (char.IsControl(ch) || char.IsSurrogate(ch)) {
-						return "\\u" + ((int)ch).ToString("x4");
+						return "\\x"+ ((int)ch).ToString("x4");// 
 					//} else {
                     //    byte[] ba = Encoding.Unicode.GetBytes(new char[] { (char)ch });
                     //    ushort shrt = BitConverter.ToUInt16(ba, 0);
@@ -2550,7 +2580,13 @@ namespace Cudafy.Translator
         /// The constant dims.
         /// </value>
         public int[] ConstantDims { get; set; }
-		
+
+        /// <summary>
+        /// Visits the field declaration.
+        /// </summary>
+        /// <param name="fieldDeclaration">The field declaration.</param>
+        /// <param name="data">The data.</param>
+        /// <returns></returns>
 		public object VisitFieldDeclaration (FieldDeclaration fieldDeclaration, object data)
 		{
             eCudafyType? ct = null;
@@ -2656,8 +2692,10 @@ namespace Cudafy.Translator
                 case "int":
                     return 4;
                 case "unsigned long long":
+                case "ulong":
                     return 8;
                 case "long long":
+                case "long":
                     return 8;
                 case "float":
                     return 4;
@@ -2921,8 +2959,9 @@ namespace Cudafy.Translator
 		{
 			StartNode(simpleType);
             var sti = CUDALanguage.TranslateSpecialType(simpleType.Identifier);
+#warning Why the hell did I comment out these next two lines? 030112
             WriteIdentifier(sti);
-            WriteTypeArguments(simpleType.TypeArguments);
+			WriteTypeArguments(simpleType.TypeArguments);
 			return EndNode(simpleType);
 		}
 		
@@ -3010,9 +3049,9 @@ namespace Cudafy.Translator
                 case "uint":
                     return "unsigned int";
                 case "ulong":
-                    return "unsigned long long";
+                    return CudafyTranslator.LanguageSpecifics.UInt64Translation;//"unsigned long long";
                 case "long":
-                    return "long long";
+                    return CudafyTranslator.LanguageSpecifics.Int64Translation;//"long long";
                 case "decimal":
                     return "double";
                 case "char":

@@ -36,11 +36,34 @@ namespace Cudafy
     {
 
         /// <summary>
-        /// Returns the absolute value of a single precision floating point number.
+        /// Returns the absolute value of a single precision floating point number. For OpenCL compatibility, first cast
+        /// value to an integer.
         /// </summary>
         /// <param name="value">The value to find absolute value of.</param>
         /// <returns>Absolute of specified value.</returns>
         public static float Abs(float value)
+        {
+            return Math.Abs(value);
+        }
+
+        /// <summary>
+        /// Returns the absolute value of a single precision floating point number.  For OpenCL compatibility, first cast
+        /// value to an integer.
+        /// </summary>
+        /// <param name="value">The value to find absolute value of.</param>
+        /// <returns>Absolute of specified value.</returns>
+        public static float Abs(int value)
+        {
+            return Math.Abs(value);
+        }
+
+        /// <summary>
+        /// Returns the absolute value of a single precision floating point number.  For OpenCL compatibility, first cast
+        /// value to an integer.
+        /// </summary>
+        /// <param name="value">The value to find absolute value of.</param>
+        /// <returns>Absolute of specified value.</returns>
+        public static float Abs(long value)
         {
             return Math.Abs(value);
         }

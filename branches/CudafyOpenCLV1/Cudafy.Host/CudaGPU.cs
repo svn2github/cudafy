@@ -398,6 +398,7 @@ namespace Cudafy.Host
             GPGPUProperties props = new GPGPUProperties();
             props.UseAdvanced = useAdvanced;
             props.Capability = dev.ComputeCapability;
+            props.PlatformName = "CUDA " + GetDriverVersion().ToString();
             props.Name = dev.Name;
             props.DeviceId = dev.Ordinal;
             props.TotalMemory = dev.TotalMemory;
@@ -1333,7 +1334,7 @@ namespace Cudafy.Host
 #pragma warning restore 1591
 
 
-        private Dictionary<IntPtr, CUcontext> _hostHandles;
+        private new Dictionary<IntPtr, CUcontext> _hostHandles;
 
         /// <summary>
         /// Destroys the stream.

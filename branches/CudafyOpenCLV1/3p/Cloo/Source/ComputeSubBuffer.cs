@@ -54,7 +54,7 @@ namespace Cloo
         public ComputeSubBuffer(ComputeBuffer<T> buffer, ComputeMemoryFlags flags, long offset, long count)
             : base(buffer.Context, flags)
         {
-            SysIntX2 region = new SysIntX2(offset * Marshal.SizeOf(typeof(T)), count * Marshal.SizeOf(typeof(T)));
+            SysIntX2 region = new SysIntX2(offset * HDSPUtils.SizeOf(typeof(T)), count * HDSPUtils.SizeOf(typeof(T)));
             ComputeErrorCode error;
             CLMemoryHandle handle = CL11.CreateSubBuffer(Handle, flags, ComputeBufferCreateType.Region, ref region, out error);
             ComputeException.ThrowOnError(error);

@@ -20,9 +20,9 @@ namespace CudafyByExample
         [STAThread]
         static void Main(string[] args)
         {
-            CudafyModes.Target = eGPUType.OpenCL;
+            CudafyModes.Target = eGPUType.Cuda;
             CudafyModes.DeviceId = 0;
-            CudafyTranslator.Language = eLanguage.OpenCL;
+            CudafyTranslator.Language = eLanguage.Cuda;
             try
             {
                 GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
@@ -68,28 +68,29 @@ namespace CudafyByExample
 
                 // Chapter 6
                 Console.WriteLine("\r\nChapter 6");
-                Console.WriteLine("\r\nray (OpenCL compatible as well as CUDA)");
-                new ray_gui(ray_gui.eRayVersion.OpenCL).ShowDialog(); 
+                Console.WriteLine("\r\nray (no constant memory) (OpenCL compatible as well as CUDA)");
+                new ray_gui(ray_gui.eRayVersion.OpenCL).ShowDialog();
+                Console.WriteLine("\r\nray (constant memory) (OpenCL compatible as well as CUDA)");
+                new ray_gui(ray_gui.eRayVersion.OpenCL_const).ShowDialog();
                 if (CudafyTranslator.Language == eLanguage.Cuda) // CUDA only
                 {
-                    Console.WriteLine("\r\nChapter 6");
                     Console.WriteLine("\r\nray (no constant memory)");
                     new ray_gui(ray_gui.eRayVersion.CUDA).ShowDialog(); // no const
                     Console.WriteLine("\r\nray (constant memory)");
                     new ray_gui(ray_gui.eRayVersion.CUDA_const).ShowDialog();  // const
                 }
 
-                //// Chapter 9
-                //Console.WriteLine("\r\nChapter 9");
-                //Console.WriteLine("\r\nhist_gpu_shmem_atomics");
-                //hist_gpu_shmem_atomics.Execute();
+                // Chapter 9
+                Console.WriteLine("\r\nChapter 9");
+                Console.WriteLine("\r\nhist_gpu_shmem_atomics");
+                hist_gpu_shmem_atomics.Execute();
 
-                //// Chapter 10
-                //Console.WriteLine("\r\nChapter 10");
-                //Console.WriteLine("\r\nbasic_double_stream_correct");
-                //basic_double_stream_correct.Execute();
-                //Console.WriteLine("\r\ncopy_timed");
-                //new copy_timed().Execute();
+                // Chapter 10
+                Console.WriteLine("\r\nChapter 10");
+                Console.WriteLine("\r\nbasic_double_stream_correct");
+                basic_double_stream_correct.Execute();
+                Console.WriteLine("\r\ncopy_timed");
+                new copy_timed().Execute();
 
                 Console.WriteLine("Done!");
             }
