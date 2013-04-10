@@ -98,6 +98,7 @@ namespace Cudafy
             Name = "cudafymodule";
             CompilerOutput = string.Empty;
             CompilerArguments = string.Empty;
+            TimeOut = 60000;
             _options = new List<CompilerOptions>();
             _PTXModules = new List<PTXModule>();
             Reset();
@@ -774,6 +775,14 @@ namespace Cudafy
         public bool GenerateDebug { get; set; }
 
         /// <summary>
+        /// Gets or sets the time out for compilation.
+        /// </summary>
+        /// <value>
+        /// The time out in milliseconds.
+        /// </value>
+        public int TimeOut { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether to start the compilation in a new window.
         /// </summary>
         /// <value>
@@ -812,7 +821,7 @@ namespace Cudafy
                 foreach (CompilerOptions co in CompilerOptionsList)
                 {
                     co.GenerateDebugInfo = GenerateDebug;
-                    
+                    co.TimeOut = TimeOut;
                     co.ClearSources();
                     co.AddSource(cuFileName);
 
@@ -835,8 +844,16 @@ namespace Cudafy
                     Debug.WriteLine(CompilerArguments);
                     process.Start();
 
-                    while (!process.HasExited)
+                    //while (!process.HasExited)
+                    //    Thread.Sleep(10);
+                    int waitCounter = 0;
+                    bool procTimedOut = false;
+                    int timeout = co.TimeOut;
+                    while (!process.HasExited && !(procTimedOut = ++waitCounter >= timeout)) // 1m timeout
                         Thread.Sleep(10);
+                    if (procTimedOut)
+                        throw new CudafyCompileException(CudafyCompileException.csCOMPILATION_ERROR_X, "Process timed out");
+
 
                     if (process.ExitCode != 0)
                     {

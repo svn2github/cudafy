@@ -25,8 +25,6 @@ namespace CudafyByExample
         public float x;
         public float y;
         public float z;
-
-
     }
 
     public class ray_opencl
@@ -61,6 +59,8 @@ namespace CudafyByExample
         [Cudafy]
         public static void thekernel(GThread thread, SphereOpenCL[] s, byte[] ptr)
         {
+            SphereOpenCL localSphere = s[0];
+            float somefloat = GMath.Pow(localSphere.b, 2.0F);
             // map from threadIdx/BlockIdx to pixel position
             int x = thread.threadIdx.x + thread.blockIdx.x * thread.blockDim.x;
             int y = thread.threadIdx.y + thread.blockIdx.y * thread.blockDim.y;
@@ -72,8 +72,7 @@ namespace CudafyByExample
             float maxz = -INF;
             for (int i = 0; i < SPHERES; i++)
             {
-                float n = 0;
-
+                float n = 0;                
                 float t = hit(s[i], ox, oy, ref n);
                 if (t > maxz)
                 {

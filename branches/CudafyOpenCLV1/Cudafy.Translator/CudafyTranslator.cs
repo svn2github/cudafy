@@ -40,6 +40,11 @@ namespace Cudafy.Translator
     /// </summary>
     public class CudafyTranslator
     {
+        static CudafyTranslator()
+        {
+            TimeOut = 60000;
+        }
+        
         private static CUDALanguage _cl = new CUDALanguage(eLanguage.Cuda);
 
         internal static CUDAfyLanguageSpecifics LanguageSpecifics = new CUDAfyLanguageSpecifics();
@@ -91,6 +96,14 @@ namespace Cudafy.Translator
                 LanguageSpecifics.Language = value; 
             }
         }
+
+        /// <summary>
+        /// Gets or sets the time out for compilation.
+        /// </summary>
+        /// <value>
+        /// The time out in milliseconds.
+        /// </value>
+        public static int TimeOut { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether to compile for debug.
@@ -256,6 +269,7 @@ namespace Cudafy.Translator
                 if (platform != ePlatform.x64)
                     km.CompilerOptionsList.Add(NvccCompilerOptions.Createx86(cudaVersion, arch));
                 km.GenerateDebug = GenerateDebug;
+                km.TimeOut = TimeOut;
                 km.Compile(eGPUCompiler.CudaNvcc, false);
             }
             Type lastType = types.Last(t => t != null);
@@ -571,6 +585,72 @@ namespace Cudafy.Translator
                     return "unsigned long long";
                 else
                     return "ulong";
+            }
+        }
+
+        public string PositiveInfinitySingle
+        {
+            get
+            {
+                if (Language == eLanguage.Cuda)
+                    return "0x7ff00000";
+                else
+                    return "INFINITY";
+            }
+        }
+
+        public string NegativeInfinitySingle
+        {
+            get
+            {
+                if (Language == eLanguage.Cuda)
+                    return "0xfff00000";
+                else
+                    return "INFINITY";
+            }
+        }
+
+        public string NaNSingle
+        {
+            get
+            {
+                if (Language == eLanguage.Cuda)
+                    return "logf(-1.0F)";
+                else
+                    return "NAN";
+            }
+        }
+
+        public string PositiveInfinityDouble
+        {
+            get
+            {
+                if (Language == eLanguage.Cuda)
+                    return "0x7ff0000000000000";
+                else
+                    return "INFINITY";
+            }
+        }
+
+        public string NegativeInfinityDouble
+        {
+            get
+            {
+                if (Language == eLanguage.Cuda)
+                    return "0xfff0000000000000";
+                else
+                    return "INFINITY";
+            }
+        }
+
+        public string NaNDouble
+        {
+            get
+            {
+                if (Language == eLanguage.Cuda)
+                    return "log(-1.0)";
+                else
+                    return "NAN";
             }
         }
     }

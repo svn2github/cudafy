@@ -52,7 +52,8 @@ namespace Cudafy.Host.UnitTests
             SupportsDouble = _gpu.GetDeviceProperties().SupportsDoublePrecision;
             if (SupportsDouble)
                 types.Add(typeof(MathDoubleTest));
-            _cm = CudafyTranslator.Cudafy(_gpu.GetArchitecture(), types.ToArray());
+            eArchitecture arch = _gpu.GetArchitecture();
+            _cm = CudafyTranslator.Cudafy(arch, types.ToArray());
             Debug.WriteLine(_cm.CudaSourceCode);
             _gpu.LoadModule(_cm);
         }
@@ -90,7 +91,7 @@ namespace Cudafy.Host.UnitTests
                 Console.WriteLine("Device does not support double precision, skipping test...");
                 return;
             }
-            double[] data = new double[N];
+            double[] data = new double[N]; 
             double[] dev_data = _gpu.CopyToDevice(data);
 #if !NET35
             _gpu.Launch().mathtest(dev_data);
@@ -100,8 +101,19 @@ namespace Cudafy.Host.UnitTests
             _gpu.CopyFromDevice(dev_data, data);
             double[] control = new double[N];
             MathDoubleTest.mathtest(control);
-            for (int i = 0; i < N; i++)
+            for (int i = 0; i < N-4; i++)
                 Assert.AreEqual(control[i], data[i], 0.00005, "Index={0}", i);
+            if (_gpu is CudaGPU)
+            {
+                Assert.AreEqual(9.2188684372274053E18, data[60], 0.0000000000000001E18);
+                Assert.AreEqual(1.8442240474082181E19, data[61], 0.0000000000000001E19);
+            }
+            else
+            {
+                Assert.IsTrue(Double.IsInfinity(data[60]));
+                Assert.IsTrue(Double.IsInfinity(data[61]));
+            }
+            Assert.IsTrue(Double.IsNaN(data[62]));
         }
 
         [Test]
@@ -117,8 +129,19 @@ namespace Cudafy.Host.UnitTests
             _gpu.CopyFromDevice(dev_data, data);
             float[] control = new float[N];
             MathSingleTest.gmathtest(control);
-            for (int i = 0; i < N; i++)
+            for (int i = 0; i < N-4; i++)
                 Assert.AreEqual(control[i], data[i], 0.00005, "Index={0}", i);
+            if (_gpu is CudaGPU)
+            {
+                Assert.AreEqual(2.14643507E9, data[60], 0.00000001E9);
+                Assert.AreEqual(4.29391872E9, data[61], 0.00000001E9);
+            }
+            else
+            {
+                Assert.IsTrue(Single.IsInfinity(data[60]));
+                Assert.IsTrue(Single.IsInfinity(data[61]));
+            }
+            Assert.IsTrue(Single.IsNaN(data[62]));
         }
 
         [Test]
@@ -256,6 +279,12 @@ namespace Cudafy.Host.UnitTests
             c[i++] = Math.Tan(4.3);
             c[i++] = Math.Tanh(8.1);
             c[i++] = Math.Truncate(10.14334325);
+            c[i++] = (double)(Double.IsNaN(Math.Sqrt(-1.0)) ? 1.0 : 0.0);
+            double zero = 0.0;
+            c[i++] = Double.IsInfinity(1/zero) ? 1.0 : 0.0;
+            c[60] = Double.PositiveInfinity;
+            c[61] = Double.NegativeInfinity;
+            c[62] = Double.NaN;
         }
     }
 
@@ -287,9 +316,29 @@ namespace Cudafy.Host.UnitTests
             c[i++] = GMath.Sin(4.2F);
             c[i++] = GMath.Sinh(3.1F);
             c[i++] = GMath.Sqrt(8.1F);
+            c[i++] = GMath.Sqrt(-1.0F);
             c[i++] = GMath.Tan(4.3F);
             c[i++] = GMath.Tanh(8.1F);
+            //c[i++] = (float)(Single.IsNaN(GMath.Sqrt(-1.0F)) ? 1.0F : 0.0F);//GMath.Sqrt(-1.0F)
             c[i++] = GMath.Truncate(10.14334325F);
+            float zero = 0.0F;
+            c[i++] = Single.IsInfinity(1 / zero) ? 1.0F : 0.0F;
+            c[60] = Single.PositiveInfinity;
+            c[61] = Single.NegativeInfinity;
+            c[62] = Single.NaN; 
         }
     }
 }
+//0x7f800000 = infinity
+
+//0xff800000 = -infinity
+
+
+
+//These conform to the ieee floating point specification. You can use the values:
+
+
+
+//0x7ff0000000000000 = infinity
+
+//0xfff0000000000000 = -infinity

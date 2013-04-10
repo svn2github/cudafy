@@ -264,7 +264,6 @@ namespace Cudafy.Translator
         {
             SpecialMethods.Clear();
             SpecialMethods.Add(new SpecialMember("GThread", "InsertCode", new Func<MemberReferenceExpression, object, string>(TranslateInsertCode), false, true));
-
             SpecialMethods.Add(new SpecialMember("Trace", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
             SpecialMethods.Add(new SpecialMember("Debug", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
             SpecialMethods.Add(new SpecialMember("Console", null, new Func<MemberReferenceExpression, object, string>(CommentMeOut), false));
@@ -275,9 +274,12 @@ namespace Cudafy.Translator
             SpecialMethods.Add(new SpecialMember("Debug", "WriteLine", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
             SpecialMethods.Add(new SpecialMember("Debug", "WriteLineIf", new Func<MemberReferenceExpression, object, string>(TranslateToPrintF), false));
             SpecialMethods.Add(new SpecialMember("ArrayType", "GetLength", new Func<MemberReferenceExpression, object, string>(TranslateArrayGetLength), false));
+            SpecialMethods.Add(new SpecialMember("double", "IsNaN", new Func<MemberReferenceExpression, object, string>(TranslateFloatingPointMemberName)));
+            SpecialMethods.Add(new SpecialMember("float", "IsNaN", new Func<MemberReferenceExpression, object, string>(TranslateFloatingPointMemberName)));
+            SpecialMethods.Add(new SpecialMember("double", "IsInfinity", new Func<MemberReferenceExpression, object, string>(TranslateFloatingPointMemberName)));
+            SpecialMethods.Add(new SpecialMember("float", "IsInfinity", new Func<MemberReferenceExpression, object, string>(TranslateFloatingPointMemberName)));
 
-            SpecialProperties.Clear();
-            
+            SpecialProperties.Clear();       
             SpecialProperties.Add(new SpecialMember("ArrayType", "Length", new Func<MemberReferenceExpression, object, string>(TranslateArrayLength)));
             SpecialProperties.Add(new SpecialMember("ArrayType", "LongLength", new Func<MemberReferenceExpression, object, string>(TranslateArrayLength)));
             SpecialProperties.Add(new SpecialMember("ArrayType", "IsFixedSize", new Func<MemberReferenceExpression, object, string>(TranslateToTrue)));
@@ -352,19 +354,18 @@ namespace Cudafy.Translator
 
             SpecialMethods.Add(new SpecialMember("ComplexD", null, new Func<MemberReferenceExpression, object, string>(TranslateComplexD)));
             SpecialMethods.Add(new SpecialMember("ComplexF", null, new Func<MemberReferenceExpression, object, string>(TranslateComplexF)));
-
-            
-
+           
             SpecialMethods.Add(new SpecialMember("ComplexD", "ctor", new Func<MemberReferenceExpression, object, string>(TranslateComplexDCtor)));
             SpecialMethods.Add(new SpecialMember("ComplexF", "ctor", new Func<MemberReferenceExpression, object, string>(TranslateComplexFCtor)));
             SpecialMethods.Add(new SpecialMember("Debug", "Assert", new Func<MemberReferenceExpression, object, string>(TranslateAssert), false));
-
+            
+ 
             SpecialProperties.Add(new SpecialMember("Cudafy.GThread", "warpSize", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
             SpecialProperties.Add(new SpecialMember("Math", "E", new Func<MemberReferenceExpression, object, string>(TranslateMathE)));
             SpecialProperties.Add(new SpecialMember("Math", "PI", new Func<MemberReferenceExpression, object, string>(TranslateMathPI)));
             SpecialProperties.Add(new SpecialMember("GMath", "E", new Func<MemberReferenceExpression, object, string>(TranslateGMathE)));
             SpecialProperties.Add(new SpecialMember("GMath", "PI", new Func<MemberReferenceExpression, object, string>(TranslateGMathPI)));
-
+            
             SpecialTypes.Add("ComplexD", new SpecialTypeProps() { Name = "cuDoubleComplex", OptionalHeader = "cuComplex" });
             SpecialTypes.Add("ComplexF", new SpecialTypeProps() { Name = "cuFloatComplex", OptionalHeader = "cuComplex" });
 
@@ -875,6 +876,21 @@ namespace Cudafy.Translator
         static string CommentMeOut(MemberReferenceExpression mre, object data)
         {
             return string.Format("// {0}", mre.ToString());
+        }
+
+        static string TranslateFloatingPointMemberName(MemberReferenceExpression mre, object data)
+        {
+            switch (mre.MemberName)
+            {
+                case "IsNaN":
+                    return "isnan";
+                case "IsInfinity":
+                    return "isinf";
+
+                default:
+                    break;
+            }
+            throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED, mre.MemberName);
         }
 
         static string TranslateCUDAIntegerFunc(MemberReferenceExpression mre, object data)

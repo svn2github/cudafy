@@ -258,11 +258,11 @@ namespace Cudafy.Translator
                 {
                     Comma(node);
                 }
-                if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
-                {
-                    if (pd.Type is SimpleType)
-                        WriteKeyword("struct");
-                }
+                //if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
+                //{
+                //    if (pd.Type is SimpleType)
+                //        WriteKeyword("struct");
+                //}
                 node.AcceptVisitor(this, null);
             }
             if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
@@ -1229,37 +1229,47 @@ namespace Cudafy.Translator
 				lastWritten = LastWritten.Other;
 			} else if (val is float) {
 				float f = (float)val;
-                //if (float.IsInfinity(f) || float.IsNaN(f)) {
+                if (float.IsInfinity(f) || float.IsNaN(f)) {
                 //    // Strictly speaking, these aren't PrimitiveExpressions;
                 //    // but we still support writing these to make life easier for code generators.
                 //    WriteKeyword("float");
                 //    WriteToken(".", AstNode.Roles.Dot);
-                //    if (float.IsPositiveInfinity(f))
-                //        WriteIdentifier("PositiveInfinity");
-                //    else if (float.IsNegativeInfinity(f))
-                //        WriteIdentifier("NegativeInfinity");
-                //    else
-                //        WriteIdentifier("NaN");
-                //    return;
-                //}
-				formatter.WriteToken(f.ToString("R", NumberFormatInfo.InvariantInfo));// + "f");
+                if (float.IsPositiveInfinity(f))
+                    WriteIdentifier(CudafyTranslator.LanguageSpecifics.PositiveInfinitySingle); // INFINITY OpenCL  //"PositiveInfinity");
+                else if (float.IsNegativeInfinity(f))
+                    WriteIdentifier(CudafyTranslator.LanguageSpecifics.NegativeInfinitySingle);// INFINITY OpenCL//NegativeInfinity");
+                else
+                    WriteIdentifier(CudafyTranslator.LanguageSpecifics.NaNSingle);// NAN OpenCL//"NaN");
+                    return;
+                }
+				//formatter.WriteToken(f.ToString("R", NumberFormatInfo.InvariantInfo) +"f");// + "f");
+                //if(!f.ToString().Contains("."))
+                //    formatter.WriteToken(f.ToString("F1", NumberFormatInfo.InvariantInfo) + "f");// + "f");
+                //else
+                //    formatter.WriteToken(f.ToString() + "f");
+
+                string number = f.ToString(NumberFormatInfo.InvariantInfo);//"R", NumberFormatInfo.InvariantInfo);
+                if (number.IndexOf('.') < 0 && number.IndexOf('E') < 0)
+                    number += ".0";
+                formatter.WriteToken(number+"f");
 				lastWritten = LastWritten.Other;
 			} else if (val is double) {
 				double f = (double)val;
-                //if (double.IsInfinity(f) || double.IsNaN(f)) {
-                //    // Strictly speaking, these aren't PrimitiveExpressions;
-                //    // but we still support writing these to make life easier for code generators.
-                //    WriteKeyword("double");
-                //    WriteToken(".", AstNode.Roles.Dot);
-                //    if (double.IsPositiveInfinity(f))
-                //        WriteIdentifier("PositiveInfinity");
-                //    else if (double.IsNegativeInfinity(f))
-                //        WriteIdentifier("NegativeInfinity");
-                //    else
-                //        WriteIdentifier("NaN");
-                //    return;
-                //}
-				string number = f.ToString("R", NumberFormatInfo.InvariantInfo);
+                if (double.IsInfinity(f) || double.IsNaN(f))
+                {
+                    // Strictly speaking, these aren't PrimitiveExpressions;
+                    // but we still support writing these to make life easier for code generators.
+                    //WriteKeyword("double");
+                    //WriteToken(".", AstNode.Roles.Dot);
+                    if (double.IsPositiveInfinity(f))
+                        WriteIdentifier(CudafyTranslator.LanguageSpecifics.PositiveInfinityDouble);//"PositiveInfinity");
+                    else if (double.IsNegativeInfinity(f))
+                        WriteIdentifier(CudafyTranslator.LanguageSpecifics.NegativeInfinityDouble);//NegativeInfinity");
+                    else
+                        WriteIdentifier(CudafyTranslator.LanguageSpecifics.NaNDouble);//"NaN");
+                    return;
+                }
+                string number = f.ToString(NumberFormatInfo.InvariantInfo);//"R", NumberFormatInfo.InvariantInfo);
 				if (number.IndexOf('.') < 0 && number.IndexOf('E') < 0)
 					number += ".0";
 				formatter.WriteToken(number);
@@ -2469,6 +2479,8 @@ namespace Cudafy.Translator
 			StartNode(constructorDeclaration);
 			//WriteAttributes(constructorDeclaration.Attributes);
 			//WriteModifiers(constructorDeclaration.ModifierTokens);
+            if (CudafyTranslator.Language == eLanguage.OpenCL)
+                throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED_IN_X, "Constructor", "OpenCL");
             WriteKeyword("__device__");
             TypeDeclaration type = constructorDeclaration.Parent as TypeDeclaration;
 			TypeDeclarationEx typeEx = constructorDeclaration.Parent as TypeDeclarationEx;
@@ -2960,6 +2972,11 @@ namespace Cudafy.Translator
 			StartNode(simpleType);
             var sti = CUDALanguage.TranslateSpecialType(simpleType.Identifier);
 #warning Why the hell did I comment out these next two lines? 030112
+            if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
+            {
+                WriteKeyword("struct");
+            }
+
             WriteIdentifier(sti);
 			WriteTypeArguments(simpleType.TypeArguments);
 			return EndNode(simpleType);
@@ -2988,8 +3005,8 @@ namespace Cudafy.Translator
             if (composedType.ArraySpecifiers.Count > 0 && _lastAddressSpace == null)
                 WriteKeyword(CudafyTranslator.LanguageSpecifics.MemorySpaceSpecifier);
             _lastAddressSpace = null;
-            if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL && !(composedType.BaseType is PrimitiveType))
-                WriteKeyword("struct");
+            //if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL && !(composedType.BaseType is PrimitiveType))
+            //    WriteKeyword("struct");
 			composedType.BaseType.AcceptVisitor(this, data);
 			if (composedType.HasNullableSpecifier)
 				WriteToken("?", ComposedType.NullableRole);

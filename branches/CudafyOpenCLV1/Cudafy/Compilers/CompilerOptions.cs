@@ -305,5 +305,13 @@ namespace Cudafy.Compilers
             sb.Append(string.Format(" Platform: {0},", Platform));
             return sb.ToString();
         }
+
+        /// <summary>
+        /// Gets or sets the time out for compilation.
+        /// </summary>
+        /// <value>
+        /// The time out in milliseconds.
+        /// </value>
+        public int TimeOut { get; set; }
     }
 }
