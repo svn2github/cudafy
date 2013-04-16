@@ -4,7 +4,7 @@ namespace GASS.CUDA.FFT
     using GASS.CUDA.FFT.Types;
     using GASS.CUDA.Types;
     using System;
-
+    [Obsolete]
     public class CUFFT
     {
         //private GASS.CUDA.CUDA cuda;
@@ -18,7 +18,7 @@ namespace GASS.CUDA.FFT
             if (IntPtr.Size == 8)
                 _driver = new CUFFTDriver64();
             else
-                throw new NotImplementedException();
+                _driver = new CUFFTDriver32();
         }
 
         public void Destroy()
@@ -253,7 +253,7 @@ namespace GASS.CUDA.FFT
                 if (IntPtr.Size == 8)
                     driver = new CUFFTDriver64();
                 else
-                    throw new NotImplementedException();
+                    driver = new CUFFTDriver32();
                 res = driver.cufftGetVersion(ref version);
                 if(res != CUFFTResult.Success)
                     throw new CUFFTException(res);

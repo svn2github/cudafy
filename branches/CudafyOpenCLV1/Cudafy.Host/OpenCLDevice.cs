@@ -184,6 +184,27 @@ namespace Cudafy.Host
             return props;
         }
 
+        /// <summary>
+        /// Gets the device count.
+        /// </summary>
+        /// <returns>Number of Cuda devices in system.</returns>
+        public new static int GetDeviceCount()
+        {
+            int cnt = 0;
+            try
+            {
+                cnt = CudafyHost.GetDeviceCount(eGPUType.OpenCL);               
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                throw;
+#endif
+                Debug.WriteLine(ex.Message);
+            }
+            return cnt;
+        }
+
         #endregion GetDeviceProperties
 
         public override bool CanAccessPeer(GPGPU peer)

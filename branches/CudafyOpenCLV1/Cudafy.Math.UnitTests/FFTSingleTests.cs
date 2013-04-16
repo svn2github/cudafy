@@ -75,7 +75,7 @@ namespace Cudafy.Maths.UnitTests
 
         [TestFixtureSetUp]
         public void SetUp()
-        {                       
+        {
             _gpu = CudafyHost.CreateDevice(CudafyModes.Target);
              Console.WriteLine(_gpu.GetDriverVersion());
             _fft = GPGPUFFT.Create(_gpu);

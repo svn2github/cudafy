@@ -38,7 +38,7 @@ namespace Cudafy.Compilers
         /// <param name="compilerPath">The compiler path.</param>
         /// <param name="includeDirectory">The include directory.</param>
         /// <param name="compilerVersion">Compiler/toolkit version (e.g. CUDA V5.0).</param>
-        protected CompilerOptions(string name, string compilerPath, string includeDirectory, Version compilerVersion)
+        protected CompilerOptions(string name, string compilerPath, string includeDirectory, Version compilerVersion, ePlatform platform )
         {
             _options = new List<string>();
             _sources = new List<string>();
@@ -49,6 +49,7 @@ namespace Cudafy.Compilers
             Include = includeDirectory;
             GenerateDebugInfo = false;
             Version = compilerVersion;
+            Platform = platform;
         }
 
         /// <summary>
