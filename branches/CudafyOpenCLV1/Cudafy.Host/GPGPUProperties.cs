@@ -41,6 +41,7 @@ namespace Cudafy.Host
             MultiProcessorCount = 0;
             HighPerformanceDriver = false;
             SupportsDoublePrecision = true;
+            AsynchEngineCount = 1;
             if (simulate)
             {
                 Capability = new Version(0, 0);
@@ -246,5 +247,10 @@ namespace Cudafy.Host
         ///   <c>true</c> if performance driver; otherwise, <c>false</c>.
         /// </value>
         public bool HighPerformanceDriver { get; internal set; }
+        /// <summary>
+        /// Gets the number of asynchronous engines.
+        /// </summary>
+        /// <value>The number of asynchronous engines.</value>
+        public int AsynchEngineCount { get; internal set; }
     }
 }

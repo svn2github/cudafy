@@ -414,6 +414,7 @@ namespace Cudafy.Host
             props.TotalConstantMemory = dp.TotalConstantMemory;
             props.TextureAlignment = dp.TextureAlign;
             props.MultiProcessorCount = 0;
+            
             if (useAdvanced)
             {
                 cudaDeviceProp devProps = new cudaDeviceProp();
@@ -434,6 +435,7 @@ namespace Cudafy.Host
                         props.PciBusID = devProps.pciBusID;
                         props.PciDeviceID = devProps.pciDeviceID;
                         props.TotalGlobalMem = devProps.totalGlobalMem;
+                        props.AsynchEngineCount = devProps.asyncEngineCount;
 #if LINUX 
                         props.HighPerformanceDriver = true;
 #else
