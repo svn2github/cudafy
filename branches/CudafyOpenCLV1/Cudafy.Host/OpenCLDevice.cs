@@ -468,8 +468,8 @@ kernel void VectorAdd(
         {
             // Create and build the opencl program.//
            // module.CudaSourceCode = module.CudaSourceCode.Replace("\r\n", "\n");
-            Debug.WriteLine(module.CudaSourceCode);
-            ComputeProgram program = new ComputeProgram(_context, module.CudaSourceCode);
+            Debug.WriteLine(module.SourceCode);
+            ComputeProgram program = new ComputeProgram(_context, module.SourceCode);
             try
             {
                 program.Build(null, null, null, IntPtr.Zero);

@@ -37,9 +37,9 @@ namespace Cudafy.Host.UnitTests
         {
             try
             {
-                CudafyModes.Target = eGPUType.OpenCL;
+                CudafyModes.Target = eGPUType.Cuda;
                 CudafyModes.DeviceId = 0;
-                CudafyTranslator.Language = eLanguage.OpenCL;
+                CudafyTranslator.Language = eLanguage.Cuda;
 
                 if (CudafyModes.Target != eGPUType.OpenCL)
                 {
@@ -120,7 +120,7 @@ namespace Cudafy.Host.UnitTests
             CudafyTranslator.Language = eLanguage.Cuda;
             var mod = CudafyTranslator.Cudafy(typeof(OpenCLTestClass));
             //mod.CudaSourceCode
-            Console.WriteLine(mod.CudaSourceCode);
+            Console.WriteLine(mod.SourceCode);
             gpu.LoadModule(mod);
             int[] dev_data1 = gpu.CopyToDevice(inputData1);
             int[] dev_data2 = gpu.CopyToDevice(inputData2);
@@ -144,7 +144,7 @@ namespace Cudafy.Host.UnitTests
                 km = CudafyTranslator.Cudafy(typeof(OpenCLTestClass));
                 km.TrySerialize();
             }
-            Console.WriteLine(km.CudaSourceCode);
+            Console.WriteLine(km.SourceCode);
 
             GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target);
             gpu.LoadModule(km);

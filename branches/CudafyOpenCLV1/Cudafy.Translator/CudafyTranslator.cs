@@ -98,6 +98,12 @@ namespace Cudafy.Translator
         }
 
         /// <summary>
+        /// Gets or sets the working directory for the compiler. The compiler must write temporary files to disk. This
+        /// can be an issue if the application does not have write access of your application directly.
+        /// </summary>
+        public static string WorkingDirectory { get; set; }
+
+        /// <summary>
         /// Gets or sets the time out for compilation.
         /// </summary>
         /// <value>
@@ -112,6 +118,14 @@ namespace Cudafy.Translator
         ///   <c>true</c> if compile for debug; otherwise, <c>false</c>.
         /// </value>
         public static bool GenerateDebug { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to delete any temporary files.
+        /// </summary>
+        /// <value>
+        /// 	<c>true</c> if delete temporary files; otherwise, <c>false</c>.
+        /// </value>
+        public static bool DeleteTempFiles { get; set; }
 
         /// <summary>
         /// Tries to use a previous serialized CudafyModule else cudafies and compiles the type in which the calling method is located. 
@@ -138,7 +152,7 @@ namespace Cudafy.Translator
         /// CUDA architecture is as specified; platform is set to the current application's (x86 or x64); and the CUDA version is the 
         /// latest official release found on the current machine. 
         /// </summary>
-        /// <param name="arch">The architecture.</param>
+        /// <param name="arch">The CUDA or OpenCL architecture.</param>
         /// <returns>A CudafyModule.</returns>
         public static CudafyModule Cudafy(eArchitecture arch)
         {
@@ -179,7 +193,7 @@ namespace Cudafy.Translator
         /// Cudafies for the specified platform.
         /// </summary>
         /// <param name="platform">The platform.</param>
-        /// <param name="arch">The architecture.</param>
+        /// <param name="arch">The CUDA or OpenCL architecture.</param>
         /// <returns>A CudafyModule.</returns>
         public static CudafyModule Cudafy(ePlatform platform, eArchitecture arch)
         {
@@ -224,7 +238,7 @@ namespace Cudafy.Translator
         /// Cudafies the specified types for the specified platform.
         /// </summary>
         /// <param name="platform">The platform.</param>
-        /// <param name="arch">The architecture.</param>
+        /// <param name="arch">The CUDA or OpenCL architecture.</param>
         /// <param name="types">The types.</param>
         /// <returns>A CudafyModule.</returns>
         public static CudafyModule Cudafy(ePlatform platform, eArchitecture arch, params Type[] types)
@@ -235,7 +249,7 @@ namespace Cudafy.Translator
         /// <summary>
         /// Cudafies the specified types for the specified architecture on automatic platform.
         /// </summary>
-        /// <param name="arch">The architecture.</param>
+        /// <param name="arch">The CUDA or OpenCL architecture.</param>
         /// <param name="types">The types.</param>
         /// <returns>A CudafyModule.</returns>
         public static CudafyModule Cudafy(eArchitecture arch, params Type[] types)
@@ -245,11 +259,22 @@ namespace Cudafy.Translator
 
 
         /// <summary>
-        /// Cudafies the specified types.
+        /// Translates the specified types for the specified architecture without compiling. You can later call Compile method on the CudafyModule.
+        /// </summary>
+        /// <param name="arch">The CUDA or OpenCL architecture.</param>
+        /// <param name="types">The types.</param>
+        /// <returns></returns>
+        public static CudafyModule Translate(eArchitecture arch, params Type[] types)
+        {
+            return Cudafy(ePlatform.Auto, arch, null, false, types);
+        }
+
+        /// <summary>
+        /// Cudafies the specified types. Working directory will be as per CudafyTranslator.WorkingDirectory.
         /// </summary>
         /// <param name="platform">The platform.</param>
-        /// <param name="arch">The architecture.</param>
-        /// <param name="cudaVersion">The cuda version.</param>
+        /// <param name="arch">The CUDA or OpenCL architecture.</param>
+        /// <param name="cudaVersion">The CUDA version. Specify null to automatically use the highest installed version.</param>
         /// <param name="compile">if set to <c>true</c> compile to PTX.</param>
         /// <param name="types">The types.</param>
         /// <returns>A CudafyModule.</returns>
@@ -257,9 +282,12 @@ namespace Cudafy.Translator
         {
             CudafyModule km = null;
             CUDALanguage.ComputeCapability = GetComputeCapability(arch);
+            if (arch == eArchitecture.OpenCL)
+                CudafyTranslator.Language = eLanguage.OpenCL;
             km = DoCudafy(types);
             if (km == null)
                 throw new CudafyFatalException(CudafyFatalException.csUNEXPECTED_STATE_X, "CudafyModule km = null");
+            km.WorkingDirectory = WorkingDirectory;
             if (compile && LanguageSpecifics.Language == eLanguage.Cuda)
             {
                 if (platform == ePlatform.Auto)
@@ -270,7 +298,7 @@ namespace Cudafy.Translator
                     km.CompilerOptionsList.Add(NvccCompilerOptions.Createx86(cudaVersion, arch));
                 km.GenerateDebug = GenerateDebug;
                 km.TimeOut = TimeOut;
-                km.Compile(eGPUCompiler.CudaNvcc, false);
+                km.Compile(eGPUCompiler.CudaNvcc, DeleteTempFiles);
             }
             Type lastType = types.Last(t => t != null);
             if(lastType != null)
@@ -294,6 +322,8 @@ namespace Cudafy.Translator
                 return new Version(3, 0);
             else if (arch == eArchitecture.sm_35)
                 return new Version(3, 5);
+            else if (arch == eArchitecture.OpenCL)
+                return new Version(1, 1);
             throw new ArgumentException("Unknown architecture.");
         }
         
@@ -450,7 +480,7 @@ namespace Cudafy.Translator
             }
 #endif
             String s = Encoding.UTF8.GetString(output.GetBuffer(), 0, (int)output.Length);
-            cm.CudaSourceCode = s;
+            cm.SourceCode = s;
 
             return cm;
         }

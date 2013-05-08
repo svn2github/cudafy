@@ -145,6 +145,7 @@ namespace Cudafy.Host.UnitTests
             Assert.AreEqual(false, props[0].Integrated);
             Assert.AreEqual(false, props[0].UseAdvanced);
             Assert.IsTrue(props[0].MultiProcessorCount == 0);
+            Assert.GreaterOrEqual(props[0].AsynchEngineCount, 1);
         }
 
         [Test]

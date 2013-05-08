@@ -277,7 +277,7 @@ namespace Cudafy.Host.UnitTests
     public class StringConstClass
     {
         public const string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-        public const string constString = "悪霊退悪霊退散怨霊abcdefghijklmn";//"";//// 
+        public const string constString = "悪霊退悪霊退散怨霊abcdefghijklmn";
         [Cudafy]
         public static void StringConst(char[] ca, char[] cb, char[] cc)
         {

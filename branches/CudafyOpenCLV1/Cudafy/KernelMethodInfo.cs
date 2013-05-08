@@ -215,7 +215,7 @@ namespace Cudafy
                 Type type = assembly.GetType(typeName);
                 if (type == null)
                     throw new CudafyException(CudafyException.csCOULD_NOT_FIND_TYPE_X_IN_ASSEMBLY_X, typeName, assemblyFullName);
-                mi = type.GetMethod(methodName);
+                mi = type.GetMethod(methodName, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
                 if (mi == null)
                     throw new CudafyException(CudafyException.csCOULD_NOT_FIND_METHOD_X_IN_TYPE_X_IN_ASSEMBLY_X, methodName, typeName, assemblyFullName);
                 kmi = new KernelMethodInfo(type, mi, methodType, isDummy == true ? true : false, behaviour, parentModule);                

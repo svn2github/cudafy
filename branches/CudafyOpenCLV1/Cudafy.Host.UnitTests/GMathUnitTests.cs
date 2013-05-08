@@ -54,7 +54,7 @@ namespace Cudafy.Host.UnitTests
                 types.Add(typeof(MathDoubleTest));
             eArchitecture arch = _gpu.GetArchitecture();
             _cm = CudafyTranslator.Cudafy(arch, types.ToArray());
-            Debug.WriteLine(_cm.CudaSourceCode);
+            Debug.WriteLine(_cm.SourceCode);
             _gpu.LoadModule(_cm);
         }
 

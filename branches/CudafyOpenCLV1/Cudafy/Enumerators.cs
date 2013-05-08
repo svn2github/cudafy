@@ -207,38 +207,42 @@ namespace Cudafy
 
 
     /// <summary>
-    /// CUDA Architecture
+    /// CUDA or OpenCL Architecture
     /// </summary>
     public enum eArchitecture
     {
         /// <summary>
-        /// sm_11
+        /// CUDA sm_11
         /// </summary>
         sm_11,
         /// <summary>
-        /// sm_12
+        /// CUDA sm_12
         /// </summary>
         sm_12,
         /// <summary>
-        /// sm_13
+        /// CUDA sm_13
         /// </summary>
         sm_13,
         /// <summary>
-        /// sm_20
+        /// CUDA sm_20
         /// </summary>
         sm_20,
         /// <summary>
-        /// sm_21
+        /// CUDA sm_21
         /// </summary>
         sm_21,
         /// <summary>
-        /// sm_30
+        /// CUDA sm_30
         /// </summary>
         sm_30,
         /// <summary>
-        /// sm_35
+        /// CUDA sm_35
         /// </summary>
-        sm_35
+        sm_35,
+        /// <summary>
+        /// OpenCL
+        /// </summary>
+        OpenCL
     }
 
     /// <summary>

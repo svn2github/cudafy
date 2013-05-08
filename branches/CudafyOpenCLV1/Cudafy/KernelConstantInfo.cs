@@ -211,7 +211,7 @@ namespace Cudafy
                 if (assembly == null)
                     throw new CudafyException(CudafyException.csCOULD_NOT_LOAD_ASSEMBLY_X, assemblyFullName);
                 Type type = assembly.GetType(typeName);
-                fi = type.GetField(fieldName);
+                fi = type.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
                 kci = new KernelConstantInfo(fieldName, fi, isDummy == true ? true : false);
             }
             kci.DeserializedChecksum = checksum;

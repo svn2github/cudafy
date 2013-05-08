@@ -110,14 +110,14 @@ namespace CudafyModuleViewer
                 lbConstants.SelectedIndex = _module.Constants.Count > 0 ? 0 : -1;
                 lbPTX.SelectedIndex = _module.PTXModules.Length > 0 ? 0 : -1;
 
-                tbSource.Text = _module.CudaSourceCode;
+                tbSource.Text = _module.SourceCode;
                 lbPTX_SelectedIndexChanged(this, null);
                 //tbPTX.Text = _module.PTX == null ? string.Empty : _module.PTX.PTX;
 
                 tpConstants.Text = string.Format(csCONSTANTS_X, _module.Constants.Count);
                 tpTypes.Text = string.Format(csTYPES_X, _module.Types.Count);
                 tpFunctions.Text = string.Format(csFUNCTIONS_X, _module.Functions.Count);
-                tpSource.Text = string.Format(csSOURCE_X, _module.HasCudaSourceCode ? "1": "0");
+                tpSource.Text = string.Format(csSOURCE_X, _module.HasSourceCode ? "1": "0");
                 tpPTX.Text = string.Format(csPTX_X, _module.PTXModules.Length);
             }
             
@@ -226,13 +226,19 @@ namespace CudafyModuleViewer
             {
                 if (_module != null)
                 {
+                    eArchitecture arch = (eArchitecture)Enum.Parse(typeof(eArchitecture), cbArch.SelectedItem as string);
+                    if(arch == eArchitecture.OpenCL)
+                    {
+                        MessageBox.Show(this, "OpenCL modules are not compiled.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
                     if (!cb32bit.Checked && !cb64bit.Checked)
                     {
                         MessageBox.Show(this, "Select a platform.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return;
                     }
-                    _module.CudaSourceCode = tbSource.Text;
-                    eArchitecture arch = (eArchitecture)Enum.Parse(typeof(eArchitecture), cbArch.SelectedItem as string);
+                    _module.SourceCode = tbSource.Text;
+                    
                     NvccCompilerOptions opt = null;
                     _module.CompilerOptionsList.Clear();
                     _module.RemovePTXModules();
@@ -265,7 +271,7 @@ namespace CudafyModuleViewer
             {
                 try
                 {
-                    _module.CudaSourceCode = tbSource.Text;                   
+                    _module.SourceCode = tbSource.Text;                   
                     _module.Serialize(saveFileDialog.FileName);
                 }
                 catch (Exception ex)
@@ -279,12 +285,5 @@ namespace CudafyModuleViewer
         {
             miSaveAs.Enabled = _module != null && miEnableEditing.Checked;
         }
-
-
-
-
-
-
-
     }
 }
