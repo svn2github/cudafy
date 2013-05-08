@@ -27,25 +27,25 @@ using System.Text;
 namespace Cudafy
 {
 
-    /// <summary>
-    /// Flag for code generator.
-    /// </summary>
-    [Flags]
-    public enum eGPUCodeGenerator
-    {
-        /// <summary>
-        /// None selected.
-        /// </summary>
-        None = 0,
-        /// <summary>
-        /// Cuda C code.
-        /// </summary>
-        CudaC = 1,
-        /// <summary>
-        /// Generate code for all.
-        /// </summary>
-        All = 255
-    };
+    ///// <summary>
+    ///// Flag for code generator.
+    ///// </summary>
+    //[Flags]
+    //public enum eGPUCodeGenerator
+    //{
+    //    /// <summary>
+    //    /// None selected.
+    //    /// </summary>
+    //    None = 0,
+    //    /// <summary>
+    //    /// Cuda C code.
+    //    /// </summary>
+    //    CudaC = 1,
+    //    /// <summary>
+    //    /// Generate code for all.
+    //    /// </summary>
+    //    All = 255
+    //};
 
     /// <summary>
     /// GPU target type.
@@ -59,7 +59,28 @@ namespace Cudafy
         /// <summary>
         /// Target a Cuda GPU.
         /// </summary>
-        Cuda
+        Cuda,
+        /// <summary>
+        /// Target an OpenCL Device
+        /// </summary>
+        OpenCL
+    }
+
+    /// <summary>
+    /// Language type.
+    /// </summary>
+    public enum eLanguage
+    {
+
+        /// <summary>
+        /// NVIDIA CUDA C
+        /// </summary> 
+        Cuda,
+
+        /// <summary>
+        /// OpenCL C
+        /// </summary>
+        OpenCL
     }
 
     /// <summary>
@@ -78,22 +99,34 @@ namespace Cudafy
     }
 
     /// <summary>
-    /// Convenience class for storing three main types of enumerators.
+    /// Convenience class for storing device settings.
     /// </summary>
     public class CudafyModes
     {
         /// <summary>
+        /// Gets or sets the device id.
+        /// </summary>
+        /// <value>
+        /// The device id.
+        /// </value>
+        public static int DeviceId { get; set; }
+        
+        /// <summary>
         /// Target GPU.
         /// </summary>
         public static eGPUType Target;
+
         /// <summary>
         /// Target compiler.
         /// </summary>
         public static eGPUCompiler Compiler;
-        /// <summary>
-        /// Target code generator.
-        /// </summary>
-        public static eGPUCodeGenerator CodeGen;
+
+
+
+        ///// <summary>
+        ///// Target code generator.
+        ///// </summary>
+        //public static eGPUCodeGenerator CodeGen;
 
         /// <summary>
         /// Quick mode.
@@ -111,10 +144,11 @@ namespace Cudafy
         /// </summary>
         static CudafyModes()
         {
-            CodeGen = eGPUCodeGenerator.CudaC;
+            //CodeGen = eGPUCodeGenerator.CudaC;
             Compiler = eGPUCompiler.CudaNvcc;
             Target = eGPUType.Cuda;
             Mode = eCudafyQuickMode.Cuda;
+            DeviceId = 0;
         }
     }
 
@@ -173,37 +207,90 @@ namespace Cudafy
 
 
     /// <summary>
-    /// CUDA Architecture
+    /// CUDA or OpenCL Architecture
     /// </summary>
     public enum eArchitecture
     {
         /// <summary>
-        /// sm_11
+        /// CUDA sm_11
         /// </summary>
         sm_11,
         /// <summary>
-        /// sm_12
+        /// CUDA sm_12
         /// </summary>
         sm_12,
         /// <summary>
-        /// sm_13
+        /// CUDA sm_13
         /// </summary>
         sm_13,
         /// <summary>
-        /// sm_20
+        /// CUDA sm_20
         /// </summary>
         sm_20,
         /// <summary>
-        /// sm_21
+        /// CUDA sm_21
         /// </summary>
         sm_21,
         /// <summary>
-        /// sm_30
+        /// CUDA sm_30
         /// </summary>
         sm_30,
         /// <summary>
-        /// sm_35
+        /// CUDA sm_35
         /// </summary>
-        sm_35
+        sm_35,
+        /// <summary>
+        /// OpenCL
+        /// </summary>
+        OpenCL
+    }
+
+    /// <summary>
+    /// OpenCL address space 
+    /// </summary>
+    public enum eCudafyAddressSpace
+    {
+        /// <summary>
+        /// Prevent automatic placement of an address space qualifier.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// Variable is in global memory.
+        /// </summary>
+        Global = 1,
+
+        /// <summary>
+        /// Variable is in constant memory.
+        /// </summary>
+        Constant = 2,
+
+        /// <summary>
+        /// Variable is in shared (local) memory.
+        /// </summary>
+        Shared = 3,
+
+        /// <summary>
+        /// Variable is in private/register memory.
+        /// </summary>
+        Private = 4 
+    }
+
+
+    /// <summary>
+    /// Use to specify the behaviour of the CudafyDummyAttribute.
+    /// </summary>
+    public enum eCudafyDummyBehaviour
+    {
+        /// <summary>
+        /// Default
+        /// </summary>
+        Default = 0,
+
+
+        /// <summary>
+        /// Do not write the include statements for dummy types in the generated CUDA C file.
+        /// </summary>
+        SuppressInclude = 1
     }
 }

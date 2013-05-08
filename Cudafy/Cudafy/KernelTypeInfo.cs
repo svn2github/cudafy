@@ -41,11 +41,13 @@ namespace Cudafy
         /// </summary>
         /// <param name="type">The type.</param>
         /// <param name="isDummy">if set to <c>true</c> is dummy.</param>
-        public KernelTypeInfo(Type type, bool isDummy = false)
+        /// <param name="noDummyInclude"></param>
+        public KernelTypeInfo(Type type, bool isDummy = false, eCudafyDummyBehaviour behaviour = eCudafyDummyBehaviour.Default)
         {
             Type = type;
             Name = type != null ? type.Name : csCUDAFYTYPE;
             IsDummy = isDummy;
+            Behaviour = behaviour;
         }
         
         internal const string csCUDAFYTYPE = "CudafyType";
@@ -57,7 +59,7 @@ namespace Cudafy
 
         internal string GetDummyInclude()
         {
-            if (!IsDummy)
+            if (!IsDummy || Behaviour == eCudafyDummyBehaviour.SuppressInclude)
                 return string.Empty;
             string ts = string.Format(@"#include ""{0}.cu""", Name);
             return ts;
@@ -68,6 +70,7 @@ namespace Cudafy
             XElement xe = new XElement(csCUDAFYTYPE);
             xe.SetAttributeValue(csNAME, Type.Name);
             xe.SetAttributeValue(csISDUMMY, IsDummy);
+            xe.SetAttributeValue(csDUMMYBEHAVIOUR, Behaviour);
             xe.Add(new XElement(csTYPE, this.Type != null ? this.Type.FullName : csCUDAFYTYPE));
             xe.Add(new XElement(csASSEMBLY, this.Type != null ? this.Type.Assembly.FullName : string.Empty));
             xe.Add(new XElement(csASSEMBLYNAME, this.Type != null ? this.Type.Assembly.GetName().Name : string.Empty));
@@ -80,13 +83,13 @@ namespace Cudafy
         {
             string name = xe.GetAttributeValue(csNAME);
             bool? isDummy = xe.TryGetAttributeBoolValue(csISDUMMY);
-
+            string behaviourStr = xe.TryGetAttributeValue(csDUMMYBEHAVIOUR);            
             string typeName = xe.Element(csTYPE).Value;
             string assemblyFullName = xe.Element(csASSEMBLY).Value;
             string assemblyName = xe.Element(csASSEMBLYNAME).Value;
             string assemblyPath = xe.TryGetElementValue(csASSEMBLYPATH);
             long checksum = XmlConvert.ToInt64(xe.Element(csCHECKSUM).Value);
-            
+            eCudafyDummyBehaviour behaviour = string.IsNullOrWhiteSpace(behaviourStr) ? eCudafyDummyBehaviour.Default : (eCudafyDummyBehaviour)Enum.Parse(typeof(eCudafyDummyBehaviour), behaviourStr);
             Type type = null;
             KernelTypeInfo kti = new KernelTypeInfo(null);
 
@@ -119,7 +122,7 @@ namespace Cudafy
                 if (assembly == null)
                     throw new CudafyException(CudafyException.csCOULD_NOT_LOAD_ASSEMBLY_X, assemblyFullName);
                 type = assembly.GetType(typeName);
-                kti = new KernelTypeInfo(type, isDummy == true ? true : false);
+                kti = new KernelTypeInfo(type, isDummy == true ? true : false, behaviour);
             }
             kti.DeserializedChecksum = checksum;
             return kti;

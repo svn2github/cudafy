@@ -31,8 +31,9 @@ using System.Text;
 using ICSharpCode.NRefactory.PatternMatching;
 using ICSharpCode.NRefactory.TypeSystem;
 using ICSharpCode.NRefactory.CSharp;
-
+using Cudafy;
 using CL = Cudafy.Translator.CUDALanguage;
+
 namespace Cudafy.Translator
 {
 #pragma warning disable 1591
@@ -207,6 +208,22 @@ namespace Cudafy.Translator
 			}
 		}
 
+        void WriteCommaSeparatedList(IEnumerable<string> list, bool isFirst = true)
+        {
+            foreach (string s in list)
+            {
+                if (isFirst)
+                {
+                    isFirst = false;
+                }
+                else
+                {
+                    formatter.WriteToken(",");
+                }
+                formatter.WriteKeyword(s);
+            }
+        }
+
         bool IsIgnored(AstNode node)
         {
             var ie = node as IdentifierExpression;
@@ -215,7 +232,7 @@ namespace Cudafy.Translator
                 if (ie.Annotations.Count() > 0)
                 {
                     var typeRef = ((object[])(node.Annotations))[0] as ICSharpCode.Decompiler.ILAst.ILVariable;//as Mono.Cecil.TypeReference;
-                    if (typeRef != null && typeRef.Type.Name == "GThread")//+		[0]	{thread}	object {ICSharpCode.Decompiler.ILAst.ILVariable}
+                    if (typeRef != null && (typeRef.Type.Name == "GThread"))//+		[0]	{thread}	object {ICSharpCode.Decompiler.ILAst.ILVariable}
                         return true;
 
                 }
@@ -230,8 +247,9 @@ namespace Cudafy.Translator
             foreach (AstNode node in list)
             {
                 ParameterDeclaration pd = node as ParameterDeclaration;
-                if(pd != null && pd.Type.ToString() == typeof(GThread).Name)
+                if(pd != null && (pd.Type.ToString() == typeof(GThread).Name))
                     continue;
+
                 if (isFirst)
                 {
                     isFirst = false;
@@ -240,18 +258,47 @@ namespace Cudafy.Translator
                 {
                     Comma(node);
                 }
+                //if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
+                //{
+                //    if (pd.Type is SimpleType)
+                //        WriteKeyword("struct");
+                //}
                 node.AcceptVisitor(this, null);
+            }
+            if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
+            {
+                foreach (var kci in CUDALanguage.GetConstants())
+                {
+                    var elemType = kci.Information.FieldType.GetElementType();
+                    string keyword = elemType.Name;
+                    var primitiveType = CUDAAstBuilder.ConvertToPrimitiveType(keyword) as PrimitiveType;
+                    string name = primitiveType.Keyword;
+                    string structType = elemType.IsPrimitive ? "" : "struct";
+                    WriteKeyword(string.Format(", {0} {1} {2}* {3}", CudafyTranslator.LanguageSpecifics.ConstantModifier, structType, name, kci.Name));
+                }
             }
         }
 		
-		void WriteCommaSeparatedListInParenthesis(IEnumerable<AstNode> list, bool spaceWithin)
+		void WriteCommaSeparatedListInParenthesis(IEnumerable<AstNode> list, bool spaceWithin, string[] additionalArguments = null, bool writeConstants = false)
 		{
 			LPar();
 			if (list.Any()) {
 				Space(spaceWithin);
 				WriteCommaSeparatedList(list);
+                if (additionalArguments != null)
+                    WriteCommaSeparatedList(additionalArguments, list.Count() == 0);
 				Space(spaceWithin);
 			}
+            if (writeConstants && CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
+            {
+                foreach (var kci in CUDALanguage.GetConstants())
+                {
+                    //string keyword = kci.Information.FieldType.GetElementType().Name;
+                    //var primitiveType = CUDAAstBuilder.ConvertToPrimitiveType(keyword) as PrimitiveType;
+                    //string name = primitiveType.Keyword;
+                    WriteKeyword(string.Format(", {0}", kci.Name));
+                }
+            }
 			RPar();
 		}
 
@@ -915,7 +962,7 @@ namespace Cudafy.Translator
             this.DisableSmartArray = CUDALanguage.DisableSmartArray;
 			Space(policy.SpaceBeforeMethodCallParentheses);
             if(sm == null || sm.CallFunction)
-			    WriteCommaSeparatedListInParenthesis(invocationExpression.Arguments, policy.SpaceWithinMethodCallParentheses);
+			    WriteCommaSeparatedListInParenthesis(invocationExpression.Arguments, policy.SpaceWithinMethodCallParentheses, (sm != null ? sm.AdditionalLiteralParams : null), sm == null);
             CUDALanguage.DisableSmartArray = false;
 			return EndNode(invocationExpression);
 		}
@@ -960,6 +1007,14 @@ namespace Cudafy.Translator
 		public object VisitMemberReferenceExpression(MemberReferenceExpression mre, object data)
 		{
 			StartNode(mre);
+            if (mre.Target.ToString() == typeof(eCudafyAddressSpace).Name)
+            {
+                eCudafyAddressSpace cudafyQualifier = (eCudafyAddressSpace)Enum.Parse(typeof(eCudafyAddressSpace), mre.MemberName);
+                string parameterQualifier = CudafyTranslator.LanguageSpecifics.GetAddressSpaceQualifier(cudafyQualifier);
+                formatter.WriteIdentifier(parameterQualifier);
+                _lastAddressSpace = cudafyQualifier;
+                return EndNode(mre);
+            }
             bool isGThread = mre.IsThreadIdVar();
             bool isFixedElementField = mre.MemberName == "FixedElementField";
             bool isSpecialProp = !isGThread && mre.IsSpecialProperty();
@@ -967,10 +1022,11 @@ namespace Cudafy.Translator
             Debug.WriteLine(mre.MemberName);
             Debug.Assert(!mre.IsAllocateShared());
             bool callFunc = !isSpecialProp;
+            string builtinTranslation = null;
             if (isSpecialMethod)
             {
                 bool noSemicolon = false;
-                string s = mre.TranslateSpecialMethod(data, out noSemicolon);//,out callFunc);
+                string s = mre.TranslateSpecialMethod(data, out noSemicolon);
                 _noSemicolon = noSemicolon;
                 formatter.WriteIdentifier(s);
             }
@@ -985,20 +1041,56 @@ namespace Cudafy.Translator
                 IsGThread = isGThread;
                 if (!(mre.Target is ThisReferenceExpression) && !(mre.Target is TypeReferenceExpression))
                 {
-                    mre.Target.AcceptVisitor(this, data);
-                    if (!isFixedElementField)
-                        WriteToken(".", MemberReferenceExpression.Roles.Dot);
+                    
+                    if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
+                    {
+                        string target = mre.Target.ToString();
+                        string dim = mre.MemberName;
+                        builtinTranslation = ConvertToOpenCLBuiltinFunction(target, dim);                      
+                    }
+                    if (builtinTranslation == null)
+                    {
+                        mre.Target.AcceptVisitor(this, data);
+                        if (!isFixedElementField)
+                            WriteToken(".", MemberReferenceExpression.Roles.Dot);
+                    }
+                    else
+                    {
+                        WriteKeyword(builtinTranslation);
+                    }
                 }
                 IsGThread = curIsGThread;
             }
 
-            if (!isSpecialMethod && !isSpecialProp && !isFixedElementField)
+            if (!isSpecialMethod && !isSpecialProp && !isFixedElementField && builtinTranslation == null)
             {
                 WriteIdentifier(mre.MemberName);
                 WriteTypeArguments(mre.TypeArguments);
             }
 			return EndNode(mre);
 		}
+
+        private string ConvertToOpenCLBuiltinFunction(string target, string dim)
+        {
+            string function = null;
+            int dimension = 0;
+            if (dim == "y")
+                dimension = 1;
+            else if (dim == "z")
+                dimension = 2;
+            if (target.Contains(".threadIdx"))
+                function = "get_local_id";
+            else if (target.Contains(".blockDim"))
+                function = "get_local_size";
+            else if (target.Contains(".blockIdx"))
+                function = "get_group_id";
+            else if (target.Contains(".gridDim"))
+                function = "get_num_groups";
+            else
+                return null;
+            string call = string.Format("{0}({1})", function, dimension);
+            return call;
+        }
 
         private bool IsGThread { get; set; }
 		
@@ -1137,37 +1229,47 @@ namespace Cudafy.Translator
 				lastWritten = LastWritten.Other;
 			} else if (val is float) {
 				float f = (float)val;
-                //if (float.IsInfinity(f) || float.IsNaN(f)) {
+                if (float.IsInfinity(f) || float.IsNaN(f)) {
                 //    // Strictly speaking, these aren't PrimitiveExpressions;
                 //    // but we still support writing these to make life easier for code generators.
                 //    WriteKeyword("float");
                 //    WriteToken(".", AstNode.Roles.Dot);
-                //    if (float.IsPositiveInfinity(f))
-                //        WriteIdentifier("PositiveInfinity");
-                //    else if (float.IsNegativeInfinity(f))
-                //        WriteIdentifier("NegativeInfinity");
-                //    else
-                //        WriteIdentifier("NaN");
-                //    return;
-                //}
-				formatter.WriteToken(f.ToString("R", NumberFormatInfo.InvariantInfo));// + "f");
+                if (float.IsPositiveInfinity(f))
+                    WriteIdentifier(CudafyTranslator.LanguageSpecifics.PositiveInfinitySingle); // INFINITY OpenCL  //"PositiveInfinity");
+                else if (float.IsNegativeInfinity(f))
+                    WriteIdentifier(CudafyTranslator.LanguageSpecifics.NegativeInfinitySingle);// INFINITY OpenCL//NegativeInfinity");
+                else
+                    WriteIdentifier(CudafyTranslator.LanguageSpecifics.NaNSingle);// NAN OpenCL//"NaN");
+                    return;
+                }
+				//formatter.WriteToken(f.ToString("R", NumberFormatInfo.InvariantInfo) +"f");// + "f");
+                //if(!f.ToString().Contains("."))
+                //    formatter.WriteToken(f.ToString("F1", NumberFormatInfo.InvariantInfo) + "f");// + "f");
+                //else
+                //    formatter.WriteToken(f.ToString() + "f");
+
+                string number = f.ToString(NumberFormatInfo.InvariantInfo);//"R", NumberFormatInfo.InvariantInfo);
+                if (number.IndexOf('.') < 0 && number.IndexOf('E') < 0)
+                    number += ".0";
+                formatter.WriteToken(number+"f");
 				lastWritten = LastWritten.Other;
 			} else if (val is double) {
 				double f = (double)val;
-                //if (double.IsInfinity(f) || double.IsNaN(f)) {
-                //    // Strictly speaking, these aren't PrimitiveExpressions;
-                //    // but we still support writing these to make life easier for code generators.
-                //    WriteKeyword("double");
-                //    WriteToken(".", AstNode.Roles.Dot);
-                //    if (double.IsPositiveInfinity(f))
-                //        WriteIdentifier("PositiveInfinity");
-                //    else if (double.IsNegativeInfinity(f))
-                //        WriteIdentifier("NegativeInfinity");
-                //    else
-                //        WriteIdentifier("NaN");
-                //    return;
-                //}
-				string number = f.ToString("R", NumberFormatInfo.InvariantInfo);
+                if (double.IsInfinity(f) || double.IsNaN(f))
+                {
+                    // Strictly speaking, these aren't PrimitiveExpressions;
+                    // but we still support writing these to make life easier for code generators.
+                    //WriteKeyword("double");
+                    //WriteToken(".", AstNode.Roles.Dot);
+                    if (double.IsPositiveInfinity(f))
+                        WriteIdentifier(CudafyTranslator.LanguageSpecifics.PositiveInfinityDouble);//"PositiveInfinity");
+                    else if (double.IsNegativeInfinity(f))
+                        WriteIdentifier(CudafyTranslator.LanguageSpecifics.NegativeInfinityDouble);//NegativeInfinity");
+                    else
+                        WriteIdentifier(CudafyTranslator.LanguageSpecifics.NaNDouble);//"NaN");
+                    return;
+                }
+                string number = f.ToString(NumberFormatInfo.InvariantInfo);//"R", NumberFormatInfo.InvariantInfo);
 				if (number.IndexOf('.') < 0 && number.IndexOf('E') < 0)
 					number += ".0";
 				formatter.WriteToken(number);
@@ -1225,7 +1327,7 @@ namespace Cudafy.Translator
 					return "\\v";
 				default:
 					//if (char.IsControl(ch) || char.IsSurrogate(ch)) {
-						return "\\u" + ((int)ch).ToString("x4");
+						return "\\x"+ ((int)ch).ToString("x4");// 
 					//} else {
                     //    byte[] ba = Encoding.Unicode.GetBytes(new char[] { (char)ch });
                     //    ushort shrt = BitConverter.ToUInt16(ba, 0);
@@ -1482,21 +1584,22 @@ namespace Cudafy.Translator
 			attribute.Type.AcceptVisitor(this, data);
 			Space(policy.SpaceBeforeMethodCallParentheses);
 			if (attribute.Arguments.Count != 0 || !attribute.GetChildByRole(AstNode.Roles.LPar).IsNull)
-				WriteCommaSeparatedListInParenthesis(attribute.Arguments, policy.SpaceWithinMethodCallParentheses);
+                WriteCommaSeparatedList(attribute.Arguments);//, policy.SpaceWithinMethodCallParentheses);
+				//WriteCommaSeparatedListInParenthesis(attribute.Arguments, policy.SpaceWithinMethodCallParentheses);
 			return EndNode(attribute);
 		}
 		
 		public object VisitAttributeSection(AttributeSection attributeSection, object data)
 		{
 			StartNode(attributeSection);
-			WriteToken("[", AstNode.Roles.LBracket);
-			if (!string.IsNullOrEmpty (attributeSection.AttributeTarget)) {
-				WriteToken(attributeSection.AttributeTarget, AttributeSection.TargetRole);
-				WriteToken(":", AttributeSection.Roles.Colon);
-				Space();
-			}
+			//WriteToken("[", AstNode.Roles.LBracket);
+            //if (!string.IsNullOrEmpty (attributeSection.AttributeTarget)) {
+            //    WriteToken(attributeSection.AttributeTarget, AttributeSection.TargetRole);
+            //    WriteToken(":", AttributeSection.Roles.Colon);
+            //    Space();
+            //}
 			WriteCommaSeparatedList(attributeSection.Attributes.SafeCast<ICSharpCode.NRefactory.CSharp.Attribute, AstNode>());
-			WriteToken("]", AstNode.Roles.RBracket);
+			//WriteToken("]", AstNode.Roles.RBracket);
 			if (attributeSection.Parent is ParameterDeclaration || attributeSection.Parent is TypeParameterDeclaration)
 				Space();
 			else
@@ -1615,11 +1718,14 @@ namespace Cudafy.Translator
                     IsTypeTranslationDepth++;
                     try
                     {
-                        // Make an default constructor
-                        WriteIdentifier(string.Format("__device__ {0}()", typeName));
-                        OpenBrace(braceStyle);
-                        CloseBrace(braceStyle);
-                        NewLine();
+                        // Make an default constructor for CUDA
+                        if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.Cuda)
+                        {
+                            WriteIdentifier(string.Format("{0} {1}()", CudafyTranslator.LanguageSpecifics.DeviceFunctionModifiers, typeName));
+                            OpenBrace(braceStyle);
+                            CloseBrace(braceStyle);
+                            NewLine();
+                        }
                         Dictionary<string, int> classSizes = new Dictionary<string, int>();
                         foreach (var member in typeDeclaration.Members)
                         {
@@ -2220,7 +2326,7 @@ namespace Cudafy.Translator
             bool isAlloc = variableDeclarationStatement.ToString().Contains(CL.csAllocateShared);
             if (isAlloc)
             {
-                WriteKeyword("__shared__");
+                WriteKeyword(CudafyTranslator.LanguageSpecifics.SharedModifier);
                 string keyword = (variableDeclarationStatement.Type as ComposedType).BaseType.ToString();
                 
                 keyword = ConvertPrimitiveType(keyword);
@@ -2373,6 +2479,8 @@ namespace Cudafy.Translator
 			StartNode(constructorDeclaration);
 			//WriteAttributes(constructorDeclaration.Attributes);
 			//WriteModifiers(constructorDeclaration.ModifierTokens);
+            if (CudafyTranslator.Language == eLanguage.OpenCL)
+                throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED_IN_X, "Constructor", "OpenCL");
             WriteKeyword("__device__");
             TypeDeclaration type = constructorDeclaration.Parent as TypeDeclaration;
 			TypeDeclarationEx typeEx = constructorDeclaration.Parent as TypeDeclarationEx;
@@ -2484,7 +2592,13 @@ namespace Cudafy.Translator
         /// The constant dims.
         /// </value>
         public int[] ConstantDims { get; set; }
-		
+
+        /// <summary>
+        /// Visits the field declaration.
+        /// </summary>
+        /// <param name="fieldDeclaration">The field declaration.</param>
+        /// <param name="data">The data.</param>
+        /// <returns></returns>
 		public object VisitFieldDeclaration (FieldDeclaration fieldDeclaration, object data)
 		{
             eCudafyType? ct = null;
@@ -2506,28 +2620,32 @@ namespace Cudafy.Translator
                     throw new CudafyLanguageException(CudafyLanguageException.csMULTIPLE_VARIABLE_DECLARATIONS_ARE_NOT_SUPPORTED);
                 if (!(fieldDeclaration.ReturnType is ComposedType) && !(fieldDeclaration.ReturnType is PrimitiveType))
                     throw new CudafyLanguageException(CudafyLanguageException.csCONSTANTS_MUST_BE_INITIALIZED);
-                
-                WriteKeyword("__constant__");
-                if(fieldDeclaration.ReturnType is ComposedType)
-                    WriteKeyword((fieldDeclaration.ReturnType as ComposedType).BaseType.ToString().Replace(".", ""));
-                else
-                    WriteKeyword((fieldDeclaration.ReturnType as PrimitiveType).Keyword);
-                string varName = fieldDeclaration.Variables.First().Name;
-                WriteIdentifier(varName);
                 int ctr = 0;
-                if (ConstantDims.Any())
+                string varName = fieldDeclaration.Variables.First().Name;
+                if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.Cuda)
                 {
-                    formatter.WriteKeyword("[");
-                    foreach (int dim in ConstantDims)
+                    WriteKeyword(CudafyTranslator.LanguageSpecifics.ConstantModifier);
+                    if (fieldDeclaration.ReturnType is ComposedType)
+                        WriteKeyword((fieldDeclaration.ReturnType as ComposedType).BaseType.ToString().Replace(".", ""));
+                    else
+                        WriteKeyword((fieldDeclaration.ReturnType as PrimitiveType).Keyword);
+                    
+                    WriteIdentifier(varName);
+                    
+                    if (ConstantDims.Any())
                     {
-                        formatter.WriteKeyword(string.Format("{0}", dim));
-                        if (ctr < ConstantDims.Length - 1)
-                            formatter.WriteKeyword(" * ");
-                        ctr++;
+                        formatter.WriteKeyword("[");
+                        foreach (int dim in ConstantDims)
+                        {
+                            formatter.WriteKeyword(string.Format("{0}", dim));
+                            if (ctr < ConstantDims.Length - 1)
+                                formatter.WriteKeyword(" * ");
+                            ctr++;
+                        }
+                        formatter.WriteKeyword("]");
                     }
-                    formatter.WriteKeyword("]");
+                    Semicolon();
                 }
-                Semicolon();
                 //formatter.NewLine();
                 ctr = 0;
                 foreach (int dim in ConstantDims)
@@ -2586,8 +2704,10 @@ namespace Cudafy.Translator
                 case "int":
                     return 4;
                 case "unsigned long long":
+                case "ulong":
                     return 8;
                 case "long long":
+                case "long":
                     return 8;
                 case "float":
                     return 4;
@@ -2693,9 +2813,9 @@ namespace Cudafy.Translator
         void WriteCUDAModifiers(IEnumerable<CSharpModifierToken> modifierTokens, AstType returnType, eCudafyType ct)
         {
             if(returnType.ToString() == "void" && ct != eCudafyType.Device && IsTypeTranslationDepth == 0)
-                formatter.WriteKeyword(@"extern ""C"" __global__ ");
-            else 
-                formatter.WriteKeyword(@"__device__ ");
+                formatter.WriteKeyword(CudafyTranslator.LanguageSpecifics.KernelFunctionModifiers);//@"extern ""C"" __global__ ");
+            else
+                formatter.WriteKeyword(CudafyTranslator.LanguageSpecifics.DeviceFunctionModifiers);//@"__device__ ");
         }
 		
 		public object VisitOperatorDeclaration(OperatorDeclaration operatorDeclaration, object data)
@@ -2726,6 +2846,8 @@ namespace Cudafy.Translator
             //return EndNode(operatorDeclaration);
 		}
 
+        private eCudafyAddressSpace? _lastAddressSpace = null;
+
         /// <summary>
         /// Visits the parameter declaration.
         /// </summary>
@@ -2736,6 +2858,8 @@ namespace Cudafy.Translator
 		{
 			StartNode(parameterDeclaration);
 			WriteAttributes(parameterDeclaration.Attributes);
+            //foreach(var attr in parameterDeclaration.Attributes)
+            //    attr.
             //switch (parameterDeclaration.ParameterModifier) {
             //    case ParameterModifier.Ref:
             //        WriteKeyword("ref", ParameterDeclaration.ModifierRole);
@@ -2758,6 +2882,8 @@ namespace Cudafy.Translator
             {
                 if (parameterDeclaration.Type.ToString().Contains("["))
                     throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED, "Passing array by reference");
+                //if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
+                //    formatter.WriteKeyword("__local");
                 formatter.WriteKeyword("*");
             }
             else if (parameterDeclaration.ParameterModifier != ParameterModifier.None)
@@ -2785,6 +2911,8 @@ namespace Cudafy.Translator
                     formatter.WriteKeyword(string.Format(", int {0}Len", parameterDeclaration.Name));
                 }
             }
+
+
 
 			if (!parameterDeclaration.DefaultExpression.IsNull) {
                 //Space(policy.SpaceAroundAssignment);
@@ -2843,6 +2971,12 @@ namespace Cudafy.Translator
 		{
 			StartNode(simpleType);
             var sti = CUDALanguage.TranslateSpecialType(simpleType.Identifier);
+#warning Why the hell did I comment out these next two lines? 030112
+            if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
+            {
+                WriteKeyword("struct");
+            }
+
             WriteIdentifier(sti);
 			WriteTypeArguments(simpleType.TypeArguments);
 			return EndNode(simpleType);
@@ -2867,7 +3001,12 @@ namespace Cudafy.Translator
 		
 		public object VisitComposedType(ComposedType composedType, object data)
 		{
-			StartNode(composedType);
+			StartNode(composedType);//
+            if (composedType.ArraySpecifiers.Count > 0 && _lastAddressSpace == null)
+                WriteKeyword(CudafyTranslator.LanguageSpecifics.MemorySpaceSpecifier);
+            _lastAddressSpace = null;
+            //if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL && !(composedType.BaseType is PrimitiveType))
+            //    WriteKeyword("struct");
 			composedType.BaseType.AcceptVisitor(this, data);
 			if (composedType.HasNullableSpecifier)
 				WriteToken("?", ComposedType.NullableRole);
@@ -2927,9 +3066,9 @@ namespace Cudafy.Translator
                 case "uint":
                     return "unsigned int";
                 case "ulong":
-                    return "unsigned long long";
+                    return CudafyTranslator.LanguageSpecifics.UInt64Translation;//"unsigned long long";
                 case "long":
-                    return "long long";
+                    return CudafyTranslator.LanguageSpecifics.Int64Translation;//"long long";
                 case "decimal":
                     return "double";
                 case "char":

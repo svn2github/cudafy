@@ -398,6 +398,7 @@ namespace Cudafy.Host
             GPGPUProperties props = new GPGPUProperties();
             props.UseAdvanced = useAdvanced;
             props.Capability = dev.ComputeCapability;
+            props.PlatformName = "CUDA " + GetDriverVersion().ToString();
             props.Name = dev.Name;
             props.DeviceId = dev.Ordinal;
             props.TotalMemory = dev.TotalMemory;
@@ -413,6 +414,7 @@ namespace Cudafy.Host
             props.TotalConstantMemory = dp.TotalConstantMemory;
             props.TextureAlignment = dp.TextureAlign;
             props.MultiProcessorCount = 0;
+            
             if (useAdvanced)
             {
                 cudaDeviceProp devProps = new cudaDeviceProp();
@@ -433,6 +435,7 @@ namespace Cudafy.Host
                         props.PciBusID = devProps.pciBusID;
                         props.PciDeviceID = devProps.pciDeviceID;
                         props.TotalGlobalMem = devProps.totalGlobalMem;
+                        props.AsynchEngineCount = devProps.asyncEngineCount;
 #if LINUX 
                         props.HighPerformanceDriver = true;
 #else
@@ -1131,7 +1134,7 @@ namespace Cudafy.Host
 
         private List<StreamDesc> _streamsPending = new List<StreamDesc>();
 
-        private void DoCopyFromDeviceAsyncEx<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId)
+        private void DoCopyFromDeviceAsyncEx<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId) where T : struct
         {
             if(IsSmartCopyEnabled)
                 Lock();
@@ -1140,7 +1143,7 @@ namespace Cudafy.Host
                 Unlock();
         }
 
-        private void OnCopyOnHostCompleted<T>(IAsyncResult result)
+        private void OnCopyOnHostCompleted<T>(IAsyncResult result) where T : struct
         {
             DelegateStateM2N<T> dlgtStaten = (DelegateStateM2N<T>)result.AsyncState;
             CopyDeviceParams<T> cdp = dlgtStaten.Params;
@@ -1333,7 +1336,7 @@ namespace Cudafy.Host
 #pragma warning restore 1591
 
 
-        private Dictionary<IntPtr, CUcontext> _hostHandles;
+        private new Dictionary<IntPtr, CUcontext> _hostHandles;
 
         /// <summary>
         /// Destroys the stream.
@@ -2139,12 +2142,6 @@ namespace Cudafy.Host
         /// </summary>
         public CUcontext? Context { get; private set; }
 
-        /// <summary>
-        /// Gets a value indicating whether created from cast.
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if created from cast; otherwise, <c>false</c>.
-        /// </value>
-        public bool CreatedFromCast { get; private set; }
+
     }
 }

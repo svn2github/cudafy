@@ -17,7 +17,7 @@ namespace CudafyExamples.Misc
         {
             CudafyModule km = CudafyTranslator.Cudafy(typeof(ParamsStruct), typeof(ImpliedVolatile));
 
-            _gpu = CudafyHost.GetDevice(eGPUType.Cuda);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target);
             _gpu.LoadModule(km);
 
             ParamsStruct[] host_par = new ParamsStruct[1];

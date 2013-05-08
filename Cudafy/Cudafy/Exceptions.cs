@@ -309,7 +309,7 @@ namespace Cudafy
 
         public const string csSHARED_MEMORY_MUST_BE_CONSTANT = "Shared memory size must be constant at compile time.";
 
-        //public const string csCUDAFY_ATTRIBUTE_IS_MISSING_ON_X = "Cudafy attribute is missing on {0}.";
+        public const string csX_IS_A_RESERVED_KEYWORD = "'{0}' is a reserved keyword.";
 
         protected override void CheckParamsAreNoExceptions(object[] args)
         {

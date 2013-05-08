@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Runtime.InteropServices;
 
 namespace Cudafy.Host
 {
@@ -31,6 +32,24 @@ namespace Cudafy.Host
     /// </summary>
     public static class IntPtrEx
     {
+        /// <summary>
+        /// Allows for x86 AND x64 pointer arithmetic
+        /// </summary>
+        /// <typeparam name="T">type pointed to</typeparam>
+        /// <param name="pt"></param>
+        /// <param name="offset">Offsets the prt by a number of bytes equal to offset+sizeof(T)</param>
+        /// <returns></returns>
+        public static IntPtr AddOffset<T>(this IntPtr pt, long offset) where T : struct
+        {
+            IntPtr hostArrOffset = IntPtr.Zero;
+            if (IntPtr.Size == 8)
+                hostArrOffset = new IntPtr(pt.ToInt64() + offset * (long)Marshal.SizeOf(typeof(T)));
+            else
+                hostArrOffset = IntPtr.Add(pt, (int)offset * Marshal.SizeOf(typeof(T))); // eventual truncation is of the user's responsability
+            return hostArrOffset;
+        }
+
+
         /// <summary>
         /// Sets the specified value.
         /// </summary>

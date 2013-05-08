@@ -26,8 +26,11 @@ using System.Text;
 using System.Threading;
 namespace Cudafy
 {
+
+    
+    
     /// <summary>
-    /// Represents a Cuda thread.
+    /// Represents a CUDA thread. This cannot be used when targeting OpenCL.
     /// </summary>
     public class GThread
     {
@@ -39,9 +42,129 @@ namespace Cudafy
         /// <param name="parent">The parent block.</param>
         public GThread(int xId, int yId, GBlock parent)
         {
-            threadIdx = new dim3(xId, yId);
+            _threadIdx = new dim3(xId, yId);
             block = parent;
         }
+
+        public int get_global_id(int dimension)
+        {
+            if (dimension == 0) // x
+                return (block.Idx.x * block.Dim.x) + _threadIdx.x;
+            else if (dimension == 1) // y
+                return (block.Idx.y * block.Dim.y) + _threadIdx.y;
+            else if (dimension == 2) // z
+                return (block.Idx.z * block.Dim.z) + _threadIdx.z;
+            throw new ArgumentOutOfRangeException("dimension");
+        }
+
+        public int get_local_id(int dimension)
+        {
+            if (dimension == 0) // x
+                return _threadIdx.x;
+            else if (dimension == 1) // y
+                return _threadIdx.y;
+            else if (dimension == 2) // z
+                return _threadIdx.z;
+            throw new ArgumentOutOfRangeException("dimension");
+        }
+
+        public int get_group_id(int dimension)
+        {
+            if (dimension == 0) // x
+                return block.Idx.x;
+            else if (dimension == 1) // y
+                return block.Idx.y;
+            else if (dimension == 2) // z
+                return block.Idx.z;
+            throw new ArgumentOutOfRangeException("dimension");
+        }
+
+        public int get_local_size(int dimension)
+        {
+            if (dimension == 0) // x
+                return block.Dim.x;
+            else if (dimension == 1) // y
+                return block.Dim.y;
+            else if (dimension == 2) // z
+                return block.Dim.z;
+            throw new ArgumentOutOfRangeException("dimension");
+        }
+
+        public int get_global_size(int dimension)
+        {
+            if (dimension == 0) // x
+                return block.Dim.x * block.Grid.Dim.x;
+            else if (dimension == 1) // y
+                return block.Dim.y * block.Grid.Dim.y;
+            else if (dimension == 2) // z
+                return block.Dim.z * block.Grid.Dim.z;
+            throw new ArgumentOutOfRangeException("dimension");
+        }
+
+        public int get_num_groups(int dimension)
+        {
+            if (dimension == 0) // x
+                return block.Grid.Dim.x;
+            else if (dimension == 1) // y
+                return block.Grid.Dim.y;
+            else if (dimension == 2) // z
+                return block.Grid.Dim.z;
+            throw new ArgumentOutOfRangeException("dimension");
+        }
+
+        /// <summary>
+        /// Syncs the threads in the block.
+        /// </summary>
+        public void SyncThreads()
+        {
+            block.SyncThreads();
+        }
+
+        /// <summary>
+        /// Allocates a 1D array in shared memory.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="varName">Key of the variable.</param>
+        /// <param name="x">The x size.</param>
+        /// <returns>Pointer to the shared memory.</returns>
+        public T[] AllocateShared<T>(string varName, int x)
+        {
+            return block.AllocateShared<T>(varName, x);
+        }
+
+        /// <summary>
+        /// Allocates a 2D array in shared memory.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="varName">Key of the variable.</param>
+        /// <param name="x">The x size.</param>
+        /// <param name="y">The y size.</param>
+        /// <returns>Pointer to the shared memory.</returns>
+        public T[,] AllocateShared<T>(string varName, int x, int y)
+        {
+            return block.AllocateShared<T>(varName, x, y);
+        }
+
+        /// <summary>
+        /// Allocates a 3D array in shared memory.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="varName">Key of the variable.</param>
+        /// <param name="x">The x size.</param>
+        /// <param name="y">The y size.</param>
+        /// <param name="z">The z size.</param>
+        /// <returns>Pointer to the shared memory.</returns>
+        public T[, ,] AllocateShared<T>(string varName, int x, int y, int z)
+        {
+            return block.AllocateShared<T>(varName, x, y, z);
+        }
+
+        /// <summary>
+        /// Gets the parent block.
+        /// </summary>
+        internal GBlock block { get; private set; }
+
+        internal dim3 _threadIdx { get; private set; }
 
          /// <summary>
         /// Gets the warp id this thread belongs too
@@ -91,12 +214,14 @@ namespace Cudafy
         }
 
         /// <summary>
-        /// Syncs the threads in the block.
+        /// Gets the thread id.
         /// </summary>
-        public void SyncThreads()
+        public dim3 threadIdx 
         {
-            block.SyncThreads();
+            get { return _threadIdx; }
         }
+
+
 
          /// <summary>
         /// NOTE Compute Capability 2.x and later only. Syncs the threads in the block.
@@ -130,44 +255,7 @@ namespace Cudafy
             return block.Ballot(predicate, WarpId());
         }
 
-        /// <summary>
-        /// Allocates a 1D array in shared memory.
-        /// </summary>
-        /// <typeparam name="T">Blittable type.</typeparam>
-        /// <param name="varName">Key of the variable.</param>
-        /// <param name="x">The x size.</param>
-        /// <returns>Pointer to the shared memory.</returns>
-        public T[] AllocateShared<T>(string varName, int x)
-        {
-            return block.AllocateShared<T>(varName, x);
-        }
 
-        /// <summary>
-        /// Allocates a 2D array in shared memory.
-        /// </summary>
-        /// <typeparam name="T">Blittable type.</typeparam>
-        /// <param name="varName">Key of the variable.</param>
-        /// <param name="x">The x size.</param>
-        /// <param name="y">The y size.</param>
-        /// <returns>Pointer to the shared memory.</returns>
-        public T[,] AllocateShared<T>(string varName, int x, int y)
-        {
-            return block.AllocateShared<T>(varName, x, y);
-        }
-
-        /// <summary>
-        /// Allocates a 3D array in shared memory.
-        /// </summary>
-        /// <typeparam name="T">Blittable type.</typeparam>
-        /// <param name="varName">Key of the variable.</param>
-        /// <param name="x">The x size.</param>
-        /// <param name="y">The y size.</param>
-        /// <param name="z">The z size.</param>
-        /// <returns>Pointer to the shared memory.</returns>
-        public T[,,] AllocateShared<T>(string varName, int x, int y, int z)
-        {
-            return block.AllocateShared<T>(varName, x, y, z);
-        }
 
 
         /// <summary>
@@ -216,15 +304,7 @@ namespace Cudafy
                 throw new CudafyException(CudafyException.csX_NOT_SUPPORTED, "Text insertion");
         }
 
-        /// <summary>
-        /// Gets the thread id.
-        /// </summary>
-        public dim3 threadIdx { get; private set; }
 
-        /// <summary>
-        /// Gets the parent block.
-        /// </summary>
-        internal GBlock block { get; private set; }
 
     }
 }

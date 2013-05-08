@@ -64,6 +64,12 @@ namespace Cudafy
         /// IsDummy
         /// </summary>
         protected const string csISDUMMY = "IsDummy";
+        /// <summary>
+        /// DummyBehaviour
+        /// </summary>
+        protected const string csDUMMYBEHAVIOUR = "DummyBehaviour";
+
+        public CudafyModule ParentModule { get; internal set; }
 
         /// <summary>
         /// Gets or sets the deserialized checksum.
@@ -86,6 +92,13 @@ namespace Cudafy
         ///   <c>true</c> if this instance is dummy; otherwise, <c>false</c>.
         /// </value>
         public bool IsDummy { get; internal set; }
+
+
+        /// <summary>
+        /// Gets a value indicating whether to include header file for dummy or not.
+        /// </summary>
+        public eCudafyDummyBehaviour Behaviour { get; internal set; }
+
         /// <summary>
         /// Gets the checksum of the assembly on which this member was based.
         /// </summary>

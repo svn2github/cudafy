@@ -102,7 +102,7 @@ namespace CudafyByExample
             float elapsedTime;
             float MB = (float)100*SIZE*sizeof(int)/1024/1024;
 
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
             var props = _gpu.GetDeviceProperties();
 
             Console.WriteLine(props.Name);

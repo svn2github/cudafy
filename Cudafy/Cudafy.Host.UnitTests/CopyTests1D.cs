@@ -110,7 +110,7 @@ namespace Cudafy.Host.UnitTests
         [TestFixtureSetUp]
         public void SetUp()
         {
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target, 0);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
 
             _byteBufferIn = new byte[N];
             _byteBufferOut = new byte[N];            
@@ -181,9 +181,6 @@ namespace Cudafy.Host.UnitTests
             GC.Collect();
         }
 
-
-
-
         [Cudafy]
         public static void DoubleAllValues(GThread t, uint[] input, uint[] output)
         {
@@ -195,7 +192,12 @@ namespace Cudafy.Host.UnitTests
         [Test]
         public void Test_smartCopyToDevice()
         {
-           var mod = CudafyModule.TryDeserialize();
+            if (_gpu is OpenCLDevice)
+            {
+                Console.WriteLine("Device not supporting smart copy, so skip.");
+                return;
+            }
+            var mod = CudafyModule.TryDeserialize();
            if (mod == null || !mod.TryVerifyChecksums())
            {
                mod = CudafyTranslator.Cudafy();
@@ -257,8 +259,28 @@ namespace Cudafy.Host.UnitTests
             ClearOutputsAndGPU();
         }
 
+        public enum MyEnum : int
+        {
+            mon = 0, tue = 1, wed = 2, thu = 3, fri = 4, sat = 5
+        }
+
+        public struct MyEnumStruct
+        {
+            public MyEnum ME;
+        }
 
 
+
+        [Test]
+        public void TestEnum()
+        {
+            MyEnumStruct[] enum1 = new MyEnumStruct[10];
+            for (int i = 0; i < 10; i++)
+            {
+                enum1[i].ME = MyEnum.mon;
+            }
+            MyEnumStruct[] d_enum1 = _gpu.CopyToDevice(enum1);
+        }
 
         [Test]
         public void Test_getValue_int2D()
@@ -392,8 +414,6 @@ namespace Cudafy.Host.UnitTests
             ClearOutputsAndGPU();
         }
 
-
-
         [Test]
         public void Test_copyToFromOffsetGPU_byte()
         {
@@ -407,7 +427,7 @@ namespace Cudafy.Host.UnitTests
         [Test]
         public void Test_cast_byte()
         {
-            if (_gpu is EmulatedGPU)
+            if (_gpu is EmulatedGPU || _gpu is OpenCLDevice)
             {
                 Console.WriteLine("Emulated not supporting cast with offset, so skip.");
                 return;
@@ -423,9 +443,9 @@ namespace Cudafy.Host.UnitTests
         [Test]
         public void Test_cast_cast_byte()
         {
-            if (_gpu is EmulatedGPU)
+            if (_gpu is EmulatedGPU || _gpu is OpenCLDevice)
             {
-                Console.WriteLine("Emulated not supporting cast with offset, so skip.");
+                Console.WriteLine("Device not supporting cast with offset, so skip.");
                 return;
             }
             _gpubyteBufferIn = _gpu.Allocate(_byteBufferIn);
@@ -440,6 +460,11 @@ namespace Cudafy.Host.UnitTests
         [Test]
         public void Test_cast_byte_to_sbyte()
         {
+            if (_gpu is OpenCLDevice)
+            {
+                Console.WriteLine("Device not supporting cast, so skip.");
+                return;
+            }
             _gpubyteBufferIn = _gpu.Allocate(_byteBufferIn);
             _gpu.CopyToDevice(_byteBufferIn, _gpubyteBufferIn);
             sbyte[] sbyteBufferOut = new sbyte[N];
@@ -453,6 +478,11 @@ namespace Cudafy.Host.UnitTests
         [Test]
         public void Test_cast_cplxD_to_double()
         {
+            if (_gpu is OpenCLDevice)
+            {
+                Console.WriteLine("Device not supporting cast, so skip.");
+                return;
+            }
             _gpucplxDBufferIn = _gpu.Allocate(_cplxDBufferIn);
             _gpu.CopyToDevice(_cplxDBufferIn, _gpucplxDBufferIn);
             double[] doubleBufferOut = new double[N*2];
@@ -479,6 +509,11 @@ namespace Cudafy.Host.UnitTests
         [Test]
         public void Test_cast_uint_to_2d()
         {
+            if (_gpu is EmulatedGPU || _gpu is OpenCLDevice)
+            {
+                Console.WriteLine("Device not supporting cast with offset, so skip.");
+                return;
+            }
             if (N > 32768)
             {
                 Debug.WriteLine("Skipping Test_cast_uint_to_2d due to N being too large");

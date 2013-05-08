@@ -54,18 +54,33 @@ namespace Cudafy
             this.z = 1;
         }
 
-        ///// <summary>
-        ///// Initializes a new instance of the <see cref="dim3"/> class.
-        ///// </summary>
-        ///// <param name="x">The x value.</param>
-        ///// <param name="y">The y value.</param>
-        ///// <param name="z">The z value.</param>
-        //public dim3(int x, int y, int z)
-        //{
-        //    this.x = x;
-        //    this.y = y;
-        //    this.z = z;
-        //}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="dim3"/> class.
+        /// </summary>
+        /// <param name="dimensions">The dimensions.</param>
+        public dim3(long[] dimensions)
+        {
+            int len = dimensions.Length;
+            if (len > 0)
+                x = (int)dimensions[0];
+            if (len > 1)
+                y = (int)dimensions[1];
+            if (len > 2)
+                z = (int)dimensions[2];
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="dim3"/> class.
+        /// </summary>
+        /// <param name="x">The x value.</param>
+        /// <param name="y">The y value.</param>
+        /// <param name="z">The z value.</param>
+        public dim3(long x, long y, long z)
+        {
+            this.x = (int)x;
+            this.y = (int)y;
+            this.z = (int)z;
+        }
 
         /// <summary>
         /// Gets the x.
@@ -79,6 +94,39 @@ namespace Cudafy
         /// Gets the z.
         /// </summary>
         public int z { get; private set; }
+
+        /// <summary>
+        /// Helper method to transform into an array of dimension sizes.
+        /// </summary>
+        /// <returns></returns>
+        public long[] ToArray()
+        {
+            int dims = 1;
+            if (z > 1)
+                dims = 3;
+            else if (y > 1)
+                dims = 2;
+            long[] array = new long[dims];
+            array[0] = x;
+            if (dims > 1)
+                array[1] = y;
+            if (dims > 2)
+                array[2] = z;
+            return array;
+        }
+
+        public long[] ToFixedSizeArray(int size)
+        {
+            if (size < 1 || size > 3)
+                throw new ArgumentOutOfRangeException("size");
+            long[] array = new long[size];
+            array[0] = x;
+            if (size > 1)
+                array[1] = y;
+            if (size > 2)
+                array[2] = z;
+            return array;
+        }
 
         /// <summary>
         /// Performs an implicit conversion from <see cref="System.Int32"/> to <see cref="Cudafy.dim3"/>.

@@ -33,7 +33,7 @@ namespace CudafyByExample
         {
             CudafyModule km = CudafyTranslator.Cudafy();
 
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
             _gpu.LoadModule(km);
 
             _dev_bitmap = _gpu.Allocate<byte>(bytes);
@@ -44,12 +44,12 @@ namespace CudafyByExample
 
         public void Execute(byte[] resultBuffer, int ticks)
         {
-            _gpu.Launch(_blocks, _threads).kernel(_dev_bitmap, ticks);
+            _gpu.Launch(_blocks, _threads).thekernel(_dev_bitmap, ticks);
             _gpu.CopyFromDevice(_dev_bitmap, resultBuffer);
         }
 
         [Cudafy]
-        public static void kernel(GThread thread, byte[] ptr, int ticks)
+        public static void thekernel(GThread thread, byte[] ptr, int ticks)
         {
             // map from threadIdx/BlockIdx to pixel position
             int x = thread.threadIdx.x + thread.blockIdx.x * thread.blockDim.x;

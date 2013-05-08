@@ -39,10 +39,10 @@ namespace Cudafy.Compilers
         /// </summary>
         /// <param name="name">The name.</param>
         public NvccCompilerOptions(string name)
-            : base(name, csNVCC, string.Empty, null)
+            : base(name, csNVCC, string.Empty, null, IntPtr.Size == 8 ? ePlatform.x64 : ePlatform.x86)
         {
 
-        }
+        } 
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NvccCompilerOptions"/> class.
@@ -51,8 +51,8 @@ namespace Cudafy.Compilers
         /// <param name="compiler">The compiler.</param>
         /// <param name="includeDirectory">The include directory.</param>
         /// <param name="compilerVersion">Compiler/toolkit version (e.g. CUDA V5.0).</param>
-        public NvccCompilerOptions(string name, string compiler, string includeDirectory, Version compilerVersion)
-            : base(name, compiler, includeDirectory, compilerVersion)
+        public NvccCompilerOptions(string name, string compiler, string includeDirectory, Version compilerVersion, ePlatform platform)
+            : base(name, compiler, includeDirectory, compilerVersion, platform)
         {
 
         }
@@ -168,10 +168,10 @@ namespace Cudafy.Compilers
             string gpuToolKit = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT + cvStr;
             string compiler = gpuToolKit + Path.DirectorySeparatorChar + @"bin" + Path.DirectorySeparatorChar + csNVCC;
             string includeDir = gpuToolKit + Path.DirectorySeparatorChar + @"include";
-            NvccCompilerOptions opt = new NvccCompilerOptions("NVidia CC (x86)", compiler, includeDir, selVer);
+            NvccCompilerOptions opt = new NvccCompilerOptions("NVidia CC (x86)", compiler, includeDir, selVer, ePlatform.x86);
             if (!opt.TryTest())
             {
-                opt = new NvccCompilerOptions("NVidia CC (x86)", csNVCC, string.Empty, selVer);
+                opt = new NvccCompilerOptions("NVidia CC (x86)", csNVCC, string.Empty, selVer, ePlatform.x86);
 //#if DEBUG
 //                throw new CudafyCompileException("Test failed for NvccCompilerOptions for x86");
 //#endif
@@ -218,10 +218,10 @@ namespace Cudafy.Compilers
             string gpuToolKit = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT + cvStr;// cudaVersion;
             string compiler = gpuToolKit + Path.DirectorySeparatorChar + @"bin" + Path.DirectorySeparatorChar + csNVCC;
             string includeDir = gpuToolKit + Path.DirectorySeparatorChar + @"include";
-            NvccCompilerOptions opt = new NvccCompilerOptions("NVidia CC (x64)", compiler, includeDir, selVer);
+            NvccCompilerOptions opt = new NvccCompilerOptions("NVidia CC (x64)", compiler, includeDir, selVer, ePlatform.x64);
             if (!opt.TryTest())
             {
-                opt = new NvccCompilerOptions("NVidia CC (x64)", csNVCC, string.Empty, selVer);
+                opt = new NvccCompilerOptions("NVidia CC (x64)", csNVCC, string.Empty, selVer, ePlatform.x64);
 //#if DEBUG
 //                throw new CudafyCompileException("Test failed for NvccCompilerOptions for x64");
 //#endif

@@ -23,12 +23,12 @@ namespace CudafyByExample
         {
             CudafyModule km = CudafyTranslator.Cudafy();
 
-            GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target);
+            GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
             gpu.LoadModule(km);
 
             byte[] dev_bitmap = gpu.Allocate<byte>(ptr.Length);
 
-            gpu.Launch(new dim3(DIM, DIM), 1).kernel(dev_bitmap);
+            gpu.Launch(new dim3(DIM, DIM), 1).thekernel(dev_bitmap);
 
             gpu.CopyFromDevice(dev_bitmap, ptr);
 
@@ -66,7 +66,7 @@ namespace CudafyByExample
         }
 
         [Cudafy]
-        public static void kernel(GThread thread, byte[] ptr)
+        public static void thekernel(GThread thread, byte[] ptr)
         {
             int x = thread.blockIdx.x;
             int y = thread.blockIdx.y;
@@ -78,5 +78,6 @@ namespace CudafyByExample
             ptr[offset * 4 + 2] = 0;
             ptr[offset * 4 + 3] = 255;                         
         }
+
     }
 }

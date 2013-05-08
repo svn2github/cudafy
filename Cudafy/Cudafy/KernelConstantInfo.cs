@@ -50,6 +50,14 @@ namespace Cudafy
         }
 
         /// <summary>
+        /// Gets or sets a handle that can be arbitrarily used to prevent garbage collection.
+        /// </summary>
+        /// <value>
+        /// The handle.
+        /// </value>
+        public object Handle { get; set; }
+
+        /// <summary>
         /// Gets or sets the cuda pointer.
         /// </summary>
         /// <value>
@@ -91,7 +99,6 @@ namespace Cudafy
             StringBuilder sb = new StringBuilder();
             sb.Append("__constant__ ");
 
-            List<int> dimensions = new List<int>();
             Type type = Information.FieldType;
             Array array = null;
             int rank = 0;
@@ -126,12 +133,32 @@ namespace Cudafy
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Gets the total length.
+        /// </summary>
+        /// <returns></returns>
+        public int GetTotalLength()
+        {
+            Type type = Information.FieldType;
+            Array array = Information.GetValue(null) as Array;
+            if (array == null)
+                return 1;
+            int rank = array.Rank;
+            int length = 1;
+            for (int dim = 1; dim <= rank; dim++)
+            {
+                length *= array.GetUpperBound(dim - 1) + 1;
+            }
+            return length;
+        }
+
         internal override XElement GetXElement()
         {
             XElement xe = new XElement(csCUDAFYCONSTANTINFO);
             xe.SetAttributeValue(csNAME, Name);
             xe.SetAttributeValue(csFIELDNAME, Information.Name);
             xe.SetAttributeValue(csISDUMMY, IsDummy);
+            xe.SetAttributeValue(csDUMMYBEHAVIOUR, Behaviour);
             xe.Add(new XElement(csTYPE, this.Type != null ? this.Type.FullName : string.Empty));
             xe.Add(new XElement(csASSEMBLY, this.Type != null ? this.Type.Assembly.FullName : string.Empty));
             xe.Add(new XElement(csASSEMBLYNAME, this.Type != null ? this.Type.Assembly.GetName().Name : string.Empty));
@@ -145,6 +172,7 @@ namespace Cudafy
             string constantName = xe.GetAttributeValue(csNAME);
             string fieldName = xe.GetAttributeValue(csFIELDNAME);
             bool? isDummy = xe.TryGetAttributeBoolValue(csISDUMMY);
+            string behaviourStr = xe.TryGetAttributeValue(csDUMMYBEHAVIOUR);  
             string typeName = xe.Element(csTYPE).Value;
             string assemblyFullName = xe.Element(csASSEMBLY).Value;
             string assemblyName = xe.Element(csASSEMBLYNAME).Value;
@@ -183,7 +211,7 @@ namespace Cudafy
                 if (assembly == null)
                     throw new CudafyException(CudafyException.csCOULD_NOT_LOAD_ASSEMBLY_X, assemblyFullName);
                 Type type = assembly.GetType(typeName);
-                fi = type.GetField(fieldName);
+                fi = type.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
                 kci = new KernelConstantInfo(fieldName, fi, isDummy == true ? true : false);
             }
             kci.DeserializedChecksum = checksum;

@@ -40,7 +40,7 @@ namespace Cudafy
 
     /// <summary>
     /// Methods, structures and fields that already have an equivalent in Cuda C should be decorated with this attribute.
-    /// The item should have the same name and be in a Cuda C (.cu) file of the same name.
+    /// The item should have the same name and be in a CUDA C (.cu) file of the same name unless specified.
     /// </summary>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Struct | AttributeTargets.Field)]
     public class CudafyDummyAttribute : Attribute
@@ -49,10 +49,12 @@ namespace Cudafy
         /// Initializes a new instance of the <see cref="CudafyDummyAttribute"/> class.
         /// </summary>
         /// <param name="type">The type.</param>
-        public CudafyDummyAttribute(eCudafyType type)
+        /// <param name="behaviour">If set to Suppress then do not include CUDA C file of the same name.</param>
+        public CudafyDummyAttribute(eCudafyType type, eCudafyDummyBehaviour behaviour = eCudafyDummyBehaviour.Default)
         {
             CudafyType = type;
             SupportsEmulation = true;
+            Behaviour = behaviour;
         }
 
         /// <summary>
@@ -62,6 +64,7 @@ namespace Cudafy
         {
             CudafyType = eCudafyType.Auto;
             SupportsEmulation = true;
+            Behaviour = eCudafyDummyBehaviour.Default;
         }
         
         ///// <summary>
@@ -100,6 +103,11 @@ namespace Cudafy
         public eCudafyType CudafyType { get; private set; }
 
         /// <summary>
+        /// Gets the behaviour.
+        /// </summary>
+        public eCudafyDummyBehaviour Behaviour { get; private set; }
+
+        /// <summary>
         /// Gets a value indicating whether supports emulation.
         /// </summary>
         /// <value>
@@ -114,5 +122,21 @@ namespace Cudafy
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Constructor)]
     public class CudafyIgnoreAttribute : Attribute
     {
+    }
+
+
+    /// <summary>
+    /// Placed on parameters to indicate the OpenCL address space. Note that if not specified then arrays will
+    /// automatically be marked global. Ignored when translating to CUDA.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public class CudafyAddressSpaceAttribute : Attribute
+    {
+        public CudafyAddressSpaceAttribute(eCudafyAddressSpace qualifier)
+        {
+            Qualifier = qualifier;
+        }
+        
+        public eCudafyAddressSpace Qualifier { get; private set; }
     }
 }

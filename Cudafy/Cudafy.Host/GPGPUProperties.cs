@@ -40,6 +40,8 @@ namespace Cudafy.Host
             UseAdvanced = useAdvanced;
             MultiProcessorCount = 0;
             HighPerformanceDriver = false;
+            SupportsDoublePrecision = true;
+            AsynchEngineCount = 1;
             if (simulate)
             {
                 Capability = new Version(0, 0);
@@ -53,6 +55,16 @@ namespace Cudafy.Host
                 MaxThreadsPerBlock = 1024;
             }
         }
+
+        /// <summary>
+        /// Gets a value indicating whether device supports code containing double precision.
+        /// Although early CUDA devices do not support double, it is still possible to write code containing doubles.
+        /// For many AMD GPUs this is not the case.
+        /// </summary>
+        /// <value>
+        /// 	<c>true</c> if supports double precision; otherwise, <c>false</c>.
+        /// </value>
+        public bool SupportsDoublePrecision { get; internal set; }
 
         /// <summary>
         /// Gets a value indicating whether this instance is simulated or emulated.
@@ -73,6 +85,14 @@ namespace Cudafy.Host
         /// </summary>
         /// <value>The name.</value>
         public string Name { get; internal set; }
+
+        /// <summary>
+        /// Gets the name of the platform.
+        /// </summary>
+        /// <value>
+        /// The name of the platform.
+        /// </value>
+        public string PlatformName { get; internal set; }
 
         /// <summary>
         /// Gets the device id.
@@ -227,5 +247,10 @@ namespace Cudafy.Host
         ///   <c>true</c> if performance driver; otherwise, <c>false</c>.
         /// </value>
         public bool HighPerformanceDriver { get; internal set; }
+        /// <summary>
+        /// Gets the number of asynchronous engines.
+        /// </summary>
+        /// <value>The number of asynchronous engines.</value>
+        public int AsynchEngineCount { get; internal set; }
     }
 }

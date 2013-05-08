@@ -11,7 +11,8 @@ using System.Text;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Cudafy;
-
+using Cudafy.Host;
+using Cudafy.Translator;
 namespace CudafyByExample
 {
     class Program
@@ -19,11 +20,15 @@ namespace CudafyByExample
         [STAThread]
         static void Main(string[] args)
         {
-            Console.WriteLine(IntPtr.Size);
-            CudafyModes.CodeGen = eGPUCodeGenerator.CudaC;
-            CudafyModes.Target = eGPUType.Cuda;
+            CudafyModes.Target = eGPUType.OpenCL;
+            CudafyModes.DeviceId = 0;
+            CudafyTranslator.Language = eLanguage.OpenCL;
             try
             {
+                int deviceCount = CudafyHost.GetDeviceCount(eGPUType.OpenCL);
+                GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
+                Console.WriteLine("Running examples using {0}", gpu.GetDeviceProperties().Name);
+
                 // Chapter 3
                 Console.WriteLine("\r\nChapter 3");
                 Console.WriteLine("\r\nhello_world");
@@ -64,10 +69,17 @@ namespace CudafyByExample
 
                 // Chapter 6
                 Console.WriteLine("\r\nChapter 6");
-                Console.WriteLine("\r\nray (no constant memory)");
-                new ray_gui(false).ShowDialog(); // no const
-                Console.WriteLine("\r\nray (constant memory)");
-                new ray_gui(true).ShowDialog();  // const
+                Console.WriteLine("\r\nray (no constant memory) (OpenCL compatible as well as CUDA)");
+                new ray_gui(ray_gui.eRayVersion.OpenCL).ShowDialog();
+                Console.WriteLine("\r\nray (constant memory) (OpenCL compatible as well as CUDA)");
+                new ray_gui(ray_gui.eRayVersion.OpenCL_const).ShowDialog();
+                if (CudafyTranslator.Language == eLanguage.Cuda) // CUDA only
+                {
+                    Console.WriteLine("\r\nray (no constant memory)");
+                    new ray_gui(ray_gui.eRayVersion.CUDA).ShowDialog(); // no const
+                    Console.WriteLine("\r\nray (constant memory)");
+                    new ray_gui(ray_gui.eRayVersion.CUDA_const).ShowDialog();  // const
+                }
 
                 // Chapter 9
                 Console.WriteLine("\r\nChapter 9");

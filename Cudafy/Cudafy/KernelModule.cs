@@ -94,10 +94,11 @@ namespace Cudafy
         public CudafyModule()
         {
             _is64bit = IntPtr.Size == 8;
-            CudaSourceCode = string.Empty;
+            SourceCode = string.Empty;
             Name = "cudafymodule";
             CompilerOutput = string.Empty;
             CompilerArguments = string.Empty;
+            TimeOut = 60000;
             _options = new List<CompilerOptions>();
             _PTXModules = new List<PTXModule>();
             Reset();
@@ -237,12 +238,25 @@ namespace Cudafy
         }
 
         /// <summary>
-        /// Gets or sets the cuda source code.
+        /// Gets or sets the CUDA or OpenCL source code.
         /// </summary>
         /// <value>
         /// The cuda source code.
         /// </value>
-        public string CudaSourceCode { get; set; }
+        [Obsolete("Use SourceCode instead")]
+        public string CudaSourceCode
+        {
+            get { return SourceCode; }
+            set { SourceCode = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the CUDA or OpenCL source code.
+        /// </summary>
+        /// <value>
+        /// The source code.
+        /// </value>
+        public string SourceCode { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether this instance has cuda source code.
@@ -250,9 +264,21 @@ namespace Cudafy
         /// <value>
         /// 	<c>true</c> if this instance has cuda source code; otherwise, <c>false</c>.
         /// </value>
+        [Obsolete("Use HasSourceCode instead")]
         public bool HasCudaSourceCode
         {
-            get { return !string.IsNullOrEmpty(CudaSourceCode); }
+            get { return HasSourceCode; }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance has source code.
+        /// </summary>
+        /// <value>
+        /// 	<c>true</c> if this instance has source code; otherwise, <c>false</c>.
+        /// </value>
+        public bool HasSourceCode
+        {
+            get { return !string.IsNullOrEmpty(SourceCode); }
         }
 
         /// <summary>
@@ -322,7 +348,7 @@ namespace Cudafy
         {
             XDocument doc = new XDocument(new XDeclaration("1.0", "utf-8", null));
 
-            byte[] cudaSrcBa = UnicodeEncoding.ASCII.GetBytes(CudaSourceCode);
+            byte[] cudaSrcBa = UnicodeEncoding.ASCII.GetBytes(SourceCode);
             string cudaSrcB64 = Convert.ToBase64String(cudaSrcBa);
 
             XElement root = new XElement(csCUDAFYMODULE);
@@ -331,7 +357,7 @@ namespace Cudafy
             root.SetAttributeValue(csDEBUGINFO, GenerateDebug);
             
             XElement cudaSrc = new XElement(csCUDASOURCECODE, cudaSrcB64);
-            root.SetAttributeValue(csHASCUDASOURCECODE, XmlConvert.ToString(HasCudaSourceCode));
+            root.SetAttributeValue(csHASCUDASOURCECODE, XmlConvert.ToString(HasSourceCode));
             root.Add(cudaSrc);
             
             root.SetAttributeValue(csHASPTX, XmlConvert.ToString(_PTXModules.Count > 0));
@@ -407,7 +433,7 @@ namespace Cudafy
         }
 
         /// <summary>
-        /// Gets the dummy includes.
+        /// Gets the dummy function includes.
         /// </summary>
         /// <returns>Strings representing the Cuda include files.</returns>
         public IEnumerable<string> GetDummyIncludes()
@@ -612,11 +638,11 @@ namespace Cudafy
             {
                 string src = root.Element(csCUDASOURCECODE).Value;
                 byte[] ba = Convert.FromBase64String(src);
-                km.CudaSourceCode = UnicodeEncoding.ASCII.GetString(ba);
+                km.SourceCode = UnicodeEncoding.ASCII.GetString(ba);
             }
             else
             {
-                km.CudaSourceCode = string.Empty;
+                km.SourceCode = string.Empty;
             }
 
             bool? hasDebug = root.TryGetAttributeBoolValue(csDEBUGINFO);
@@ -648,7 +674,7 @@ namespace Cudafy
             {
                 foreach (var xe in funcs.Elements(KernelMethodInfo.csCUDAFYKERNELMETHOD))
                 {
-                    KernelMethodInfo kmi = KernelMethodInfo.Deserialize(xe, path);
+                    KernelMethodInfo kmi = KernelMethodInfo.Deserialize(xe, km, path);
                     km.Functions.Add(kmi.Method.Name, kmi);
                 }
             }
@@ -745,9 +771,9 @@ namespace Cudafy
         private List<CompilerOptions> _options;
 
         /// <summary>
-        /// Gets the compiler output.
+        /// Gets or sets the compiler output.
         /// </summary>
-        public string CompilerOutput { get; private set; }
+        public string CompilerOutput { get; set; }
 
         /// <summary>
         /// Gets the last arguments passed to compiler.
@@ -774,6 +800,14 @@ namespace Cudafy
         public bool GenerateDebug { get; set; }
 
         /// <summary>
+        /// Gets or sets the time out for compilation.
+        /// </summary>
+        /// <value>
+        /// The time out in milliseconds.
+        /// </value>
+        public int TimeOut { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether to start the compilation in a new window.
         /// </summary>
         /// <value>
@@ -795,8 +829,8 @@ namespace Cudafy
             {
                 CompilerOutput = string.Empty;
                 _PTXModules.Clear();
-                if (!HasCudaSourceCode)
-                    throw new CudafyCompileException(CudafyCompileException.csNO_X_SOURCE_CODE_PRESENT_IN_CUDAFY_MODULE, "Cuda");
+                if (!HasSourceCode)
+                    throw new CudafyCompileException(CudafyCompileException.csNO_X_SOURCE_CODE_PRESENT_IN_CUDAFY_MODULE, "CUDA");
 
                 if (CompilerOptionsList.Count == 0)
                 {
@@ -807,12 +841,12 @@ namespace Cudafy
                 string tempFileName = "CUDAFYSOURCETEMP.tmp";
                 string cuFileName = WorkingDirectory + Path.DirectorySeparatorChar + tempFileName.Replace(".tmp", ".cu");
                 string ptxFileName = WorkingDirectory + Path.DirectorySeparatorChar + tempFileName.Replace(".tmp", ".ptx");
-                File.WriteAllText(cuFileName, CudaSourceCode, Encoding.Default);
+                File.WriteAllText(cuFileName, SourceCode, Encoding.Default);
 
                 foreach (CompilerOptions co in CompilerOptionsList)
                 {
                     co.GenerateDebugInfo = GenerateDebug;
-                    
+                    co.TimeOut = TimeOut;
                     co.ClearSources();
                     co.AddSource(cuFileName);
 
@@ -835,8 +869,16 @@ namespace Cudafy
                     Debug.WriteLine(CompilerArguments);
                     process.Start();
 
-                    while (!process.HasExited)
+                    //while (!process.HasExited)
+                    //    Thread.Sleep(10);
+                    int waitCounter = 0;
+                    bool procTimedOut = false;
+                    int timeout = co.TimeOut;
+                    while (!process.HasExited && !(procTimedOut = ++waitCounter >= timeout)) // 1m timeout
                         Thread.Sleep(10);
+                    if (procTimedOut)
+                        throw new CudafyCompileException(CudafyCompileException.csCOMPILATION_ERROR_X, "Process timed out");
+
 
                     if (process.ExitCode != 0)
                     {

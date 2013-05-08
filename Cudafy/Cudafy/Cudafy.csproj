@@ -118,6 +118,7 @@
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
@@ -133,6 +134,7 @@
     <Compile Include="Exceptions.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\Atomics.cs" />
+    <Compile Include="Extensions\IntegerIntrinsics.cs" />
     <Compile Include="Extensions\Rand.cs" />
     <Compile Include="GBlock.cs" />
     <Compile Include="GGrid.cs" />

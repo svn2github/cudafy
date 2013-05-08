@@ -42,7 +42,7 @@ namespace Cudafy.Host.UnitTests
         [TestFixtureSetUp]
         public void SetUp()
         {
-            _gpu = CudafyHost.CreateDevice(CudafyModes.Target);
+            _gpu = CudafyHost.CreateDevice(CudafyModes.Target, CudafyModes.DeviceId);
             _uintBufferIn1 = new uint[N];
             _uintBufferOut1 = new uint[N];
             _uintBufferIn2 = new uint[N];

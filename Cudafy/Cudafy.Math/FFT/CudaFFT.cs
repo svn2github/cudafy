@@ -275,12 +275,16 @@ namespace Cudafy.Maths.FFT
         }
 
         /// <summary>
-        /// Gets the version of CUFFT (CUDA 4.0 only)
+        /// Gets the version of CUFFT (CUDA 5.0 only)
         /// </summary>
         /// <returns>Version of library or -1 if not supported or available.</returns>
         public override int GetVersion()
         {
-            return CUFFT.GetVersion();
+            int version = -1;
+            CUFFTResult res = _driver.cufftGetVersion(ref version);
+            if (res != CUFFTResult.Success)
+                version = -1;
+            return version;
         }
 
         /// <summary>

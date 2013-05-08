@@ -22,6 +22,7 @@
     <DefineConstants>TRACE;DEBUG;NET_4_0;FULL_AST</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\Cudafy.Translator.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -588,6 +589,7 @@
     <Compile Include="Mono.Cecil\Mono\Empty.cs" />
     <Compile Include="Mono.Cecil\Mono\Funcs.cs" />
     <Compile Include="Mono.Cecil\System.Runtime.CompilerServices\ExtensionAttribute.cs" />
+    <Compile Include="OptionalStrings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -50,16 +50,18 @@ namespace Cudafy
     /// </summary>
     public class KernelMethodInfo : KernelMemberInfo
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="KernelMethodInfo"/> class.
-        /// </summary>
-        /// <param name="type">The type.</param>
-        /// <param name="method">The method.</param>
-        /// <param name="gpuMethodType">Type of the gpu method.</param>
-        public KernelMethodInfo(Type type, MethodInfo method, eKernelMethodType gpuMethodType)
-            : this(type, method, gpuMethodType, false)
-        {
-        }
+        ///// <summary>
+        ///// Initializes a new instance of the <see cref="KernelMethodInfo"/> class.
+        ///// </summary>
+        ///// <param name="type">The type.</param>
+        ///// <param name="method">The method.</param>
+        ///// <param name="gpuMethodType">Type of the gpu method.</param>
+        ///// <param name="noDummyInclude"></param>
+        ///// <param name="parentModule"></param>
+        //public KernelMethodInfo(Type type, MethodInfo method, eKernelMethodType gpuMethodType, bool noDummyInclude, CudafyModule parentModule)
+        //    : this(type, method, gpuMethodType, false, false, parentModule)
+        //{
+        //}
 
         /// <summary>
         /// Initializes a new instance of the <see cref="KernelMethodInfo"/> class.
@@ -68,13 +70,17 @@ namespace Cudafy
         /// <param name="method">The method.</param>
         /// <param name="gpuMethodType">Type of the gpu method.</param>
         /// <param name="isDummy">if set to <c>true</c> is dummy.</param>
-        public KernelMethodInfo(Type type, MethodInfo method, eKernelMethodType gpuMethodType, bool isDummy)
+        /// <param name="behaviour"></param>
+        /// <param name="parentModule">Module of which this is a part.</param>
+        public KernelMethodInfo(Type type, MethodInfo method, eKernelMethodType gpuMethodType, bool isDummy, eCudafyDummyBehaviour behaviour, CudafyModule parentModule)
         {
             Type = type;
             Method = method;
             MethodType = gpuMethodType;
             DeserializedChecksum = 0;
             IsDummy = isDummy;
+            Behaviour = behaviour;
+            ParentModule = parentModule;
         }
 
         /// <summary>
@@ -127,7 +133,7 @@ namespace Cudafy
 
         internal string GetDummyInclude()
         {
-            if (!IsDummy)
+            if (!IsDummy || Behaviour == eCudafyDummyBehaviour.SuppressInclude)
                 return string.Empty;
             string ts = string.Format(@"#include ""{0}.cu""", Name);
             return ts;
@@ -139,6 +145,7 @@ namespace Cudafy
             xe.SetAttributeValue(csNAME, Method.Name);
             xe.SetAttributeValue(csTYPE, MethodType);
             xe.SetAttributeValue(csISDUMMY, IsDummy);
+            xe.SetAttributeValue(csDUMMYBEHAVIOUR, Behaviour);
             xe.Add(new XElement(csTYPE, this.Type != null ? this.Type.FullName : string.Empty));
             xe.Add(new XElement(csASSEMBLY, this.Type != null ? this.Type.Assembly.FullName : string.Empty));
             xe.Add(new XElement(csASSEMBLYNAME, this.Type != null ? this.Type.Assembly.GetName().Name : string.Empty));
@@ -161,18 +168,19 @@ namespace Cudafy
             return xe;
         }
 
-        internal static KernelMethodInfo Deserialize(XElement xe, string directory = null)
+        internal static KernelMethodInfo Deserialize(XElement xe, CudafyModule parentModule, string directory = null)
         {
             string methodName = xe.GetAttributeValue(csNAME);
             string methodTypeName = xe.GetAttributeValue(csTYPE);
             eKernelMethodType methodType = (eKernelMethodType)Enum.Parse(typeof(eKernelMethodType), methodTypeName);
             bool? isDummy = xe.TryGetAttributeBoolValue(csISDUMMY);
+            string behaviourStr = xe.TryGetAttributeValue(csDUMMYBEHAVIOUR);  
             string typeName = xe.Element(csTYPE).Value;
             string assemblyFullName = xe.Element(csASSEMBLY).Value;
             string assemblyName = xe.Element(csASSEMBLYNAME).Value;
             string assemblyPath = xe.TryGetElementValue(csASSEMBLYPATH);
             long checksum = XmlConvert.ToInt64(xe.Element(csCHECKSUM).Value);
-            
+            eCudafyDummyBehaviour behaviour = string.IsNullOrWhiteSpace(behaviourStr) ? eCudafyDummyBehaviour.Default : (eCudafyDummyBehaviour)Enum.Parse(typeof(eCudafyDummyBehaviour), behaviourStr);
             MethodInfo mi = null;
             KernelMethodInfo kmi = null;
 
@@ -207,10 +215,10 @@ namespace Cudafy
                 Type type = assembly.GetType(typeName);
                 if (type == null)
                     throw new CudafyException(CudafyException.csCOULD_NOT_FIND_TYPE_X_IN_ASSEMBLY_X, typeName, assemblyFullName);
-                mi = type.GetMethod(methodName);
+                mi = type.GetMethod(methodName, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
                 if (mi == null)
                     throw new CudafyException(CudafyException.csCOULD_NOT_FIND_METHOD_X_IN_TYPE_X_IN_ASSEMBLY_X, methodName, typeName, assemblyFullName);
-                kmi = new KernelMethodInfo(type, mi, methodType, isDummy == true ? true : false);                
+                kmi = new KernelMethodInfo(type, mi, methodType, isDummy == true ? true : false, behaviour, parentModule);                
             }
             kmi.DeserializedChecksum = checksum;
             return kmi;

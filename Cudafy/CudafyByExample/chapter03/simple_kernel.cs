@@ -19,14 +19,14 @@ namespace CudafyByExample
         {
             CudafyModule km = CudafyTranslator.Cudafy();
 
-            GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target);
+            GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
             gpu.LoadModule(km);
-            gpu.Launch().kernel(); // or gpu.Launch(1, 1, "kernel"); 
+            gpu.Launch().thekernel(); // or gpu.Launch(1, 1, "kernel"); 
             Console.WriteLine("Hello, World!");
         }
 
         [Cudafy]
-        public static void kernel()
+        public static void thekernel()
         {
         }
     }

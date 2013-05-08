@@ -33,14 +33,10 @@ namespace Cudafy.UnitTests
             try
             {
                 RelectorAddInTypeTests raitt = new RelectorAddInTypeTests();
-                raitt.SetUp();
                 CudafyUnitTest.PerformAllTests(raitt);
-                raitt.TearDown();
 
                 RelectorAddInFunctionsTests raift = new RelectorAddInFunctionsTests();
-                raift.SetUp();
                 CudafyUnitTest.PerformAllTests(raift);
-                raift.TearDown();
             }
             catch (Exception ex)
             {

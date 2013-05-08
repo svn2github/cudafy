@@ -277,7 +277,8 @@ namespace Cudafy.Translator
             context.CurrentType = typeDef;
             TypeDeclarationEx astType = new TypeDeclarationEx();
             bool isDummy = false;
-            var cudafyAttr = typeDef.GetCudafyType(out isDummy);
+            eCudafyDummyBehaviour behaviour;
+            var cudafyAttr = typeDef.GetCudafyType(out isDummy, out behaviour);
             astType.CudafyType = cudafyAttr;
             astType.IsDummy = isDummy;
 
@@ -517,42 +518,7 @@ namespace Cudafy.Translator
                 {
                     if (ns == "System")
                     {
-                        switch (name)
-                        {
-                            case "SByte":
-                                return new PrimitiveType("char") { OriginalType = "SByte" }; ;//"sbyte");
-                            case "Int16":
-                                return new PrimitiveType("short");
-                            case "Int32":
-                                return new PrimitiveType("int");
-                            case "Int64":
-                                return new PrimitiveType("long long");
-                            case "Byte":
-                                return new PrimitiveType("unsigned char");//"byte");
-                            case "UInt16":
-                                return new PrimitiveType("unsigned short");//"ushort");
-                            case "UInt32":
-                                return new PrimitiveType("unsigned int");//"uint");
-                            case "UInt64":
-                                return new PrimitiveType("unsigned long long");//"ulong");
-                            case "String":
-                                //throw new NotSupportedException("String");
-                                return new PrimitiveType("unsigned short*") { OriginalType = "String" };
-                            case "Single":
-                                return new PrimitiveType("float");
-                            case "Double":
-                                return new PrimitiveType("double");
-                            case "Decimal":
-                                return new PrimitiveType("double");//"decimal");
-                            case "Char":
-                                return new PrimitiveType("unsigned short");//"char");
-                            case "Boolean":
-                                return new PrimitiveType("bool");
-                            case "Void":
-                                return new PrimitiveType("void");
-                            case "Object":
-                                throw new NotSupportedException("Object");//return new PrimitiveType("object");
-                        }
+                        return ConvertToPrimitiveType(name);
                     }
 
                     name = ICSharpCode.NRefactory.TypeSystem.ReflectionHelper.SplitTypeParameterCountFromReflectionName(name);
@@ -580,6 +546,48 @@ namespace Cudafy.Translator
                     }
                     return astType;
                 }
+            }
+        }
+
+        internal static AstType ConvertToPrimitiveType(string name)
+        {
+            switch (name)
+            {
+                case "SByte":
+                    return new PrimitiveType("char") { OriginalType = "SByte" }; ;//"sbyte");
+                case "Int16":
+                    return new PrimitiveType("short");
+                case "Int32":
+                    return new PrimitiveType("int");
+                case "Int64":
+                    return new PrimitiveType(CudafyTranslator.LanguageSpecifics.Int64Translation);
+                case "Byte":
+                    return new PrimitiveType("unsigned char");//"byte");
+                case "UInt16":
+                    return new PrimitiveType("unsigned short");//"ushort");
+                case "UInt32":
+                    return new PrimitiveType("unsigned int");//"uint");
+                case "UInt64":
+                    return new PrimitiveType(CudafyTranslator.LanguageSpecifics.UInt64Translation);//"ulong");
+                case "String":
+                    //throw new NotSupportedException("String");
+                    return new PrimitiveType("unsigned short*") { OriginalType = "String" };
+                case "Single":
+                    return new PrimitiveType("float");
+                case "Double":
+                    return new PrimitiveType("double");
+                case "Decimal":
+                    return new PrimitiveType("double");//"decimal");
+                case "Char":
+                    return new PrimitiveType("unsigned short");//"char");
+                case "Boolean":
+                    return new PrimitiveType("bool");
+                case "Void":
+                    return new PrimitiveType("void");
+                //case "Object":
+                //    throw new NotSupportedException("Object");//return new PrimitiveType("object");
+                default:
+                    return new PrimitiveType(name);
             }
         }
 
@@ -791,7 +799,8 @@ namespace Cudafy.Translator
         {
             bool isDummy = false;
             bool ignore = false;
-            var cudafyAttr = methodDef.GetCudafyType(out isDummy, out ignore);
+            eCudafyDummyBehaviour behaviour;
+            var cudafyAttr = methodDef.GetCudafyType(out isDummy, out ignore, out behaviour);
             if (cudafyAttr == null)
                 cudafyAttr = eCudafyType.Auto;
             
@@ -1106,7 +1115,8 @@ namespace Cudafy.Translator
         {
             FieldDeclarationEx astField = new FieldDeclarationEx();
             bool isDummy;
-            var cudafyAttr = fieldDef.GetCudafyType(out isDummy);
+            eCudafyDummyBehaviour behaviour;
+            var cudafyAttr = fieldDef.GetCudafyType(out isDummy, out behaviour);
             astField.CudafyType = cudafyAttr;
             astField.IsDummy = isDummy;
 

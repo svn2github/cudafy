@@ -31,6 +31,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using GASS.CUDA;
 using GASS.CUDA.Types;
+using Cloo;
 namespace Cudafy.Host
 {
     /// <summary>
@@ -81,6 +82,12 @@ namespace Cudafy.Host
                 if (ctx != null && currentGPU != null)
                     currentGPU.SetCurrentContext();
             }
+            else if (type == eGPUType.OpenCL)
+            {
+                int deviceId = 0;
+                foreach (ComputeDevice computeDevice in OpenCLDevice.ComputeDevices)
+                    yield return OpenCLDevice.GetDeviceProperties(computeDevice, deviceId++);
+            }
             else
                 throw new CudafyHostException(CudafyHostException.csX_NOT_CURRENTLY_SUPPORTED, type);
         }
@@ -103,7 +110,14 @@ namespace Cudafy.Host
                 }
             }
             else if (type == eGPUType.Cuda)
+            {
                 cnt += CudaGPU.GetDeviceCount();
+            }
+            else if (type == eGPUType.OpenCL)
+            {
+                foreach (var platform in ComputePlatform.Platforms)
+                    cnt += platform.Devices.Count;
+            }
             else
                 throw new CudafyHostException(CudafyHostException.csX_NOT_CURRENTLY_SUPPORTED, type);
             return cnt;
@@ -240,7 +254,9 @@ namespace Cudafy.Host
                     return new CudaGPU(deviceId);
                 else if (target == eGPUType.Emulator)
                     return new EmulatedGPU(deviceId);
-                else 
+                else if (target == eGPUType.OpenCL)
+                    return new OpenCLDevice(deviceId);
+                else
                     throw new CudafyHostException(CudafyHostException.csX_NOT_CURRENTLY_SUPPORTED, target);
             }
             catch (Exception)

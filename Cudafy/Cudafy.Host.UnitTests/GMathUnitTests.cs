@@ -23,7 +23,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 using Cudafy.Host;
+using Cudafy.Atomics;
+using Cudafy.IntegerIntrinsics;
 using Cudafy.UnitTests;
 using NUnit.Framework;
 using Cudafy.Translator;
@@ -37,11 +40,21 @@ namespace Cudafy.Host.UnitTests
 
         protected GPGPU _gpu;
 
+        public bool SupportsDouble { get; private set; }
+
         [TestFixtureSetUp]
         public virtual void SetUp()
         {
-            _cm = CudafyTranslator.Cudafy(this);
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
+            var types = new List<Type>();
+            types.Add(this.GetType());
+            types.Add(typeof(MathSingleTest));
+            SupportsDouble = _gpu.GetDeviceProperties().SupportsDoublePrecision;
+            if (SupportsDouble)
+                types.Add(typeof(MathDoubleTest));
+            eArchitecture arch = _gpu.GetArchitecture();
+            _cm = CudafyTranslator.Cudafy(arch, types.ToArray());
+            Debug.WriteLine(_cm.SourceCode);
             _gpu.LoadModule(_cm);
         }
 
@@ -73,8 +86,13 @@ namespace Cudafy.Host.UnitTests
         [Test]
         public void Test_Math()
         {
-            double[] data = new double[N];
-            double[] dev_data = _gpu.CopyToDevice(data); 
+            if (!SupportsDouble)
+            {
+                Console.WriteLine("Device does not support double precision, skipping test...");
+                return;
+            }
+            double[] data = new double[N]; 
+            double[] dev_data = _gpu.CopyToDevice(data);
 #if !NET35
             _gpu.Launch().mathtest(dev_data);
 #else
@@ -82,9 +100,20 @@ namespace Cudafy.Host.UnitTests
 #endif
             _gpu.CopyFromDevice(dev_data, data);
             double[] control = new double[N];
-            mathtest(control);
-            for (int i = 0; i < N; i++)
-                Assert.AreEqual(control[i], data[i], 0.00001, "Index={0}", i);
+            MathDoubleTest.mathtest(control);
+            for (int i = 0; i < N-4; i++)
+                Assert.AreEqual(control[i], data[i], 0.00005, "Index={0}", i);
+            if (_gpu is CudaGPU)
+            {
+                Assert.AreEqual(9.2188684372274053E18, data[60], 0.0000000000000001E18);
+                Assert.AreEqual(1.8442240474082181E19, data[61], 0.0000000000000001E19);
+            }
+            else
+            {
+                Assert.IsTrue(Double.IsInfinity(data[60]));
+                Assert.IsTrue(Double.IsInfinity(data[61]));
+            }
+            Assert.IsTrue(Double.IsNaN(data[62]));
         }
 
         [Test]
@@ -99,16 +128,134 @@ namespace Cudafy.Host.UnitTests
 #endif
             _gpu.CopyFromDevice(dev_data, data);
             float[] control = new float[N];
-            gmathtest(control);
-            for (int i = 0; i < N; i++)
-                Assert.AreEqual(control[i], data[i], 0.00001, "Index={0}", i);
+            MathSingleTest.gmathtest(control);
+            for (int i = 0; i < N-4; i++)
+                Assert.AreEqual(control[i], data[i], 0.00005, "Index={0}", i);
+            if (_gpu is CudaGPU)
+            {
+                Assert.AreEqual(2.14643507E9, data[60], 0.00000001E9);
+                Assert.AreEqual(4.29391872E9, data[61], 0.00000001E9);
+            }
+            else
+            {
+                Assert.IsTrue(Single.IsInfinity(data[60]));
+                Assert.IsTrue(Single.IsInfinity(data[61]));
+            }
+            Assert.IsTrue(Single.IsNaN(data[62]));
         }
 
+        [Test]
+        public void Test_atomicsUInt32()
+        {
+            uint[] input = new uint[N];
+            uint[] output = new uint[N];
+            uint[] dev_input = _gpu.CopyToDevice(input);
+            uint[] dev_output = _gpu.CopyToDevice(output);
+            _gpu.Launch(1, 1, "atomicsTestUInt32", dev_input, dev_output);
+            _gpu.CopyFromDevice(dev_input, input);
+            _gpu.CopyFromDevice(dev_output, output);
+
+            uint[] inputControl = new uint[N];
+            uint[] outputControl = new uint[N];
+            atomicsTestUInt32(new GThread(0, 0, new GBlock(new GGrid(1), 1, 0, 0)), inputControl, outputControl);
+            for (int i = 0; i < N; i++)
+                Assert.AreEqual(inputControl[i], input[i], "Input Index={0}", i);
+            for (int i = 0; i < N; i++)
+                Assert.AreEqual(outputControl[i], output[i], "Output Index={0}", i);
+            _gpu.FreeAll();
+        }
+
+        [Test]
+        public void Test_integerIntrinsicsInt32()
+        {
+            int[] input = new int[N];
+            int[] output = new int[N];
+            int[] dev_input = _gpu.CopyToDevice(input);
+            int[] dev_output = _gpu.CopyToDevice(output);
+            _gpu.Launch(1, 1, "integerIntrinsicsInt32", dev_input, dev_output);
+            _gpu.CopyFromDevice(dev_input, input);
+            _gpu.CopyFromDevice(dev_output, output);
+
+            int[] inputControl = new int[N];
+            int[] outputControl = new int[N];
+            integerIntrinsicsInt32(new GThread(0, 0, new GBlock(new GGrid(1), 1, 0, 0)), inputControl, outputControl);
+            for (int i = 0; i < N; i++)
+                Assert.AreEqual(outputControl[i], output[i], "Output Index={0}", i);
+            _gpu.FreeAll();
+        }
+
+        [Cudafy]
+        public static void integerIntrinsicsInt32(GThread thread, int[] input, int[] output)
+        {
+            int i = 0;
+            int x = 0;
+            output[i++] = thread.popcount((uint)0x55555555);// 16
+            output[i++] = thread.clz(0x1FFFE00);            // 7
+            output[i++] = (int)thread.mul24((int)0x00000042, (int)0x00000042);
+            output[i++] = (int)thread.umul24((uint)0x00000042, (uint)0x00000042);
+            output[i++] = (int)thread.mulhi(0x0AFFEEDD, 0x0DEEFFAA);
+            output[i++] = (int)thread.umulhi((uint)0x0AFFEEDD, (uint)0x0DEEFFAA);
+        }
+
+        [Test]
+        public void Test_integerIntrinsicsInt64()
+        {
+            long[] input = new long[N];
+            long[] output = new long[N];
+            long[] dev_input = _gpu.CopyToDevice(input);
+            long[] dev_output = _gpu.CopyToDevice(output);
+            _gpu.Launch(1, 1, "integerIntrinsicsInt64", dev_input, dev_output);
+            _gpu.CopyFromDevice(dev_input, input);
+            _gpu.CopyFromDevice(dev_output, output);
+
+            long[] inputControl = new long[N];
+            long[] outputControl = new long[N];
+            integerIntrinsicsInt64(new GThread(0, 0, new GBlock(new GGrid(1), 1, 0, 0)), inputControl, outputControl);
+            for (int i = 0; i < N; i++)
+                Assert.AreEqual(outputControl[i], output[i], "Output Index={0}", i);
+            _gpu.FreeAll();
+        }
+
+        [Cudafy]
+        public static void integerIntrinsicsInt64(GThread thread, long[] input, long[] output)
+        {
+            int i = 0;
+            int x = 0;
+            output[i++] = thread.popcountll(0x5555555555555555);  // 32
+            output[i++] = thread.clzll(0x1FFFFFFFFF000);          // 15
+            output[i++] = (long)thread.umul64hi(0x0FFFFFFFFF000, 0x0555555555555555);
+            output[i++] = (long)thread.mul64hi(0x0FFFFFFFFF000, 0x0555555555555555);
+        }
+
+
+        [Cudafy]
+        public static void atomicsTestUInt32(GThread thread, uint[] input, uint[] output)
+        {
+            int i = 0;
+            int x = 0;
+            output[i++] = thread.atomicAdd(ref input[x], 42); // 42
+            output[i++] = thread.atomicSub(ref input[x], 21); // 21
+            output[i++] = thread.atomicIncEx(ref input[x]);   // 22
+            output[i++] = thread.atomicIncEx(ref input[x]);   // 23
+            output[i++] = thread.atomicMax(ref input[x], 50); // 50
+            output[i++] = thread.atomicMin(ref input[x], 40); // 40
+            output[i++] = thread.atomicOr(ref input[x], 16);  // 56
+            output[i++] = thread.atomicAnd(ref input[x], 15); // 8
+            output[i++] = thread.atomicXor(ref input[x], 15); // 7
+            output[i++] = thread.atomicExch(ref input[x], 88);// 88
+            output[i++] = thread.atomicCAS(ref input[x], 88, 123);// 123
+            output[i++] = thread.atomicCAS(ref input[x], 321, 222);// 123
+            output[i++] = thread.atomicDecEx(ref input[x]);   // 122
+        }
+    }
+
+    public class MathDoubleTest
+    {
         [Cudafy]
         public static void mathtest(double[] c)
         {
             int i = 0;
-            c[i++] = Math.Abs(-42.3);
+            c[i++] = Math.Abs((int)-42.3);
             c[i++] = Math.Acos(42.3);
             c[i++] = Math.Asin(42.3);
             c[i++] = Math.Atan(42.3);
@@ -132,13 +279,23 @@ namespace Cudafy.Host.UnitTests
             c[i++] = Math.Tan(4.3);
             c[i++] = Math.Tanh(8.1);
             c[i++] = Math.Truncate(10.14334325);
+            c[i++] = (double)(Double.IsNaN(Math.Sqrt(-1.0)) ? 1.0 : 0.0);
+            double zero = 0.0;
+            c[i++] = Double.IsInfinity(1/zero) ? 1.0 : 0.0;
+            c[60] = Double.PositiveInfinity;
+            c[61] = Double.NegativeInfinity;
+            c[62] = Double.NaN;
         }
+    }
+
+    public class MathSingleTest
+    {
 
         [Cudafy]
         public static void gmathtest(float[] c)
         {
             int i = 0;
-            c[i++] = GMath.Abs(-42.3F);
+            c[i++] = GMath.Abs((long)-42.3F);
             c[i++] = GMath.Acos(42.3F);
             c[i++] = GMath.Asin(42.3F);
             c[i++] = GMath.Atan(42.3F);
@@ -159,9 +316,29 @@ namespace Cudafy.Host.UnitTests
             c[i++] = GMath.Sin(4.2F);
             c[i++] = GMath.Sinh(3.1F);
             c[i++] = GMath.Sqrt(8.1F);
+            c[i++] = GMath.Sqrt(-1.0F);
             c[i++] = GMath.Tan(4.3F);
             c[i++] = GMath.Tanh(8.1F);
+            //c[i++] = (float)(Single.IsNaN(GMath.Sqrt(-1.0F)) ? 1.0F : 0.0F);//GMath.Sqrt(-1.0F)
             c[i++] = GMath.Truncate(10.14334325F);
+            float zero = 0.0F;
+            c[i++] = Single.IsInfinity(1 / zero) ? 1.0F : 0.0F;
+            c[60] = Single.PositiveInfinity;
+            c[61] = Single.NegativeInfinity;
+            c[62] = Single.NaN; 
         }
     }
 }
+//0x7f800000 = infinity
+
+//0xff800000 = -infinity
+
+
+
+//These conform to the ieee floating point specification. You can use the values:
+
+
+
+//0x7ff0000000000000 = infinity
+
+//0xfff0000000000000 = -infinity
