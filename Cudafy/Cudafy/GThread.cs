@@ -30,7 +30,7 @@ namespace Cudafy
     
     
     /// <summary>
-    /// Represents a CUDA thread. This cannot be used when targeting OpenCL.
+    /// Represents a CUDA thread.
     /// </summary>
     public class GThread
     {

@@ -2327,8 +2327,10 @@ namespace Cudafy.Translator
             if (isAlloc)
             {
                 WriteKeyword(CudafyTranslator.LanguageSpecifics.SharedModifier);
-                string keyword = (variableDeclarationStatement.Type as ComposedType).BaseType.ToString();
-                
+                AstType astType = (variableDeclarationStatement.Type as ComposedType).BaseType;
+                string keyword = astType.ToString();
+                if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL && !(astType is ICSharpCode.NRefactory.CSharp.PrimitiveType))
+                   WriteKeyword("struct");
                 keyword = ConvertPrimitiveType(keyword);
                 keyword = CUDALanguage.TranslateSpecialType(keyword);
                 WriteKeyword(keyword);
