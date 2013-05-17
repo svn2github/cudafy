@@ -37,9 +37,9 @@ namespace Cudafy.Host.UnitTests
         {
             try
             {
-                CudafyModes.Target = eGPUType.Cuda;
+                CudafyModes.Target = eGPUType.OpenCL;
                 CudafyModes.DeviceId = 0;
-                CudafyTranslator.Language = eLanguage.Cuda;
+                CudafyTranslator.Language = eLanguage.OpenCL;
 
                 if (CudafyModes.Target != eGPUType.OpenCL)
                 {

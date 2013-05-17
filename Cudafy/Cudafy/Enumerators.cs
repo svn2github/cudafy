@@ -268,12 +268,12 @@ namespace Cudafy
         /// <summary>
         /// Variable is in shared (local) memory.
         /// </summary>
-        Shared = 3,
+        Shared = 4,
 
         /// <summary>
         /// Variable is in private/register memory.
         /// </summary>
-        Private = 4 
+        Private = 8 
     }
 
 

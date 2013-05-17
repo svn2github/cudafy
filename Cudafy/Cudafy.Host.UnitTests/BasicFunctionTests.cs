@@ -286,6 +286,7 @@ namespace Cudafy.Host.UnitTests
             _gpu.FreeAll();
         }
 
+
         [Cudafy]
         public static void ReadConstantMemory(int[] res, int len)
         {
@@ -894,6 +895,8 @@ namespace Cudafy.Host.UnitTests
             // set the cache values
             cache[cacheIndex] = temp;
 
+            // Test passing 
+
             // synchronize threads in this block
             thread.SyncThreads();
 
@@ -903,13 +906,19 @@ namespace Cudafy.Host.UnitTests
             while (i != 0)
             {
                 if (cacheIndex < i)
-                    cache[cacheIndex] += cache[cacheIndex + i];
+                    cache[cacheIndex] += GetNextCacheValue(cache, cacheIndex, i);//cache[cacheIndex + i];
                 thread.SyncThreads();
                 i /= 2;
             }
 
             if (cacheIndex == 0)
                 c[thread.blockIdx.x] = cache[0];
+        }
+
+        [Cudafy]
+        public static float GetNextCacheValue([CudafyAddressSpace(eCudafyAddressSpace.Shared)]float[] cache, int cacheIndex, int i)
+        {
+            return cache[cacheIndex + i];
         }
 
         [Cudafy]

@@ -2859,7 +2859,10 @@ namespace Cudafy.Translator
 		public object VisitParameterDeclaration(ParameterDeclaration parameterDeclaration, object data)
 		{
 			StartNode(parameterDeclaration);
-			WriteAttributes(parameterDeclaration.Attributes);
+            if (parameterDeclaration.Attributes.Count > 0)
+            {
+                //WriteAttributes(parameterDeclaration.Attributes);
+            }
             //foreach(var attr in parameterDeclaration.Attributes)
             //    attr.
             //switch (parameterDeclaration.ParameterModifier) {
@@ -3005,7 +3008,33 @@ namespace Cudafy.Translator
 		{
 			StartNode(composedType);//
             if (composedType.ArraySpecifiers.Count > 0 && _lastAddressSpace == null)
-                WriteKeyword(CudafyTranslator.LanguageSpecifics.MemorySpaceSpecifier);
+            {
+                ParameterDeclaration pd = composedType.Parent as ParameterDeclaration;
+                bool doWriteMemorySpaceSpecifier = true;
+                if (pd != null && CudafyTranslator.Language == eLanguage.OpenCL)
+                {
+                    foreach (var a in pd.Attributes)
+                    {
+                        var v = a.Attributes.FirstOrDefault();
+                        if (v == null)
+                            continue;
+                        var arg = v.Arguments.FirstOrDefault();
+                        if (arg != null)
+                        {
+                            if (arg.ToString().StartsWith("eCudafyAddressSpace"))
+                            {
+                                eCudafyAddressSpace cas = (eCudafyAddressSpace)Enum.Parse(typeof(eCudafyAddressSpace), arg.ToString().Remove(0, "eCudafyAddressSpace.".Length));
+                                string asq = CudafyTranslator.LanguageSpecifics.GetAddressSpaceQualifier(cas);
+                                doWriteMemorySpaceSpecifier = false;
+                                WriteKeyword(asq);
+                                break;
+                            }
+                        }
+                    }
+                }
+                if(doWriteMemorySpaceSpecifier)
+                    WriteKeyword(CudafyTranslator.LanguageSpecifics.MemorySpaceSpecifier);
+            }
             _lastAddressSpace = null;
             //if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL && !(composedType.BaseType is PrimitiveType))
             //    WriteKeyword("struct");
