@@ -357,7 +357,7 @@ namespace Cudafy
             root.SetAttributeValue(csDEBUGINFO, GenerateDebug);
             
             XElement cudaSrc = new XElement(csCUDASOURCECODE, cudaSrcB64);
-            root.SetAttributeValue(csHASCUDASOURCECODE, XmlConvert.ToString(HasSourceCode));
+            root.SetAttributeValue(csHASCUDASOURCECODE, XmlConvert.ToString(HasCudaSourceCode));
             root.Add(cudaSrc);
             
             root.SetAttributeValue(csHASPTX, XmlConvert.ToString(_PTXModules.Count > 0));
@@ -815,6 +815,20 @@ namespace Cudafy
         /// </value>
         public bool SuppressWindow { get; set; }
 
+        StringBuilder standardOutput = new StringBuilder();
+        StringBuilder standardError = new StringBuilder();
+        void process_ErrorDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            if (!String.IsNullOrEmpty(e.Data))
+                standardError.Append(e.Data + Environment.NewLine);
+        }
+
+        void process_OutputDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            if (!String.IsNullOrEmpty(e.Data))
+                standardOutput.Append(e.Data + Environment.NewLine);
+        }
+
         /// <summary>
         /// Compiles the module based on current Cuda source code and options.
         /// </summary>
@@ -865,9 +879,14 @@ namespace Cudafy
                     process.StartInfo.FileName = co.GetFileName();
                     process.StartInfo.Arguments = co.GetArguments();
                     CompilerArguments = process.StartInfo.Arguments;
+                    process.OutputDataReceived += new DataReceivedEventHandler(process_OutputDataReceived);
+                    process.ErrorDataReceived += new DataReceivedEventHandler(process_ErrorDataReceived);
                     Debug.WriteLine(process.StartInfo.FileName);
                     Debug.WriteLine(CompilerArguments);
+                    standardError.Clear(); standardOutput.Clear();
                     process.Start();
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
 
                     //while (!process.HasExited)
                     //    Thread.Sleep(10);
@@ -879,10 +898,9 @@ namespace Cudafy
                     if (procTimedOut)
                         throw new CudafyCompileException(CudafyCompileException.csCOMPILATION_ERROR_X, "Process timed out");
 
-
                     if (process.ExitCode != 0)
                     {
-                        string s = process.StandardError.ReadToEnd();
+                        string s = standardError.ToString(); //process.StandardError.ReadToEnd();
                         
                         CompilerOutput += "\r\n" + s;
                         if (s.Contains("Cannot find compiler 'cl.exe' in PATH"))
@@ -892,7 +910,7 @@ namespace Cudafy
                     }
                     else
                     {
-                        string s = process.StandardError.ReadToEnd() + "\r\n" + process.StandardOutput.ReadToEnd();
+                        string s = standardError.ToString() + "\r\n" + standardOutput.ToString();
                         CompilerOutput += "\r\n" + s;
                         Debug.WriteLine(s);
                     }
