@@ -981,6 +981,31 @@ kernel void VectorAdd(
             return Allocate<T>(hostArray.GetLongLength(0), hostArray.GetLongLength(1), hostArray.GetLongLength(2));
         }
 
+        /// <summary>
+        /// Performs an aligned host memory allocation.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="x">The x size.</param>
+        /// <returns>
+        /// Pointer to allocated memory.
+        /// </returns>
+        public override IntPtr HostAllocate<T>(int x)
+        {
+            int bytes = MSizeOf(typeof(T)) * x;
+            int align = 4096;
+            byte[] buffer = new byte[bytes + align];
+            GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+            IntPtr intPtr;// = handle.AddrOfPinnedObject();
+
+            long ptr = handle.AddrOfPinnedObject().ToInt64();
+            // round up ptr to nearest 'byteAlignment' boundary
+            ptr = align > 0 ? (ptr + align - 1) & ~(align - 1) : ptr;
+            intPtr = new IntPtr(ptr);
+
+            _hostHandles.Add(intPtr, handle);
+            return intPtr;
+        }
+
         #region DoSet
 
 
