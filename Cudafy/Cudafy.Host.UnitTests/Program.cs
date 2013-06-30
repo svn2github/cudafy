@@ -38,7 +38,7 @@ namespace Cudafy.Host.UnitTests
             try
             {
                 CudafyModes.Target = eGPUType.Cuda;
-                CudafyModes.DeviceId = 0;
+                CudafyModes.DeviceId = 1;
                 CudafyTranslator.Language = eLanguage.Cuda;
 
                 if (CudafyModes.Target != eGPUType.OpenCL)
@@ -69,6 +69,9 @@ namespace Cudafy.Host.UnitTests
                     MultiGPUTests mgt = new MultiGPUTests();
                     CudafyUnitTest.PerformAllTests(mgt);
                 }
+
+                //Compute35Features c35f = new Compute35Features();
+                //CudafyUnitTest.PerformAllTests(c35f);
 
                 Console.WriteLine("Done");
                 Console.ReadLine();

@@ -29,7 +29,7 @@ using Cudafy.Host;
 using Cudafy.UnitTests;
 using NUnit.Framework;
 using Cudafy.Translator;
-
+using Cudafy.Compilers;
 namespace Cudafy.Host.UnitTests
 {
     [Cudafy]
@@ -112,18 +112,16 @@ namespace Cudafy.Host.UnitTests
             _cm = CudafyModule.TryDeserialize();
             if (_cm == null || !_cm.TryVerifyChecksums())
             {
-                //_cm = CudafyTranslator.Cudafy(typeof(PrimitiveStruct), typeof(BasicFunctionTests));
-                _cm = CudafyTranslator.Cudafy();
-                //_cm.TrySerialize();.
+                _cm = CudafyTranslator.Cudafy();//typeof(PrimitiveStruct), typeof(BasicFunctionTests));
                 Console.WriteLine(_cm.CompilerOutput);
+                _cm.TrySerialize();                
             }
             
             _gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
             _gpu.LoadModule(_cm);
-            //_gpu.CopyToConstantMemory(new int[constant_data.Length], constant_data);
-            
-           
+            //_gpu.CopyToConstantMemory(new int[constant_data.Length], constant_data);                
         }
+
 
         [TestFixtureTearDown]
         public void TearDown()
@@ -956,6 +954,8 @@ namespace Cudafy.Host.UnitTests
                 total += i;
             c[0] = total;
         }
+
+
 
 
 

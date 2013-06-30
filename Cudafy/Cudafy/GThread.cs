@@ -248,14 +248,25 @@ namespace Cudafy
         }
 
         /// <summary>
-        /// NOTE Compute Capability 2.x only. Syncs threads in warp, returns true if any had true predicate. 
+        /// NOTE Compute Capability 2.x and later only. Syncs threads in warp, returns true if any had true predicate. 
         /// </summary>
         public int Ballot(bool predicate)
         {
             return block.Ballot(predicate, WarpId());
         }
 
-
+        /// <summary>
+        ///  NOTE Compute Capability 3.5 and later only. Dynamic parallelism. Call from a single thread.
+        ///  Not supported by emulator.
+        /// </summary>
+        /// <param name="gridSize"></param>
+        /// <param name="blockSize"></param>
+        /// <param name="functionName"></param>
+        /// <param name="args"></param>
+        public void Launch(dim3 gridSize, dim3 blockSize, string functionName, params object[] args)
+        {
+            throw new NotSupportedException("Emulation of dynamic parallelism.");
+        }
 
 
         /// <summary>

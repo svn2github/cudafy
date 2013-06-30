@@ -69,6 +69,38 @@ namespace Cudafy
         /// Gets the PTX.
         /// </summary>
         public string PTX { get; internal set; }
+
+#endif
+        /// <summary>
+        /// Returns a <see cref="System.String"/> that represents this instance.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="System.String"/> that represents this instance.
+        /// </returns>
+        public override string ToString()
+        {
+            return Platform.ToString();
+        }
+    }
+
+    /// <summary>
+    /// Internal use.
+    /// </summary>
+    public class BinaryModule
+    {
+        /// <summary>
+        /// Gets the platform.
+        /// </summary>
+        public ePlatform Platform { get; internal set; }
+
+        public eArchitecture Architecture { get; internal set; }
+#if DEBUG
+        public byte[] Binary { get; set; }
+#else
+        /// <summary>
+        /// Gets the binary (e.g. cubin)
+        /// </summary>   
+        public byte[] Binary { get; internal set; }
 #endif
         /// <summary>
         /// Returns a <see cref="System.String"/> that represents this instance.
@@ -101,6 +133,7 @@ namespace Cudafy
             TimeOut = 60000;
             _options = new List<CompilerOptions>();
             _PTXModules = new List<PTXModule>();
+            _BinaryModules = new List<BinaryModule>();
             Reset();
         }
 
@@ -162,6 +195,8 @@ namespace Cudafy
 
         private List<PTXModule> _PTXModules;
 
+        private List<BinaryModule> _BinaryModules;
+
         /// <summary>
         /// Gets the PTX modules.
         /// </summary>
@@ -170,12 +205,25 @@ namespace Cudafy
             get { return _PTXModules.ToArray(); }
         }
 
+        public BinaryModule[] BinaryModules
+        {
+            get { return _BinaryModules.ToArray(); }
+        }
+
         /// <summary>
         /// Removes the PTX modules.
         /// </summary>
         public void RemovePTXModules()
         {
             _PTXModules.Clear();
+        }
+
+        /// <summary>
+        /// Removes the binary modules.
+        /// </summary>
+        public void RemoveBinaryModules()
+        {
+            _BinaryModules.Clear();
         }
 
         /// <summary>
@@ -195,6 +243,14 @@ namespace Cudafy
         }
 
         /// <summary>
+        /// Gets the first PTX suitable for the current platform.
+        /// </summary>
+        public BinaryModule Binary
+        {
+            get { return _BinaryModules.Where(b => b.Platform == CurrentPlatform).FirstOrDefault(); }
+        }
+
+        /// <summary>
         /// Gets a value indicating whether this instance has suitable PTX.
         /// </summary>
         /// <value>
@@ -203,6 +259,17 @@ namespace Cudafy
         public bool HasSuitablePTX
         {
             get { return _PTXModules.Count(ptx => ptx.Platform == CurrentPlatform) > 0; }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance has suitable binary.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if this instance has binary; otherwise, <c>false</c>.
+        /// </value>
+        public bool HasSuitableBinary
+        {
+            get { return _BinaryModules.Count(b => b.Platform == CurrentPlatform) > 0; }
         }
 
         /// <summary>
@@ -217,6 +284,17 @@ namespace Cudafy
         }
 
         /// <summary>
+        /// Gets a value indicating whether this instance has one or more binary modules.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if this instance has a binary module; otherwise, <c>false</c>.
+        /// </value>
+        public bool HasBinary
+        {
+            get { return _BinaryModules.Count > 0; }
+        }
+
+        /// <summary>
         /// Determines whether module has PTX for the specified platform.
         /// </summary>
         /// <param name="platform">The platform.</param>
@@ -228,6 +306,31 @@ namespace Cudafy
             return _PTXModules.Count(ptx => ptx.Platform == platform) > 0;
         }
 
+        /// <summary>
+        /// Determines whether module has binary for the specified platform.
+        /// </summary>
+        /// <param name="platform">The platform.</param>
+        /// <returns>
+        ///   <c>true</c> if module has binary for the specified platform; otherwise, <c>false</c>.
+        /// </returns>
+        public bool HasBinaryForPlatform(ePlatform platform)
+        {
+            return _BinaryModules.Count(b => b.Platform == platform) > 0;
+        }
+
+        /// <summary>
+        /// Determines whether module has binary for the specified platform and architecture.
+        /// </summary>
+        /// <param name="platform">The platform.</param>
+        /// <param name="arch">The architecture.</param>
+        /// <returns>
+        ///   <c>true</c> if module has binary for the specified platform and an architecture equal or less than that specified; otherwise, <c>false</c>.
+        /// </returns>
+        public bool HasBinaryForPlatform(ePlatform platform, eArchitecture arch)
+        {
+            return _BinaryModules.Count(b => b.Platform == platform && b.Architecture <= arch) > 0;
+        }
+
         internal void StorePTXFile(ePlatform platform, string path)
         {
             using (StreamReader sr = File.OpenText(path))
@@ -235,6 +338,15 @@ namespace Cudafy
                 string ptx = sr.ReadToEnd();
                 _PTXModules.Add(new PTXModule() { Platform = platform, PTX = ptx });
             }
+        }
+
+        internal void StoreBinaryFile(ePlatform platform, eArchitecture arch, string path)
+        {
+            if(!File.Exists(path))
+                path = "a_dlink.cubin";            
+            byte[] bytes = File.ReadAllBytes(path);
+
+            _BinaryModules.Add(new BinaryModule() { Platform = platform, Binary = bytes, Architecture = arch });
         }
 
         /// <summary>
@@ -299,8 +411,11 @@ namespace Cudafy
         private const string csCUDASOURCECODE = "CudaSourceCode";
         private const string csHASCUDASOURCECODE = "HasCudaSourceCode";
         private const string csPTX = "PTX";
+        private const string csBINARY = "Binary";
         private const string csPTXMODULE = "PTXMODULE";
+        private const string csBINARYMODULE = "BinaryModule";
         private const string csHASPTX = "HasPTX";
+        private const string csHASBINARY = "HasBinary";
         private const string csFUNCTIONS = "Functions";
         private const string csCONSTANTS = "Constants";
         private const string csCONSTANT = "Constant";
@@ -357,7 +472,7 @@ namespace Cudafy
             root.SetAttributeValue(csDEBUGINFO, GenerateDebug);
             
             XElement cudaSrc = new XElement(csCUDASOURCECODE, cudaSrcB64);
-            root.SetAttributeValue(csHASCUDASOURCECODE, XmlConvert.ToString(HasCudaSourceCode));
+            root.SetAttributeValue(csHASCUDASOURCECODE, XmlConvert.ToString(HasSourceCode));
             root.Add(cudaSrc);
             
             root.SetAttributeValue(csHASPTX, XmlConvert.ToString(_PTXModules.Count > 0));
@@ -369,6 +484,18 @@ namespace Cudafy
                     new XElement(csPTX, b64));
                 ptxXe.SetAttributeValue(csPLATFORM, ptxMod.Platform);
                 root.Add(ptxXe);
+            }
+
+            root.SetAttributeValue(csHASBINARY, XmlConvert.ToString(_BinaryModules.Count > 0));
+            foreach (var binMod in _BinaryModules)
+            {
+                byte[] ba = binMod.Binary;
+                string b64 = Convert.ToBase64String(ba);
+                XElement binXe = new XElement(csBINARYMODULE,
+                    new XElement(csBINARY, b64));
+                binXe.SetAttributeValue(csPLATFORM, binMod.Platform);
+                binXe.SetAttributeValue(csARCH, binMod.Architecture);
+                root.Add(binXe);
             }
           
             XElement funcs = new XElement(csFUNCTIONS);
@@ -668,6 +795,22 @@ namespace Cudafy
                 }
             }
 
+            // Binary
+            bool? hasBinary = root.TryGetAttributeBoolValue(csHASBINARY);
+            if (hasBinary == true)
+            {
+                foreach (XElement xe in root.Elements(csBINARYMODULE))
+                {
+                    string bin = xe.Element(csBINARY).Value;
+                    string platformStr = xe.GetAttributeValue(csPLATFORM);
+                    string archStr = xe.GetAttributeValue(csARCH);
+                    ePlatform platform = (ePlatform)Enum.Parse(typeof(ePlatform), platformStr);
+                    eArchitecture arch = (eArchitecture)Enum.Parse(typeof(eArchitecture), archStr);
+                    byte[] ba = Convert.FromBase64String(bin);
+                    km._BinaryModules.Add(new BinaryModule() { Binary = ba, Platform = platform, Architecture = arch });
+                }
+            }
+
             // Functions
             XElement funcs = root.Element(csFUNCTIONS);
             if (funcs != null)
@@ -834,27 +977,31 @@ namespace Cudafy
         /// </summary>
         /// <param name="mode">The mode.</param>
         /// <param name="deleteGeneratedCode">if set to <c>true</c> delete generated code on success.</param>
+        /// <param name="binary">Compile to binary if true.</param>
         /// <returns>The compile arguments.</returns>
         /// <exception cref="CudafyCompileException">No source code or compilation error.</exception>
-        public string Compile(eGPUCompiler mode, bool deleteGeneratedCode = false)
+        public string Compile(eGPUCompiler mode, bool deleteGeneratedCode = false, bool binary = false)
         {
             string ts = string.Empty;
             if ((mode & eGPUCompiler.CudaNvcc) == eGPUCompiler.CudaNvcc)
             {
                 CompilerOutput = string.Empty;
                 _PTXModules.Clear();
+                _BinaryModules.Clear();
                 if (!HasSourceCode)
                     throw new CudafyCompileException(CudafyCompileException.csNO_X_SOURCE_CODE_PRESENT_IN_CUDAFY_MODULE, "CUDA");
 
                 if (CompilerOptionsList.Count == 0)
                 {
-                    CompilerOptionsList.Add(IntPtr.Size == 4 ? NvccCompilerOptions.Createx86() : NvccCompilerOptions.Createx64());
+                    var opt = IntPtr.Size == 4 ? NvccCompilerOptions.Createx86() : NvccCompilerOptions.Createx64();
+                    opt.GenerateBinary = binary;
+                    CompilerOptionsList.Add(opt);
                 }
                 
                 // Write to temp file
                 string tempFileName = "CUDAFYSOURCETEMP.tmp";
                 string cuFileName = WorkingDirectory + Path.DirectorySeparatorChar + tempFileName.Replace(".tmp", ".cu");
-                string ptxFileName = WorkingDirectory + Path.DirectorySeparatorChar + tempFileName.Replace(".tmp", ".ptx");
+                string ptxFileName = WorkingDirectory + Path.DirectorySeparatorChar + tempFileName.Replace(".tmp", binary ? ".cubin" : ".ptx");
                 File.WriteAllText(cuFileName, SourceCode, Encoding.Default);
 
                 foreach (CompilerOptions co in CompilerOptionsList)
@@ -916,7 +1063,10 @@ namespace Cudafy
                     }
 
                     // Load ptx file
-                    this.StorePTXFile(co.Platform, ptxFileName);
+                    if (!binary)
+                        this.StorePTXFile(co.Platform, ptxFileName);
+                    else
+                        this.StoreBinaryFile(co.Platform, co.Architecture, ptxFileName);
 #if DEBUG
 
 #else

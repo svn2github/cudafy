@@ -80,13 +80,15 @@ namespace Cudafy.Compilers
 //#endif
             if (Sources.Count() == 0)
                 throw new CudafyCompileException(CudafyCompileException.csNO_SOURCES);
+            if(GenerateBinary)
+                command += " -c ";
             foreach (string src in Sources)
                 command += string.Format(@" ""{0}"" ", src);
 
-            if(Outputs.Count() == 1)
+           if(!GenerateBinary && Outputs.Count() == 1)
                 command += string.Format(@" -o ""{0}"" ", Outputs.Take(1).FirstOrDefault());
-
-            command += " --ptx";
+           if (!GenerateBinary)
+               command += " -ptx";
             return command;
         }
 
@@ -132,6 +134,8 @@ namespace Cudafy.Compilers
             //else
             //    throw new NotImplementedException(arch.ToString());
             co.AddOption("-arch=" + arch.ToString());
+            co.Architecture = arch;
+            
         }
 
         /// <summary>

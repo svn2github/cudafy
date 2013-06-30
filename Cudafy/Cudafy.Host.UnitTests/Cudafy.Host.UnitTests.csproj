@@ -125,6 +125,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BasicFunctionTests.cs" />
+    <Compile Include="Compute35Features.cs" />
     <Compile Include="CopyTests1D.cs" />
     <Compile Include="CURANDTests.cs" />
     <Compile Include="GMathUnitTests.cs" />

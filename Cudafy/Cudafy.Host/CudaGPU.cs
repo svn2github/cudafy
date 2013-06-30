@@ -526,6 +526,7 @@ namespace Cudafy.Host
                 case CUResult.ErrorNotFound:
                     break;
                 case CUResult.ErrorNotInitialized:
+                    addInfo = "Ensure that suitable GPU and CUDA is correctly installed. If newly installed then reboot may be necessary.";
                     break;
                 case CUResult.ErrorNotMapped:
                     break;
@@ -1897,15 +1898,17 @@ namespace Cudafy.Host
             else
                 CheckForDuplicateMembers(module);
 
-            if(!module.HasPTX)
-                throw new CudafyHostException(CudafyHostException.csNO_X_PRESENT_IN_CUDAFY_MODULE, "PTX");
+            if(!module.HasPTX && !module.HasBinary)
+                throw new CudafyHostException(CudafyHostException.csNO_X_PRESENT_IN_CUDAFY_MODULE, "PTX or binary");
             PTXModule ptxModule = module.PTX;
-            if (ptxModule == null)
-                throw new CudafyHostException(CudafyHostException.csNO_SUITABLE_X_PRESENT_IN_CUDAFY_MODULE, "PTX");
+            BinaryModule binModule = module.Binary;
+            if (ptxModule == null && binModule == null)
+                throw new CudafyHostException(CudafyHostException.csNO_SUITABLE_X_PRESENT_IN_CUDAFY_MODULE, "PTX or binary");
 
             try
             {
-                CUmodule cumod = _cuda.LoadModule(Encoding.ASCII.GetBytes(ptxModule.PTX));//path);// + ".ptx"
+                byte[] bytes = binModule == null ? Encoding.ASCII.GetBytes(ptxModule.PTX) : binModule.Binary;
+                CUmodule cumod = _cuda.LoadModule(bytes);
                 _module = module;
                 _module.Tag = cumod;
             }

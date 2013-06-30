@@ -20,12 +20,17 @@ namespace CudafyByExample
         [STAThread]
         static void Main(string[] args)
         {
-            CudafyModes.Target = eGPUType.OpenCL;
+            CudafyModes.Target = eGPUType.Cuda;
             CudafyModes.DeviceId = 0;
-            CudafyTranslator.Language = eLanguage.OpenCL;
+            CudafyTranslator.Language = eLanguage.Cuda;
             try
             {
-                int deviceCount = CudafyHost.GetDeviceCount(eGPUType.OpenCL);
+                int deviceCount = CudafyHost.GetDeviceCount(CudafyModes.Target);
+                if (deviceCount == 0)
+                {
+                    Console.WriteLine("No suitable {0} devices found.", CudafyModes.Target);
+                    goto theEnd;
+                }
                 GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
                 Console.WriteLine("Running examples using {0}", gpu.GetDeviceProperties().Name);
 
@@ -99,6 +104,7 @@ namespace CudafyByExample
             {
                 Console.WriteLine(ex);
             }
+theEnd:
             Console.ReadKey();
         }
 

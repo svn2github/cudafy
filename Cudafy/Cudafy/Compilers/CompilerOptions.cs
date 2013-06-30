@@ -50,6 +50,7 @@ namespace Cudafy.Compilers
             GenerateDebugInfo = false;
             Version = compilerVersion;
             Platform = platform;
+            GenerateBinary = false;
         }
 
         /// <summary>
@@ -77,6 +78,11 @@ namespace Cudafy.Compilers
         /// Gets the platform.
         /// </summary>
         public ePlatform Platform { get; protected set; }
+
+        /// <summary>
+        /// Gets the architecture.
+        /// </summary>
+        public eArchitecture Architecture { get; internal set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether to generate debug info.
@@ -314,5 +320,10 @@ namespace Cudafy.Compilers
         /// The time out in milliseconds.
         /// </value>
         public int TimeOut { get; set; }
+
+        /// <summary>
+        /// Gets a flag indicating whether the compiler generates binary.
+        /// </summary>
+        public bool GenerateBinary { get; internal set; }
     }
 }
