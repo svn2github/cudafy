@@ -53,15 +53,31 @@ namespace Cudafy
         All = 255
     };
 
-    /// <summary>
-    /// Internal use.
-    /// </summary>
-    public class PTXModule
+    public abstract class ProgramModuleBase
     {
         /// <summary>
         /// Gets the platform.
         /// </summary>
         public ePlatform Platform { get; internal set; }
+        /// <summary>
+        /// Gets the architecture.
+        /// </summary>
+        public eArchitecture Architecture { get; internal set; }
+
+        public string SourceCodeID { get; internal set; }
+    }
+
+    /// <summary>
+    /// Internal use.
+    /// </summary>
+    public class PTXModule : ProgramModuleBase
+    {
+        
+        
+        ///// <summary>
+        ///// Gets the platform.
+        ///// </summary>
+        //public ePlatform Platform { get; internal set; }
 #if DEBUG
         public string PTX { get; set; }
 #else
@@ -86,14 +102,9 @@ namespace Cudafy
     /// <summary>
     /// Internal use.
     /// </summary>
-    public class BinaryModule
+    public class BinaryModule : ProgramModuleBase
     {
-        /// <summary>
-        /// Gets the platform.
-        /// </summary>
-        public ePlatform Platform { get; internal set; }
 
-        public eArchitecture Architecture { get; internal set; }
 #if DEBUG
         public byte[] Binary { get; set; }
 #else
@@ -110,8 +121,34 @@ namespace Cudafy
         /// </returns>
         public override string ToString()
         {
-            return Platform.ToString();
+            return "binary-"+Platform.ToString() + "-"+Architecture.ToString();
         }
+    }
+
+    public class SourceCodeFile
+    {
+        public SourceCodeFile()
+        {
+            ID = Guid.NewGuid().ToString();
+            Source = "";
+            Language = eLanguage.Cuda;
+            Architecture = eArchitecture.Unknown;
+        }
+
+        public SourceCodeFile(string source, eLanguage language, eArchitecture arch) : this()
+        {
+            Source = source;
+            Language = language;
+            Architecture = arch;
+        }
+        
+        public string ID { get; internal set; }
+
+        public string Source { get; internal set; }
+
+        public eLanguage Language { get; internal set; }
+
+        public eArchitecture Architecture { get; internal set; }
     }
 
 
@@ -126,7 +163,7 @@ namespace Cudafy
         public CudafyModule()
         {
             _is64bit = IntPtr.Size == 8;
-            SourceCode = string.Empty;
+            //SourceCode = string.Empty;
             Name = "cudafymodule";
             CompilerOutput = string.Empty;
             CompilerArguments = string.Empty;
@@ -134,6 +171,7 @@ namespace Cudafy
             _options = new List<CompilerOptions>();
             _PTXModules = new List<PTXModule>();
             _BinaryModules = new List<BinaryModule>();
+            _sourceCodes = new List<SourceCodeFile>();
             Reset();
         }
 
@@ -196,6 +234,8 @@ namespace Cudafy
         private List<PTXModule> _PTXModules;
 
         private List<BinaryModule> _BinaryModules;
+
+        private List<SourceCodeFile> _sourceCodes;
 
         /// <summary>
         /// Gets the PTX modules.
@@ -261,16 +301,27 @@ namespace Cudafy
             get { return _PTXModules.Count(ptx => ptx.Platform == CurrentPlatform) > 0; }
         }
 
-        /// <summary>
-        /// Gets a value indicating whether this instance has suitable binary.
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if this instance has binary; otherwise, <c>false</c>.
-        /// </value>
-        public bool HasSuitableBinary
-        {
-            get { return _BinaryModules.Count(b => b.Platform == CurrentPlatform) > 0; }
-        }
+        ///// <summary>
+        ///// Gets a value indicating whether this instance has suitable binary.
+        ///// </summary>
+        ///// <value>
+        /////   <c>true</c> if this instance has binary; otherwise, <c>false</c>.
+        ///// </value>
+        //public bool HasSuitableBinary
+        //{
+        //    get { return _BinaryModules.Count(b => b.Platform == CurrentPlatform) > 0; }
+        //}
+
+        ///// <summary>
+        ///// Gets a value indicating whether this instance has suitable binary or PTX.
+        ///// </summary>
+        ///// <value>
+        /////   <c>true</c> if this instance has binary; otherwise, <c>false</c>.
+        ///// </value>
+        //public bool HasSuitableProgramFile
+        //{
+        //    get { return HasSuitableBinary || HasSuitablePTX; }
+        //}
 
         /// <summary>
         /// Gets a value indicating whether this instance has one or more PTX.
@@ -281,6 +332,19 @@ namespace Cudafy
         public bool HasPTX
         {
             get { return _PTXModules.Count > 0; }
+        }
+
+        /// <summary>
+        /// Determines whether module has binary for the specified platform and architecture.
+        /// </summary>
+        /// <param name="platform">The platform.</param>
+        /// <param name="arch">The architecture.</param>
+        /// <returns>
+        ///   <c>true</c> if module has binary for the specified platform and an architecture equal or less than that specified; otherwise, <c>false</c>.
+        /// </returns>
+        public bool HasPTXForPlatform(ePlatform platform, eArchitecture arch)
+        {
+            return _PTXModules.Count(b => b.Platform == platform && b.Architecture <= arch) > 0;
         }
 
         /// <summary>
@@ -307,7 +371,57 @@ namespace Cudafy
         }
 
         /// <summary>
-        /// Determines whether module has binary for the specified platform.
+        /// Determines whether module has PTX or binary for the specified platform.
+        /// </summary>
+        /// <param name="platform">The platform.</param>
+        /// <param name="arch">The architecture.</param>
+        /// <returns>
+        ///   <c>true</c> if module has module for the specified values; otherwise, <c>false</c>.
+        /// </returns>
+        public bool HasProgramModuleForPlatform(ePlatform platform, eArchitecture arch)
+        {
+            return HasPTXForPlatform(platform, arch) || HasBinaryForPlatform(platform, arch);
+        }
+
+        /// <summary>
+        /// Determines whether module has PTX or binary for the specified platform.
+        /// </summary>
+        /// <param name="platform">The platform.</param>
+        /// <returns>
+        ///   <c>true</c> if module has module for the specified value; otherwise, <c>false</c>.
+        /// </returns>
+        public bool HasProgramModuleForPlatform(ePlatform platform)
+        {
+            return HasPTXForPlatform(platform) || HasBinaryForPlatform(platform);
+        }
+
+        ///// <summary>
+        ///// Determines whether module has binary for the specified platform.
+        ///// </summary>
+        ///// <param name="platform">The platform.</param>
+        ///// <returns>
+        /////   <c>true</c> if module has binary for the specified platform; otherwise, <c>false</c>.
+        ///// </returns>
+        //public bool HasBinaryForPlatform(ePlatform platform)
+        //{
+        //    return _BinaryModules.Count(b => b.Platform == platform) > 0;
+        //}
+
+        /// <summary>
+        /// Determines whether module has binary for the specified platform and architecture.
+        /// </summary>
+        /// <param name="platform">The platform.</param>
+        /// <param name="arch">The architecture.</param>
+        /// <returns>
+        ///   <c>true</c> if module has binary for the specified platform and architecture; otherwise, <c>false</c>.
+        /// </returns>
+        public bool HasBinaryForPlatform(ePlatform platform, eArchitecture arch)
+        {
+            return _BinaryModules.Count(b => b.Platform == platform && b.Architecture == arch) > 0;
+        }
+
+        /// <summary>
+        /// Determines whether module has binary for the specified platform and architecture.
         /// </summary>
         /// <param name="platform">The platform.</param>
         /// <returns>
@@ -318,35 +432,22 @@ namespace Cudafy
             return _BinaryModules.Count(b => b.Platform == platform) > 0;
         }
 
-        /// <summary>
-        /// Determines whether module has binary for the specified platform and architecture.
-        /// </summary>
-        /// <param name="platform">The platform.</param>
-        /// <param name="arch">The architecture.</param>
-        /// <returns>
-        ///   <c>true</c> if module has binary for the specified platform and an architecture equal or less than that specified; otherwise, <c>false</c>.
-        /// </returns>
-        public bool HasBinaryForPlatform(ePlatform platform, eArchitecture arch)
-        {
-            return _BinaryModules.Count(b => b.Platform == platform && b.Architecture <= arch) > 0;
-        }
-
-        internal void StorePTXFile(ePlatform platform, string path)
+        internal void StorePTXFile(string sourceCodeFileId, ePlatform platform, eArchitecture arch, string path)
         {
             using (StreamReader sr = File.OpenText(path))
             {
                 string ptx = sr.ReadToEnd();
-                _PTXModules.Add(new PTXModule() { Platform = platform, PTX = ptx });
+                _PTXModules.Add(new PTXModule() { Platform = platform, PTX = ptx, Architecture = arch, SourceCodeID = sourceCodeFileId });
             }
         }
 
-        internal void StoreBinaryFile(ePlatform platform, eArchitecture arch, string path)
+        internal void StoreBinaryFile(string sourceCodeFileId, ePlatform platform, eArchitecture arch, string path)
         {
             if(!File.Exists(path))
                 path = "a_dlink.cubin";            
             byte[] bytes = File.ReadAllBytes(path);
 
-            _BinaryModules.Add(new BinaryModule() { Platform = platform, Binary = bytes, Architecture = arch });
+            _BinaryModules.Add(new BinaryModule() { Platform = platform, Binary = bytes, Architecture = arch, SourceCodeID = sourceCodeFileId });
         }
 
         /// <summary>
@@ -368,7 +469,26 @@ namespace Cudafy
         /// <value>
         /// The source code.
         /// </value>
-        public string SourceCode { get; set; }
+        public string SourceCode 
+        {
+            get { var sc = _sourceCodes.FirstOrDefault(); if (sc == null) return null; return sc.Source; }
+            set 
+            { 
+                _sourceCodes.Clear(); 
+                _sourceCodes.Add(new SourceCodeFile() 
+                { 
+                    ID = Guid.NewGuid().ToString(), Language = eLanguage.Cuda, Source = value, Architecture = eArchitecture.Unknown 
+                }); 
+            }
+        }
+
+        public void AddSourceCodeFile(SourceCodeFile scf)
+        {
+            if (_sourceCodes.Any(s => s.ID == scf.ID))
+                throw new ArgumentException("Module already contains a source code with this ID.");
+            _sourceCodes.Add(scf);
+        }
+
 
         /// <summary>
         /// Gets a value indicating whether this instance has cuda source code.
@@ -390,7 +510,7 @@ namespace Cudafy
         /// </value>
         public bool HasSourceCode
         {
-            get { return !string.IsNullOrEmpty(SourceCode); }
+            get { return !string.IsNullOrEmpty(SourceCode)  ||  _sourceCodes.Count == 0; }
         }
 
         /// <summary>
@@ -409,11 +529,16 @@ namespace Cudafy
         private const string csCUDAFYMODULE = "CudafyModule";
         private const string csVERSION = "Version";
         private const string csCUDASOURCECODE = "CudaSourceCode";
+        private const string csSOURCECODES = "SourceCodes";
+        private const string csSOURCECODEFILE = "SourceCodeFile";
+        private const string csID = "ID";
+        private const string csSOURCECODE = "SourceCode";
+        private const string csLANGUAGE = "Language";
         private const string csHASCUDASOURCECODE = "HasCudaSourceCode";
         private const string csPTX = "PTX";
         private const string csBINARY = "Binary";
         private const string csPTXMODULE = "PTXMODULE";
-        private const string csBINARYMODULE = "BinaryModule";
+        private const string csBINARYMODULES = "BinaryModules";
         private const string csHASPTX = "HasPTX";
         private const string csHASBINARY = "HasBinary";
         private const string csFUNCTIONS = "Functions";
@@ -461,6 +586,20 @@ namespace Cudafy
         /// <param name="filename">The filename.</param>
         public void Serialize(string filename)
         {
+            if (!Path.HasExtension(filename))
+                filename += csFILEEXT;
+            using (FileStream fs = new FileStream(filename, FileMode.Create))
+            {
+                Serialize(fs);
+            }
+        }
+
+        /// <summary>
+        /// Serializes the module to the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream to write to.</param>
+        public void Serialize(Stream stream)
+        {
             XDocument doc = new XDocument(new XDeclaration("1.0", "utf-8", null));
 
             byte[] cudaSrcBa = UnicodeEncoding.ASCII.GetBytes(SourceCode);
@@ -471,8 +610,8 @@ namespace Cudafy
             root.SetAttributeValue(csNAME, Name == null ? "cudafymodule" : Name);
             root.SetAttributeValue(csDEBUGINFO, GenerateDebug);
             
-            XElement cudaSrc = new XElement(csCUDASOURCECODE, cudaSrcB64);
-            root.SetAttributeValue(csHASCUDASOURCECODE, XmlConvert.ToString(HasSourceCode));
+            XElement cudaSrc = new XElement(csCUDASOURCECODE, string.Empty);//cudaSrcB64);
+            root.SetAttributeValue(csHASCUDASOURCECODE, XmlConvert.ToString(false));//XmlConvert.ToString(HasSourceCode));
             root.Add(cudaSrc);
             
             root.SetAttributeValue(csHASPTX, XmlConvert.ToString(_PTXModules.Count > 0));
@@ -483,6 +622,8 @@ namespace Cudafy
                 XElement ptxXe = new XElement(csPTXMODULE, 
                     new XElement(csPTX, b64));
                 ptxXe.SetAttributeValue(csPLATFORM, ptxMod.Platform);
+                ptxXe.SetAttributeValue(csARCH, ptxMod.Architecture);
+                ptxXe.SetAttributeValue(csSOURCECODEFILE, ptxMod.SourceCodeID);
                 root.Add(ptxXe);
             }
 
@@ -491,18 +632,33 @@ namespace Cudafy
             {
                 byte[] ba = binMod.Binary;
                 string b64 = Convert.ToBase64String(ba);
-                XElement binXe = new XElement(csBINARYMODULE,
+                XElement binXe = new XElement(csBINARYMODULES,
                     new XElement(csBINARY, b64));
                 binXe.SetAttributeValue(csPLATFORM, binMod.Platform);
                 binXe.SetAttributeValue(csARCH, binMod.Architecture);
+                binXe.SetAttributeValue(csSOURCECODEFILE, binMod.SourceCodeID);
                 root.Add(binXe);
             }
+
+            XElement xe = new XElement(csSOURCECODES);
+            foreach (var scf in _sourceCodes)
+            {
+                byte[] ba = UnicodeEncoding.ASCII.GetBytes(scf.Source);
+                string b64 = Convert.ToBase64String(ba);
+                XElement scfxe = new XElement(csSOURCECODEFILE, 
+                    new XElement(csSOURCECODE, b64));
+                scfxe.SetAttributeValue(csID, scf.ID);
+                scfxe.SetAttributeValue(csLANGUAGE, scf.Language);
+                scfxe.SetAttributeValue(csARCH, scf.Architecture);
+                xe.Add(scfxe);
+            }
+            root.Add(xe);
           
             XElement funcs = new XElement(csFUNCTIONS);
             root.Add(funcs);
             foreach (var kvp in Functions)
             {
-                XElement xe = kvp.Value.GetXElement();
+                xe = kvp.Value.GetXElement();
                 funcs.Add(xe);
             }
 
@@ -510,7 +666,7 @@ namespace Cudafy
             root.Add(constants);
             foreach (var kvp in Constants)
             {
-                XElement xe = kvp.Value.GetXElement();
+                xe = kvp.Value.GetXElement();
                 constants.Add(xe);
             }
 
@@ -518,14 +674,15 @@ namespace Cudafy
             root.Add(types);
             foreach (var kvp in Types)
             {
-                XElement xe = kvp.Value.GetXElement();
+                xe = kvp.Value.GetXElement();
                 types.Add(xe);
             }
 
             doc.Add(root);
-            if (!Path.HasExtension(filename))
-                filename += csFILEEXT;
-            doc.Save(filename);
+            //if (!Path.HasExtension(filename))
+            //    filename += csFILEEXT;
+            //doc.Save(filename);
+            doc.SaveStream(stream);
         }
 
         /// <summary>
@@ -761,11 +918,23 @@ namespace Cudafy
 
             // Cuda Source
             bool? hasCudaSrc = root.TryGetAttributeBoolValue(csHASCUDASOURCECODE);
-            if (hasCudaSrc == true)
+            XElement scse = root.Element(csSOURCECODES);
+            if (hasCudaSrc == true && scse == null) // Legacy support
             {
-                string src = root.Element(csCUDASOURCECODE).Value;
-                byte[] ba = Convert.FromBase64String(src);
-                km.SourceCode = UnicodeEncoding.ASCII.GetString(ba);
+                km.SourceCode = root.TryGetElementBase64(csCUDASOURCECODE); 
+            }
+            // else if sourcecodes node
+            else if (scse != null)
+            {
+                foreach (var sce in scse.Elements(csSOURCECODEFILE))
+                {
+                    SourceCodeFile scf = new SourceCodeFile();
+                    scf.ID = sce.TryGetAttributeValue(csID);
+                    scf.Language = sce.TryGetAttributeEnum<eLanguage>(csLANGUAGE);
+                    scf.Source = UnicodeEncoding.ASCII.GetString(Convert.FromBase64String(sce.Value));
+                    scf.Architecture = sce.TryGetAttributeEnum<eArchitecture>(csARCH);
+                    km._sourceCodes.Add(scf);              
+                }
             }
             else
             {
@@ -781,7 +950,7 @@ namespace Cudafy
             {
                 string ptx = root.Element(csPTX).Value;
                 byte[] ba = Convert.FromBase64String(ptx);
-                km._PTXModules.Add(new PTXModule() { PTX = UnicodeEncoding.ASCII.GetString(ba), Platform = km.CurrentPlatform });
+                km._PTXModules.Add(new PTXModule() { PTX = UnicodeEncoding.ASCII.GetString(ba), Platform = km.CurrentPlatform, Architecture = eArchitecture.Unknown });
             }
             else if (hasPtx == true)
             {
@@ -790,8 +959,13 @@ namespace Cudafy
                     string ptx = xe.Element(csPTX).Value;
                     string platformStr = xe.GetAttributeValue(csPLATFORM);
                     ePlatform platform = (ePlatform)Enum.Parse(typeof(ePlatform), platformStr);
+                    string archStr = xe.TryGetAttributeValue(csARCH);
+                    eArchitecture arch = eArchitecture.Unknown;
+                    string sourcecodeId = xe.TryGetAttributeValue(csSOURCECODEFILE);
+                    if (archStr != null)
+                        arch = (eArchitecture)Enum.Parse(typeof(eArchitecture), archStr);
                     byte[] ba = Convert.FromBase64String(ptx);
-                    km._PTXModules.Add(new PTXModule() { PTX = UnicodeEncoding.ASCII.GetString(ba), Platform = platform });
+                    km._PTXModules.Add(new PTXModule() { PTX = UnicodeEncoding.ASCII.GetString(ba), Platform = platform, Architecture = arch, SourceCodeID = sourcecodeId });
                 }
             }
 
@@ -799,15 +973,16 @@ namespace Cudafy
             bool? hasBinary = root.TryGetAttributeBoolValue(csHASBINARY);
             if (hasBinary == true)
             {
-                foreach (XElement xe in root.Elements(csBINARYMODULE))
+                foreach (XElement xe in root.Elements(csBINARYMODULES))
                 {
                     string bin = xe.Element(csBINARY).Value;
                     string platformStr = xe.GetAttributeValue(csPLATFORM);
                     string archStr = xe.GetAttributeValue(csARCH);
                     ePlatform platform = (ePlatform)Enum.Parse(typeof(ePlatform), platformStr);
                     eArchitecture arch = (eArchitecture)Enum.Parse(typeof(eArchitecture), archStr);
+                    string sourcecodeId = xe.TryGetAttributeValue(csSOURCECODEFILE);
                     byte[] ba = Convert.FromBase64String(bin);
-                    km._BinaryModules.Add(new BinaryModule() { Binary = ba, Platform = platform, Architecture = arch });
+                    km._BinaryModules.Add(new BinaryModule() { Binary = ba, Platform = platform, Architecture = arch, SourceCodeID = sourcecodeId });
                 }
             }
 
@@ -865,14 +1040,26 @@ namespace Cudafy
                 kvp.Value.VerifyChecksums();       
         }
 
-
         /// <summary>
         /// Verifies the checksums of all functions, constants and types.
         /// </summary>
         /// <returns>True if checksums match and total number of members is greater than one, else false.</returns>
         public bool TryVerifyChecksums()
         {
-            if (GetTotalMembers() == 0 || !HasSuitablePTX)
+            return TryVerifyChecksums(CurrentPlatform, eArchitecture.Unknown);
+        }
+
+        /// <summary>
+        /// Verifies the checksums of all functions, constants and types.
+        /// </summary>
+        /// <param name="platform">Platform.</param>
+        /// <param name="arch">Architecture.</param>
+        /// <returns>True if checksums match and total number of members is greater than one, else false.</returns>
+        public bool TryVerifyChecksums(ePlatform platform, eArchitecture arch)
+        {
+            if (GetTotalMembers() == 0) 
+                return false;
+            if (arch != eArchitecture.Unknown && !HasProgramModuleForPlatform(platform, arch))
                 return false;
             foreach (var kvp in Functions)
                 if (kvp.Value.TryVerifyChecksums() == false)
@@ -980,7 +1167,7 @@ namespace Cudafy
         /// <param name="binary">Compile to binary if true.</param>
         /// <returns>The compile arguments.</returns>
         /// <exception cref="CudafyCompileException">No source code or compilation error.</exception>
-        public string Compile(eGPUCompiler mode, bool deleteGeneratedCode = false, bool binary = false)
+        public string Compile(eGPUCompiler mode, bool deleteGeneratedCode = false, eCudafyCompileMode compileMode = eCudafyCompileMode.Default)
         {
             string ts = string.Empty;
             if ((mode & eGPUCompiler.CudaNvcc) == eGPUCompiler.CudaNvcc)
@@ -994,10 +1181,10 @@ namespace Cudafy
                 if (CompilerOptionsList.Count == 0)
                 {
                     var opt = IntPtr.Size == 4 ? NvccCompilerOptions.Createx86() : NvccCompilerOptions.Createx64();
-                    opt.GenerateBinary = binary;
+                    opt.CompileMode = compileMode;
                     CompilerOptionsList.Add(opt);
                 }
-                
+                bool binary = (compileMode & eCudafyCompileMode.Binary) == eCudafyCompileMode.Binary;
                 // Write to temp file
                 string tempFileName = "CUDAFYSOURCETEMP.tmp";
                 string cuFileName = WorkingDirectory + Path.DirectorySeparatorChar + tempFileName.Replace(".tmp", ".cu");
@@ -1063,10 +1250,10 @@ namespace Cudafy
                     }
 
                     // Load ptx file
-                    if (!binary)
-                        this.StorePTXFile(co.Platform, ptxFileName);
+                    if ((compileMode & eCudafyCompileMode.Binary) == eCudafyCompileMode.Binary)
+                        this.StoreBinaryFile("na", co.Platform, co.Architecture, ptxFileName);                        
                     else
-                        this.StoreBinaryFile(co.Platform, co.Architecture, ptxFileName);
+                        this.StorePTXFile("na", co.Platform, co.Architecture, ptxFileName);
 #if DEBUG
 
 #else
@@ -1076,6 +1263,116 @@ namespace Cudafy
                 }
             }
             return CompilerArguments;
+        }
+
+        private eLanguage GetLanguageFromArchitecture(eArchitecture arch)
+        {
+            return arch == eArchitecture.OpenCL ? eLanguage.OpenCL : eLanguage.Cuda;
+        }
+
+        public SourceCodeFile GetSourceCodeFile(eArchitecture arch = eArchitecture.Unknown)
+        {
+            eLanguage language = GetLanguageFromArchitecture(arch);
+            var file = _sourceCodes.Where(scf => scf.Architecture <= arch && scf.Language == language).OrderByDescending(scf => scf.Architecture).FirstOrDefault();
+            return file;
+        }
+
+        public void Compile(CompileProperties p)
+        {
+            Compile(new[] { p });
+        }
+
+        public void Compile(CompileProperties[] props)
+        {
+            string ts = string.Empty;
+            CompilerOutput = string.Empty;
+            _PTXModules.Clear();
+            _BinaryModules.Clear();
+
+            foreach (CompileProperties p in props)
+            {
+                if ((p.CompileMode & eCudafyCompileMode.TranslateOnly) != eCudafyCompileMode.TranslateOnly)
+                {
+                    bool binary = (p.CompileMode & eCudafyCompileMode.Binary) == eCudafyCompileMode.Binary;
+                    
+                    // Write to temp file
+                    string cuFileName = p.WorkingDirectory + Path.DirectorySeparatorChar + p.InputFile;
+                    SourceCodeFile srcCodeFile = GetSourceCodeFile(p.Architecture);
+                    if (srcCodeFile == null)
+                        throw new CudafyCompileException(CudafyCompileException.csNO_X_SOURCE_CODE_PRESENT_IN_CUDAFY_MODULE_FOR_X,
+                            GetLanguageFromArchitecture(p.Architecture), p.Architecture);
+                    File.WriteAllText(cuFileName, srcCodeFile.Source, Encoding.Default);
+                    var originalPlatformSetting = p.Platform;
+                    var platforms = new List<ePlatform>();
+                    if (p.Platform == ePlatform.All)
+                        platforms.AddRange(new[] { ePlatform.x64, ePlatform.x86 });
+                    else if (p.Platform == ePlatform.Auto)
+                        platforms.Add(CurrentPlatform);
+                    else
+                        platforms.Add(p.Platform);
+                    foreach (ePlatform platform in platforms)
+                    {
+                        p.Platform = platform;
+
+                        // Call nvcc
+                        Process process = new Process();
+                        process.StartInfo.UseShellExecute = false;
+                        process.StartInfo.RedirectStandardOutput = true;
+                        process.StartInfo.RedirectStandardError = true;
+                        process.StartInfo.CreateNoWindow = SuppressWindow;//WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                        process.StartInfo.FileName = string.Format(@"""{0}""", p.CompilerPath);
+                        process.StartInfo.Arguments = p.GetCommandString();
+                        p.Platform = originalPlatformSetting;
+                        CompilerArguments = process.StartInfo.Arguments;
+                        process.OutputDataReceived += new DataReceivedEventHandler(process_OutputDataReceived);
+                        process.ErrorDataReceived += new DataReceivedEventHandler(process_ErrorDataReceived);
+                        Debug.WriteLine(process.StartInfo.FileName);
+                        Debug.WriteLine(CompilerArguments);
+                        standardError.Clear();
+                        standardOutput.Clear();
+                        process.Start();
+                        process.BeginOutputReadLine();
+                        process.BeginErrorReadLine();
+
+                        int waitCounter = 0;
+                        bool procTimedOut = false;
+                        int timeout = p.TimeOut;
+                        while (!process.HasExited && !(procTimedOut = ++waitCounter >= timeout)) // 1m timeout
+                            Thread.Sleep(10);
+                        if (procTimedOut)
+                            throw new CudafyCompileException(CudafyCompileException.csCOMPILATION_ERROR_X, "Process timed out");
+
+                        if (process.ExitCode != 0)
+                        {
+                            string s = standardError.ToString(); //process.StandardError.ReadToEnd();
+
+                            CompilerOutput += "\r\n" + s;
+                            if (s.Contains("Cannot find compiler 'cl.exe' in PATH"))
+                                CompilerOutput += "\r\nPlease add the Visual Studio VC bin directory to PATH in Environment Variables.";
+                            Debug.WriteLine(s);
+                            throw new CudafyCompileException(CudafyCompileException.csCOMPILATION_ERROR_X, s);
+                        }
+                        else
+                        {
+                            string s = standardError.ToString() + "\r\n" + standardOutput.ToString();
+                            CompilerOutput += "\r\n" + s;
+                            Debug.WriteLine(s);
+                        }
+
+                        // Load ptx file
+                        if (binary)
+                            this.StoreBinaryFile(srcCodeFile.ID, platform, p.Architecture, p.WorkingDirectory + Path.DirectorySeparatorChar + p.OutputFile);
+                        else
+                            this.StorePTXFile(srcCodeFile.ID, platform, p.Architecture, p.WorkingDirectory + Path.DirectorySeparatorChar + p.OutputFile);
+#if DEBUG
+
+#else
+                    if (deleteGeneratedCode)
+                        Delete(p.InputFile, p.OutputFile);
+#endif
+                    }
+                }
+            }
         }
 
         private static void Delete(string cuFileName, string ptxFileName)

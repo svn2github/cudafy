@@ -255,18 +255,7 @@ namespace Cudafy
             return block.Ballot(predicate, WarpId());
         }
 
-        /// <summary>
-        ///  NOTE Compute Capability 3.5 and later only. Dynamic parallelism. Call from a single thread.
-        ///  Not supported by emulator.
-        /// </summary>
-        /// <param name="gridSize"></param>
-        /// <param name="blockSize"></param>
-        /// <param name="functionName"></param>
-        /// <param name="args"></param>
-        public void Launch(dim3 gridSize, dim3 blockSize, string functionName, params object[] args)
-        {
-            throw new NotSupportedException("Emulation of dynamic parallelism.");
-        }
+
 
 
         /// <summary>

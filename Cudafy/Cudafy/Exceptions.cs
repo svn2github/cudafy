@@ -104,12 +104,26 @@ namespace Cudafy
         public CudafyCompileException(string errMsg, params object[] args) : base(string.Format(errMsg, args)) { CheckParamsAreNoExceptions(args); }
 
         public CudafyCompileException(Exception inner, string errMsg, params object[] args) : base(string.Format(errMsg, args)) { CheckParamsAreNoExceptions(args); }
-
-        public const string csNO_SOURCES = "No source code files specified";
-
-        public const string csCOMPILATION_ERROR_X = "Compilation error: {0}";
-
+        /// <summary>
+        /// No source code files specified.
+        /// </summary>
+        public const string csNO_SOURCES = "No source code files specified.";
+        /// <summary>
+        /// Compilation error: {0}.
+        /// </summary>
+        public const string csCOMPILATION_ERROR_X = "Compilation error: {0}.";
+        /// <summary>
+        /// CUDA directory not found.
+        /// </summary>
+        public const string csCUDA_DIR_NOT_FOUND = "CUDA directory not found.";
+        /// <summary>
+        /// No {0} source code present in Cudafy module.
+        /// </summary>
         public const string csNO_X_SOURCE_CODE_PRESENT_IN_CUDAFY_MODULE = "No {0} source code present in Cudafy module.";
+        /// <summary>
+        /// No {0} source code present in Cudafy module for {1}.
+        /// </summary>
+        public const string csNO_X_SOURCE_CODE_PRESENT_IN_CUDAFY_MODULE_FOR_X = "No {0} source code present in Cudafy module for {1}.";
 
         protected CudafyCompileException(
           System.Runtime.Serialization.SerializationInfo info,

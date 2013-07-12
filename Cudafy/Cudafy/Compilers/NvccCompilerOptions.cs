@@ -80,14 +80,15 @@ namespace Cudafy.Compilers
 //#endif
             if (Sources.Count() == 0)
                 throw new CudafyCompileException(CudafyCompileException.csNO_SOURCES);
-            if(GenerateBinary)
+            bool generateBinary = (CompileMode & eCudafyCompileMode.Binary) == eCudafyCompileMode.Binary;
+            if (generateBinary)
                 command += " -c ";
             foreach (string src in Sources)
                 command += string.Format(@" ""{0}"" ", src);
 
-           if(!GenerateBinary && Outputs.Count() == 1)
+            if (!generateBinary && Outputs.Count() == 1)
                 command += string.Format(@" -o ""{0}"" ", Outputs.Take(1).FirstOrDefault());
-           if (!GenerateBinary)
+            if (!generateBinary)
                command += " -ptx";
             return command;
         }

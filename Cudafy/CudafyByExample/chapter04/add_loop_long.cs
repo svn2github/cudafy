@@ -19,37 +19,40 @@ namespace CudafyByExample
 
         public static void Execute()
         {
-            CudafyModule km = CudafyTranslator.Cudafy();
+            // Translate all members with the Cudafy attribute in the given type to CUDA and compile.
+            CudafyModule km = CudafyTranslator.Cudafy(typeof(add_loop_long));
 
+            // Get the first CUDA device and load the module generated above.
             GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
             gpu.LoadModule(km);
 
+            // Declare some arrays like normal
             int[] a = new int[N];
             int[] b = new int[N];
             int[] c = new int[N];
 
-            // allocate the memory on the GPU of same size as specified arrays
+            // Allocate the memory on the GPU of same size as specified arrays
             int[] dev_a = gpu.Allocate<int>(a);
             int[] dev_b = gpu.Allocate<int>(b);
             int[] dev_c = gpu.Allocate<int>(c);
 
-            // fill the arrays 'a' and 'b' on the CPU
+            // Fill the arrays 'a' and 'b' on the CPU
             for (int i = 0; i < N; i++)
             {
                 a[i] = i;
                 b[i] = 2 * i;
             }
 
-            // copy the arrays 'a' and 'b' to the GPU
+            // Copy the arrays 'a' and 'b' to the GPU
             gpu.CopyToDevice(a, dev_a);
             gpu.CopyToDevice(b, dev_b);
 
             gpu.Launch(128, 1).add(dev_a, dev_b, dev_c);
 
-            // copy the array 'c' back from the GPU to the CPU
+            // Copy the array 'c' back from the GPU to the CPU
             gpu.CopyFromDevice(dev_c, c);
 
-            // verify that the GPU did the work we requested
+            // Verify that the GPU did the work we requested
             bool success = true;
             for (int i = 0; i < N; i++)
             {

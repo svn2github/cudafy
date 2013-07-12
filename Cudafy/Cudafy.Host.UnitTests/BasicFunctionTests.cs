@@ -112,12 +112,12 @@ namespace Cudafy.Host.UnitTests
             _cm = CudafyModule.TryDeserialize();
             if (_cm == null || !_cm.TryVerifyChecksums())
             {
-                _cm = CudafyTranslator.Cudafy();//typeof(PrimitiveStruct), typeof(BasicFunctionTests));
+                _cm = CudafyTranslator.Cudafy(CudafyModes.Architecture);//typeof(PrimitiveStruct), typeof(BasicFunctionTests));
                 Console.WriteLine(_cm.CompilerOutput);
                 _cm.TrySerialize();                
             }
             
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Architecture, CudafyModes.DeviceId);
             _gpu.LoadModule(_cm);
             //_gpu.CopyToConstantMemory(new int[constant_data.Length], constant_data);                
         }

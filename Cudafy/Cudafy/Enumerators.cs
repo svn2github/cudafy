@@ -121,7 +121,10 @@ namespace Cudafy
         /// </summary>
         public static eGPUCompiler Compiler;
 
-
+        /// <summary>
+        /// Target architecture.
+        /// </summary>
+        public static eArchitecture Architecture;
 
         ///// <summary>
         ///// Target code generator.
@@ -186,63 +189,87 @@ namespace Cudafy
     public enum ePlatform
     {
         /// <summary>
+        /// None selected.
+        /// </summary>
+        Auto = 0,
+        
+        /// <summary>
         /// x86
         /// </summary>
-        x86,
+        x86 = 1,
         /// <summary>
         /// x64
         /// </summary>
-        x64,
+        x64 = 2,
 
-        /// <summary>
-        /// None selected.
-        /// </summary>
-        Auto,
+
 
         /// <summary>
         /// Both x86 and x64
         /// </summary>
-        All
+        All = 3
     }
 
 
     /// <summary>
     /// CUDA or OpenCL Architecture
     /// </summary>
-    public enum eArchitecture
+    public enum eArchitecture : uint
     {
+                /// <summary>
+        /// Unspecified architecture.
+        /// </summary>
+        Unknown = 0,//0xFFFFFFFF,
+        
+        // CUDA has bit 7 set (256)
+        // OpenCL start has bit 15 set (32768), CUDA no flag
+        
+        /// <summary>
+        /// CUDA sm_10
+        /// </summary>
+        sm_10 = 266,
+        
         /// <summary>
         /// CUDA sm_11
         /// </summary>
-        sm_11,
+        sm_11 = 267, 
         /// <summary>
         /// CUDA sm_12
         /// </summary>
-        sm_12,
+        sm_12 = 268,
         /// <summary>
         /// CUDA sm_13
         /// </summary>
-        sm_13,
+        sm_13 = 269,
         /// <summary>
         /// CUDA sm_20
         /// </summary>
-        sm_20,
+        sm_20 = 276,
         /// <summary>
         /// CUDA sm_21
         /// </summary>
-        sm_21,
+        sm_21 = 277,
         /// <summary>
         /// CUDA sm_30
         /// </summary>
-        sm_30,
+        sm_30 = 286,
         /// <summary>
         /// CUDA sm_35
         /// </summary>
-        sm_35,
+        sm_35 = 291,
         /// <summary>
-        /// OpenCL
+        /// OpenCL 1.0
         /// </summary>
-        OpenCL
+        OpenCL = 32778,
+        /// <summary>
+        /// OpenCL 1.1
+        /// </summary>
+        OpenCL11 = 32779, 
+        /// <summary>
+        /// OpenCL 1.2
+        /// </summary>
+        OpenCL12 = 32780,
+
     }
 
     /// <summary>
@@ -292,5 +319,28 @@ namespace Cudafy
         /// Do not write the include statements for dummy types in the generated CUDA C file.
         /// </summary>
         SuppressInclude = 1
+    }
+
+    /// <summary>
+    /// Controls the type of compilation.
+    /// </summary>
+    public enum eCudafyCompileMode
+    {
+        /// <summary>
+        /// Default (PTX for CUDA). You will get a module for a minimum architecture.
+        /// </summary>
+        Default = 1,
+        /// <summary>
+        /// Binary (cubin for CUDA). You will get a module for a specific architecture.
+        /// </summary>
+        Binary = 2,
+        /// <summary>
+        /// Binary (cubin for CUDA) and includes relevant library files.
+        /// </summary>
+        DynamicParallelism = 6,
+        /// <summary>
+        /// Translate but do not compile.
+        /// </summary>
+        TranslateOnly = 8
     }
 }

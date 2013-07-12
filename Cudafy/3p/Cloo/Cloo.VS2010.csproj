@@ -122,6 +122,7 @@
   <ItemGroup>
     <None Include="Cloo.dll.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>

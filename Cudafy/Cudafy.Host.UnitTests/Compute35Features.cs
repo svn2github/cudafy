@@ -30,7 +30,7 @@ using Cudafy.UnitTests;
 using NUnit.Framework;
 using Cudafy.Translator;
 using Cudafy.Compilers;
-
+using Cudafy.DynamicParallelism;
 namespace Cudafy.Host.UnitTests
 {
     [TestFixture]
@@ -45,21 +45,11 @@ namespace Cudafy.Host.UnitTests
         [TestFixtureSetUp]        
         public void SetUp()
         {
-            _cm = CudafyTranslator.Translate(eArchitecture.sm_35, typeof(Compute35Features));
-            var options = NvccCompilerOptions.Createx64(eArchitecture.sm_35);
-            options.AddOption("-cubin");
-            //options.AddOption("-rdc=true");
-            options.AddOption("cudadevrt.lib");
-            options.AddOption("cublas_device.lib");
-            options.AddOption("-dlink");
-            //options.AddOption("-gencode");
-            //options.AddOption(@"-L""C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\lib\x64""");
-            //options.AddOption("-lcublas_device");
-            _cm.CompilerOptionsList.Add(options);
-            _cm.Compile(eGPUCompiler.CudaNvcc, false, true);
-            //Console.WriteLine(_cm.CompilerOutput);
-
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
+            //var x = CompilerHelper.Create(ePlatform.x64, eArchitecture.OpenCL, eCudafyCompileMode.Default);
+            var y = CompilerHelper.Create(ePlatform.x64, CudafyModes.Architecture, eCudafyCompileMode.Default); 
+            _cm = CudafyTranslator.Cudafy(new CompileProperties[] {y}, this.GetType());
+            _cm.Serialize();
+            _gpu = CudafyHost.GetDevice(y.Architecture, CudafyModes.DeviceId);
             _gpu.LoadModule(_cm);
         }
 
@@ -69,21 +59,38 @@ namespace Cudafy.Host.UnitTests
             _gpu.FreeAll();
         }
 
+        //[Cudafy]
+        //public static void devKernel(GThread thread, int[] a, int[] c, short coeff)
+        //{
+        //    int tid = thread.blockIdx.x + N - N;
+        //    if (tid < a.Length)
+        //        c[tid] = a[tid] * coeff;
+        //}
 
-
-        [Cudafy]
+        [Cudafy]//(eCudafyType.Device)]
         public static void childKernel(GThread thread, int[] a, int[] c, short coeff)
         {
             int tid = thread.blockIdx.x + N - N;
             if (tid < a.Length)
-            //for(int tid = 0; tid < a.Length; tid++)
                 c[tid] = a[tid] * coeff;
+        }
+
+        [Cudafy]
+        public static int numberYouFirstThoughtOf()
+        {
+            return 42;
         }
 
         [Cudafy]
         public static void parentKernel(GThread thread, int[] a, int[] c, short coeff)
         {
-            GThread.InsertCode("childKernel<<<1024,1>>>(a, 1024, c, 1024, coeff);");
+            //childKernel(thread, a, c, coeff);
+            int rc;
+            //BROKEN thread.Launch(N / 2, numberYouFirstThoughtOf() * coeff, "childKernel", a, c, numberYouFirstThoughtOf() * coeff + 23 * a[0]);
+            thread.Launch(N / 2, coeff, "childKernel", a, c, numberYouFirstThoughtOf() * coeff + 23 * a[0]);
+            rc = thread.SynchronizeDevice();
+            int count = 0;
+            rc = thread.GetDeviceCount(ref count);
         }
 
         [SetUp]

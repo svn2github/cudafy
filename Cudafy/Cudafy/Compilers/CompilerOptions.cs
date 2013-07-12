@@ -50,7 +50,7 @@ namespace Cudafy.Compilers
             GenerateDebugInfo = false;
             Version = compilerVersion;
             Platform = platform;
-            GenerateBinary = false;
+            CompileMode = eCudafyCompileMode.Default;
         }
 
         /// <summary>
@@ -324,6 +324,6 @@ namespace Cudafy.Compilers
         /// <summary>
         /// Gets a flag indicating whether the compiler generates binary.
         /// </summary>
-        public bool GenerateBinary { get; internal set; }
+        public eCudafyCompileMode CompileMode { get; set; }
     }
 }

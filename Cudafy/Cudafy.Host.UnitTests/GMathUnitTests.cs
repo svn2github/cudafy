@@ -45,16 +45,15 @@ namespace Cudafy.Host.UnitTests
         [TestFixtureSetUp]
         public virtual void SetUp()
         {
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Architecture, CudafyModes.DeviceId);
             var types = new List<Type>();
             types.Add(this.GetType());
             types.Add(typeof(MathSingleTest));
             SupportsDouble = _gpu.GetDeviceProperties().SupportsDoublePrecision;
             if (SupportsDouble)
                 types.Add(typeof(MathDoubleTest));
-            eArchitecture arch = _gpu.GetArchitecture();
-            arch = eArchitecture.sm_13;
-            _cm = CudafyTranslator.Cudafy(arch, types.ToArray());
+
+            _cm = CudafyTranslator.Cudafy(CudafyModes.Architecture, types.ToArray());
             Debug.WriteLine(_cm.SourceCode);
             _gpu.LoadModule(_cm);
         }

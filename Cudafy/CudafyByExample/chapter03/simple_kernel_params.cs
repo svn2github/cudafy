@@ -12,8 +12,6 @@ using Cudafy.Host;
 using Cudafy.Translator;
 namespace CudafyByExample
 {
-
-
     public class simple_kernel_params
     {
         public static void Execute()

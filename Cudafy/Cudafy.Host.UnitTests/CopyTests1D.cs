@@ -110,7 +110,7 @@ namespace Cudafy.Host.UnitTests
         [TestFixtureSetUp]
         public void SetUp()
         {
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Architecture, CudafyModes.DeviceId);
 
             _byteBufferIn = new byte[N];
             _byteBufferOut = new byte[N];            
@@ -200,7 +200,7 @@ namespace Cudafy.Host.UnitTests
             var mod = CudafyModule.TryDeserialize();
            if (mod == null || !mod.TryVerifyChecksums())
            {
-               mod = CudafyTranslator.Cudafy();
+               mod = CudafyTranslator.Cudafy(CudafyModes.Architecture);
                mod.Serialize();
            }
            _gpu.LoadModule(mod);
@@ -656,6 +656,22 @@ namespace Cudafy.Host.UnitTests
             dstPtr.Read(_ushortBufferOut);
             _gpu.HostFreeAll();
             Assert.IsTrue(Compare(_ushortBufferIn, _ushortBufferOut, 0, 0, N));
+            ClearOutputsAndGPU();
+        }
+
+        [Test]
+        public void Test_LongArray()
+        {
+            int n = 1024 * 1024 * 32;
+            int[] longArray = new int[n];
+            Random rand = new Random();
+            for (int i = 0; i < n; i++)
+                longArray[i] = rand.Next();
+            int[] output = new int[n];
+            int[] longArray_dev = _gpu.CopyToDevice(longArray);
+            _gpu.CopyFromDevice(longArray_dev, output);
+            _gpu.Free(longArray_dev);
+            Assert.IsTrue(Compare(longArray, output, 0, 0, n));
             ClearOutputsAndGPU();
         }
 

@@ -29,6 +29,7 @@ using GASS.CUDA.FFT;
 using NUnit.Framework;
 using Cudafy.Host;
 using Cudafy.Translator;
+using Cudafy.Compilers;
 namespace Cudafy.Host.UnitTests
 {
     class Program
@@ -37,9 +38,10 @@ namespace Cudafy.Host.UnitTests
         {
             try
             {
-                CudafyModes.Target = eGPUType.Cuda;
-                CudafyModes.DeviceId = 1;
-                CudafyTranslator.Language = eLanguage.Cuda;
+                
+                CudafyModes.DeviceId = 0;
+                CudafyModes.Architecture = eArchitecture.sm_20;
+                CudafyModes.Target = CompilerHelper.GetGPUType(CudafyModes.Architecture);
 
                 if (CudafyModes.Target != eGPUType.OpenCL)
                 {
@@ -70,8 +72,11 @@ namespace Cudafy.Host.UnitTests
                     CudafyUnitTest.PerformAllTests(mgt);
                 }
 
-                //Compute35Features c35f = new Compute35Features();
-                //CudafyUnitTest.PerformAllTests(c35f);
+                //if (CudafyModes.Architecture == eArchitecture.sm_35)
+                {
+                    Compute35Features c35f = new Compute35Features();
+                    CudafyUnitTest.PerformAllTests(c35f);
+                }
 
                 Console.WriteLine("Done");
                 Console.ReadLine();

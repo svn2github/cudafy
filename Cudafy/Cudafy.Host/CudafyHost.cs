@@ -32,6 +32,7 @@ using System.Runtime.InteropServices;
 using GASS.CUDA;
 using GASS.CUDA.Types;
 using Cloo;
+using Cudafy.Compilers;
 namespace Cudafy.Host
 {
     /// <summary>
@@ -148,6 +149,19 @@ namespace Cudafy.Host
             }
             gpu.SetCurrentContext();   
             return gpu;
+        }
+
+        /// <summary>
+        /// Gets the GPU from cache of type implied by specified architecture. Creates one if it does not already exist.
+        /// Sets the current context to the returned device.
+        /// </summary>
+        /// <param name="arch">Architecture type.</param>
+        /// <param name="deviceId">The device id.</param>
+        /// <returns>GPGPU instance.</returns>
+        public static GPGPU GetDevice(eArchitecture arch, int deviceId = 0)
+        {
+            eGPUType type = CompilerHelper.GetGPUType(arch);
+            return GetDevice(type, deviceId);
         }
 
         /// <summary>

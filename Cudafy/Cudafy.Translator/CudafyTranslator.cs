@@ -159,7 +159,7 @@ namespace Cudafy.Translator
             StackTrace stackTrace = new StackTrace();
             Type type = stackTrace.GetFrame(1).GetMethod().ReflectedType;
             CudafyModule km = CudafyModule.TryDeserialize(type.Name);
-            if (km == null || !km.TryVerifyChecksums())
+            if (km == null || !km.TryVerifyChecksums(ePlatform.Auto, arch))
             {
                 km = Cudafy(ePlatform.Auto, arch, type);
                 km.Name = type.Name;
@@ -278,13 +278,14 @@ namespace Cudafy.Translator
         /// <param name="compile">if set to <c>true</c> compile to PTX.</param>
         /// <param name="types">The types.</param>
         /// <returns>A CudafyModule.</returns>
-        public static CudafyModule Cudafy(ePlatform platform, eArchitecture arch, Version cudaVersion, bool compile, params Type[] types)
+        public static CudafyModule CudafyOld(ePlatform platform, eArchitecture arch, Version cudaVersion, bool compile, params Type[] types)
         {
             CudafyModule km = null;
             CUDALanguage.ComputeCapability = GetComputeCapability(arch);
-            if (arch == eArchitecture.OpenCL)
+            _architecture = arch;
+            if (arch > eArchitecture.OpenCL)
                 CudafyTranslator.Language = eLanguage.OpenCL;
-            km = DoCudafy(types);
+            km = DoCudafy(null, types);
             if (km == null)
                 throw new CudafyFatalException(CudafyFatalException.csUNEXPECTED_STATE_X, "CudafyModule km = null");
             km.WorkingDirectory = WorkingDirectory;
@@ -306,9 +307,67 @@ namespace Cudafy.Translator
             return km;
         }
 
-        private static Version GetComputeCapability(eArchitecture arch)
+        /// <summary>
+        /// Cudafies the specified types. Working directory will be as per CudafyTranslator.WorkingDirectory.
+        /// </summary>
+        /// <param name="platform">The platform.</param>
+        /// <param name="arch">The CUDA or OpenCL architecture.</param>
+        /// <param name="cudaVersion">The CUDA version. Specify null to automatically use the highest installed version.</param>
+        /// <param name="compile">if set to <c>true</c> compile to PTX.</param>
+        /// <param name="types">The types.</param>
+        /// <returns>A CudafyModule.</returns>
+        public static CudafyModule Cudafy(ePlatform platform, eArchitecture arch, Version cudaVersion, bool compile, params Type[] types)
         {
-            if (arch == eArchitecture.sm_11)
+            var cp = CompilerHelper.Create(ePlatform.Auto, arch, eCudafyCompileMode.Default, WorkingDirectory, GenerateDebug);
+            return Cudafy(cp, types);
+        }
+
+        public static CudafyModule Cudafy(CompileProperties prop, params Type[] types)
+        {
+            var list = new List<CompileProperties>();
+            list.Add(prop);
+            return Cudafy(list, types);
+        }
+
+        /// <summary>
+        /// Translates and compiles the given types against specified compilation properties.
+        /// </summary>
+        /// <param name="props">The settings.</param>
+        /// <param name="types">Types to search and translate.</param>
+        /// <returns></returns>
+        public static CudafyModule Cudafy(IEnumerable<CompileProperties> props, params Type[] types)
+        {
+            CudafyModule km = null;
+            //var uniqueLanguages = new List<eLanguage>();
+            //if (props.Any(p => p.Language == eLanguage.Cuda))
+            //    uniqueLanguages.Add(eLanguage.Cuda);
+            //if (props.Any(p => p.Language == eLanguage.OpenCL))
+            //    uniqueLanguages.Add(eLanguage.OpenCL);
+            //foreach (var lang in uniqueLanguages)
+            foreach(var p in props)
+            {
+                CudafyTranslator.Language = p.Language;
+                _architecture = p.Architecture;
+                CUDALanguage.ComputeCapability = GetComputeCapability(p.Architecture);
+                
+                km = DoCudafy(km, types);
+                if (km == null)
+                    throw new CudafyFatalException(CudafyFatalException.csUNEXPECTED_STATE_X, "CudafyModule km = null");
+            }
+            km.WorkingDirectory = WorkingDirectory;
+            km.Compile(props.ToArray());
+            
+            Type lastType = types.Last(t => t != null);
+            if (lastType != null)
+                km.Name = lastType.Name;
+            return km;
+        }
+
+        private static Version GetComputeCapability(eArchitecture arch, params Type[] types)
+        {
+            if (arch == eArchitecture.sm_10)
+                return new Version(1, 0);
+            else if (arch == eArchitecture.sm_11)
                 return new Version(1, 1);
             else if (arch == eArchitecture.sm_12)
                 return new Version(1, 2);
@@ -323,11 +382,19 @@ namespace Cudafy.Translator
             else if (arch == eArchitecture.sm_35)
                 return new Version(3, 5);
             else if (arch == eArchitecture.OpenCL)
+                return new Version(1, 0);
+            else if (arch == eArchitecture.OpenCL11)
                 return new Version(1, 1);
+            else if (arch == eArchitecture.OpenCL12)
+                return new Version(1, 2);
+            else if (arch == eArchitecture.Unknown)
+                return new Version(1, 0);
             throw new ArgumentException("Unknown architecture.");
         }
+
+        private static eArchitecture _architecture; 
         
-        private static CudafyModule DoCudafy(params Type[] types)
+        private static CudafyModule DoCudafy(CudafyModule cm, params Type[] types)
         {
             MemoryStream output = new MemoryStream();
             var outputSw = new StreamWriter(output);
@@ -352,9 +419,12 @@ namespace Cudafy.Translator
             var compOpts = new DecompilationOptions { FullDecompilation = true };
 
             CUDALanguage.Reset();
-
-            CudafyModule cm = new CudafyModule();
-
+            bool firstPass = true;
+            if(cm == null)
+                cm = new CudafyModule();// #######!!!
+            else
+                firstPass = false;
+            
             // Test structs
             //foreach (var strct in types.Where(t => !t.IsClass))
             //    if (strct.GetCustomAttributes(typeof(CudafyAttribute), false).Length == 0)
@@ -388,7 +458,8 @@ namespace Cudafy.Translator
                         if (attr != null)
                         {
                             _cl.DecompileType(t, structsPto, compOpts);
-                            cm.Types.Add(type.FullName.Replace("+", ""), new KernelTypeInfo(type, isDummy, behaviour));
+                            if(firstPass)
+                                cm.Types.Add(type.FullName.Replace("+", ""), new KernelTypeInfo(type, isDummy, behaviour));// #######!!!
                         }
                         else if (t.Name == td.Name)
                         {
@@ -405,7 +476,8 @@ namespace Cudafy.Translator
                                     int[] dims = _cl.GetFieldInfoDimensions(fieldInfo);
                                     _cl.DecompileCUDAConstantField(fi, dims, codePto, compOpts);
                                     var kci = new KernelConstantInfo(fi.Name, fieldInfo, isDummy);
-                                    cm.Constants.Add(fi.Name, kci);
+                                    if (firstPass)
+                                        cm.Constants.Add(fi.Name, kci);// #######!!!
                                     CUDALanguage.AddConstant(kci);
                                 }
                             }
@@ -427,7 +499,8 @@ namespace Cudafy.Translator
                                     VerifyMemberName(med.Name);
                                     eKernelMethodType kmt = eKernelMethodType.Device;
                                     kmt = GetKernelMethodType(attr, mi);
-                                    cm.Functions.Add(med.Name, new KernelMethodInfo(type, mi, kmt, isDummy, behaviour, cm));
+                                    if (firstPass)
+                                        cm.Functions.Add(med.Name, new KernelMethodInfo(type, mi, kmt, isDummy, behaviour, cm));// #######!!!
                                 }
                             }
                         }
@@ -480,8 +553,9 @@ namespace Cudafy.Translator
             }
 #endif
             String s = Encoding.UTF8.GetString(output.GetBuffer(), 0, (int)output.Length);
-            cm.SourceCode = s;
-
+            //cm.SourceCode = s;// #######!!!
+            var scf = new SourceCodeFile(s, Language, _architecture);
+            cm.AddSourceCodeFile(scf);
             return cm;
         }
 

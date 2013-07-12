@@ -352,6 +352,11 @@ namespace Cudafy.Translator
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "umul64hi", new Func<MemberReferenceExpression, object, string>(TranslateCUDAIntegerFunc)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "umulhi", new Func<MemberReferenceExpression, object, string>(TranslateCUDAIntegerFunc)));
 
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "SynchronizeDevice", new Func<MemberReferenceExpression, object, string>(TranslateDynamicParallelismFunc)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "GetDeviceCount", new Func<MemberReferenceExpression, object, string>(TranslateDynamicParallelismFunc)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "GetDeviceID", new Func<MemberReferenceExpression, object, string>(TranslateDynamicParallelismFunc)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "Launch", new Func<MemberReferenceExpression, object, string>(TranslateDynamicParallelismFunc), true, false));
+
             SpecialMethods.Add(new SpecialMember("ComplexD", null, new Func<MemberReferenceExpression, object, string>(TranslateComplexD)));
             SpecialMethods.Add(new SpecialMember("ComplexF", null, new Func<MemberReferenceExpression, object, string>(TranslateComplexF)));
            
@@ -388,6 +393,8 @@ namespace Cudafy.Translator
             OptionalFunctions.Add(new OptionalFunction(csGET_LOCAL_SIZE, OptionalStrings.get_local_size));
             OptionalFunctions.Add(new OptionalFunction(csGET_NUM_GROUPS, OptionalStrings.get_num_groups)); 
         }
+
+
 
         private static void InitializeOpenCL()
         {
@@ -887,6 +894,40 @@ namespace Cudafy.Translator
                 case "IsInfinity":
                     return "isinf";
 
+                default:
+                    break;
+            }
+            throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED, mre.MemberName);
+        }
+
+        private static string TranslateDynamicParallelismFunc(MemberReferenceExpression mre, object data)
+        {
+            switch (mre.MemberName)
+            {
+                case "SynchronizeDevice":
+                    return "cudaDeviceSynchronize";
+                case "GetDeviceCount":
+                    return "cudaGetDeviceCount";
+                case "GetDeviceID":
+                    return "cudaGetDevice";
+                case "Launch":
+                    var list = (data as InvocationExpression).Arguments.Take(4).Cast<Expression>().ToList();
+                    object gridSize = list[0].ToString();
+                    object blockSize = list[1].ToString();
+                    string name = list[2].ToString().Trim('"');
+                    list[0] = new PrimitiveExpression("IGNOREMEE01B67F3" + gridSize.ToString());
+                    list[1] = new PrimitiveExpression("IGNOREMEE01B67F3" + blockSize.ToString());
+                    list[2] = new PrimitiveExpression("IGNOREMEE01B67F3" + name);
+                    var args = (data as InvocationExpression).Arguments.ToList()[3];
+                    
+                    foreach(Expression elem in ((ICSharpCode.NRefactory.CSharp.ArrayCreateExpression)(args)).Initializer.Elements)//.ToList();
+                        list.Add(elem.Clone());
+                    //var explist = list.Cast<Expression>().ToList();
+                    //list.AddRange(elems);
+                    (data as InvocationExpression).Arguments.ReplaceWith(list);
+                    return string.Format("{0}<<<{1},{2}>>>",name,gridSize,blockSize);
+                    
+                    
                 default:
                     break;
             }

@@ -129,11 +129,13 @@
     <Compile Include="Compilers\CompilerOptions.cs" />
     <Compile Include="Compilers\ICompilerOptions.cs" />
     <Compile Include="Compilers\NvccCompilerOptions.cs" />
+    <Compile Include="Compilers\TranslationProperties.cs" />
     <Compile Include="dim3.cs" />
     <Compile Include="Enumerators.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\Atomics.cs" />
+    <Compile Include="Extensions\DynamicParallelism.cs" />
     <Compile Include="Extensions\IntegerIntrinsics.cs" />
     <Compile Include="Extensions\Rand.cs" />
     <Compile Include="GBlock.cs" />

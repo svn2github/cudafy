@@ -48,10 +48,10 @@ namespace Cudafy.Host.UnitTests
         {
             CudafyTranslator.GenerateDebug = true;
             _cm = CudafyModule.TryDeserialize();
-            _gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
+            _gpu = CudafyHost.GetDevice(CudafyModes.Architecture, CudafyModes.DeviceId);
             if (_cm == null || !_cm.TryVerifyChecksums())
             {
-                _cm = CudafyTranslator.Cudafy(_gpu.GetArchitecture(), this.GetType(), (_gpu is OpenCLDevice) ? null  : typeof(StringConstClass));
+                _cm = CudafyTranslator.Cudafy(_gpu.GetArchitecture(), this.GetType(), (_gpu is OpenCLDevice) ? null  : typeof(StringConstClass));              
                 _cm.TrySerialize();
             }
             _gpu.LoadModule(_cm);

@@ -304,6 +304,8 @@ namespace Cudafy.Host
 
                     switch (capability.Minor)
                     {
+                        case 0:  return eArchitecture.sm_10;
+
 
                         case 1: return eArchitecture.sm_11;
 

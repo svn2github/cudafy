@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.IO;
 using System.Diagnostics;
 using System.Xml;
@@ -105,6 +106,45 @@ namespace Cudafy
             return attr.Value;
         }
 
+        public static TEnum TryGetAttributeEnum<TEnum>(this XElement element, string attributeName) where TEnum : struct
+        {
+            string enumValue = element.TryGetAttributeValue(attributeName);
+            if (enumValue == null)
+                return default(TEnum);
+            TEnum result;
+            bool rc = Enum.TryParse<TEnum>(enumValue, out result);
+            if (!rc)
+                return default(TEnum);
+            return result;
+        }
+
+        public static TEnum GetAttributeEnum<TEnum>(this XElement element, string attributeName) where TEnum : struct
+        {
+            string enumValue = element.TryGetAttributeValue(attributeName);
+            if (enumValue == null)
+                throw new XmlException(string.Format(GES.csATTRIBUTE_X_NOT_FOUND_FOR_NODE_X, attributeName, element.Name));
+            TEnum result;
+            bool rc = Enum.TryParse<TEnum>(enumValue, out result);
+            if (!rc)
+                throw new XmlException(string.Format(GES.csATTRIBUTE_X_NOT_FOUND_FOR_NODE_X, attributeName, element.Name));
+            return result;
+        }
+
+        public static string TryGetElementBase64(this XElement element, string elementName)
+        {
+            var value = element.TryGetElementValue(elementName);
+            byte[] ba = Convert.FromBase64String(value);
+            string result = UnicodeEncoding.ASCII.GetString(ba);
+            return result;
+        }
+
+        public static string GetElementBase64(this XElement element, string elementName)
+        {
+            string value = element.TryGetElementBase64(elementName);
+            if(value == null)
+                throw new XmlException(string.Format(GES.csELEMENT_X_NOT_FOUND, elementName));
+            return value;
+        }
         /// <summary>
         /// Gets the attribute as Int32 value.
         /// </summary>

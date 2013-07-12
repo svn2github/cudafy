@@ -186,13 +186,13 @@ namespace Cudafy.Translator
 			Space(!noSpaceAfterComma && policy.SpaceAfterBracketComma); // TODO: Comma policy has changed.
 		}
 		
-		void WriteCommaSeparatedList(IEnumerable<AstNode> list)
+		public void WriteCommaSeparatedList(IEnumerable<AstNode> list)
 		{
 			bool isFirst = true;
             bool isIgnored = false;
 			foreach (AstNode node in list) 
             {
-                isIgnored = IsIgnored(node);
+                isIgnored = (node is ArrayCreateExpression) || IsIgnored(node);
                 if (isIgnored)
                     continue;
 				if (isFirst) 
@@ -236,6 +236,12 @@ namespace Cudafy.Translator
                         return true;
 
                 }
+            }
+            var pe = node as PrimitiveExpression;
+            if (pe != null)
+            {
+                if (pe.Value.ToString().StartsWith("IGNOREMEE01B67F3"))
+                    return true;
             }
             return false;
 
@@ -699,6 +705,7 @@ namespace Cudafy.Translator
             //    specifier.AcceptVisitor(this, data);
             //arrayCreateExpression.Initializer.AcceptVisitor(this, data);
             //return EndNode(arrayCreateExpression);
+            //return "";
 		}
 		
 		public object VisitArrayInitializerExpression(ArrayInitializerExpression arrayInitializerExpression, object data)

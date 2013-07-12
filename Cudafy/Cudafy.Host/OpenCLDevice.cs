@@ -141,6 +141,40 @@ namespace Cudafy.Host
             return ComputeDevices[id];
         }
 
+        public override eArchitecture GetArchitecture()
+        {
+            //if (!(this is CudaGPU) && !(this is EmulatedGPU))
+            //    throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, this.GetType());
+
+            var capability = this.GetDeviceProperties(false).Capability;
+
+            switch (capability.Major)
+            {
+
+                case 1:
+
+                    switch (capability.Minor)
+                    {
+                        case 0: return eArchitecture.OpenCL;
+
+
+                        case 1: return eArchitecture.OpenCL11;
+
+                        case 2: return eArchitecture.OpenCL12;
+
+                        default:
+                            throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, capability.ToString());
+
+                    }
+
+  
+
+                default:
+                    throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, capability.ToString());
+            }
+
+        }
+
         #region GetDeviceProperties
 
         public override GPGPUProperties GetDeviceProperties(bool useAdvanced = true)
