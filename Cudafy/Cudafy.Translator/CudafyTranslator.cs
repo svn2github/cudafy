@@ -140,7 +140,7 @@ namespace Cudafy.Translator
             CudafyModule km = CudafyModule.TryDeserialize(type.Name);
             if (km == null || !km.TryVerifyChecksums())
             {
-                km = Cudafy(ePlatform.Auto, eArchitecture.sm_13, type);
+                km = Cudafy(ePlatform.Auto, eArchitecture.Unknown, type);
                 km.Name = type.Name;
                 km.TrySerialize();
             }
@@ -182,7 +182,7 @@ namespace Cudafy.Translator
             CudafyModule km = CudafyModule.TryDeserialize(type.Name);
             if (km == null || !km.TryVerifyChecksums() || !km.HasPTXForPlatform(platform))
             {
-                km = Cudafy(platform, eArchitecture.sm_13, type);
+                km = Cudafy(platform, eArchitecture.Unknown, type);
                 km.Name = type.Name;
                 km.TrySerialize();
             }
@@ -231,7 +231,7 @@ namespace Cudafy.Translator
         /// <returns>A CudafyModule.</returns>
         public static CudafyModule Cudafy(params Type[] types)
         {
-            return Cudafy(ePlatform.Auto, eArchitecture.sm_13, null, true, types);
+            return Cudafy(ePlatform.Auto, eArchitecture.Unknown, null, true, types);
         }
 
         /// <summary>
@@ -387,8 +387,10 @@ namespace Cudafy.Translator
                 return new Version(1, 1);
             else if (arch == eArchitecture.OpenCL12)
                 return new Version(1, 2);
-            else if (arch == eArchitecture.Unknown)
+            else if (arch == eArchitecture.Unknown && Language == eLanguage.OpenCL)
                 return new Version(1, 0);
+            else if (arch == eArchitecture.Unknown && Language == eLanguage.Cuda)
+                return new Version(1, 3);
             throw new ArgumentException("Unknown architecture.");
         }
 
@@ -588,7 +590,10 @@ namespace Cudafy.Translator
 
     public class CUDAfyLanguageSpecifics
     {
-        public eLanguage Language { get; set; }
+        public eLanguage Language {
+            get { return CudafyModes.Language; }
+            set { CudafyModes.Language = value; }
+        }
 
         public string KernelFunctionModifiers
         {

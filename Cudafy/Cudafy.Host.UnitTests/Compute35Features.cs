@@ -46,8 +46,9 @@ namespace Cudafy.Host.UnitTests
         public void SetUp()
         {
             //var x = CompilerHelper.Create(ePlatform.x64, eArchitecture.OpenCL, eCudafyCompileMode.Default);
-            var y = CompilerHelper.Create(ePlatform.x64, CudafyModes.Architecture, eCudafyCompileMode.Default); 
+            var y = CompilerHelper.Create(ePlatform.x64, CudafyModes.Architecture, eCudafyCompileMode.DynamicParallelism); 
             _cm = CudafyTranslator.Cudafy(new CompileProperties[] {y}, this.GetType());
+            Console.WriteLine(_cm.CompilerOutput);
             _cm.Serialize();
             _gpu = CudafyHost.GetDevice(y.Architecture, CudafyModes.DeviceId);
             _gpu.LoadModule(_cm);

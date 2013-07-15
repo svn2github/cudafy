@@ -20,9 +20,9 @@ namespace CudafyByExample
         [STAThread]
         static void Main(string[] args)
         {
-            CudafyModes.Target = eGPUType.Cuda;
+            CudafyModes.Target = eGPUType.OpenCL;
             CudafyModes.DeviceId = 0;
-            CudafyTranslator.Language = eLanguage.Cuda;
+            CudafyTranslator.Language = eLanguage.OpenCL;
             try
             {
                 int deviceCount = CudafyHost.GetDeviceCount(CudafyModes.Target);
@@ -32,7 +32,7 @@ namespace CudafyByExample
                     goto theEnd;
                 }
                 GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
-                Console.WriteLine("Running examples using {0}", gpu.GetDeviceProperties().Name);
+                Console.WriteLine("Running examples using {0}", gpu.GetDeviceProperties(false).Name);
 
                 // Chapter 3
                 Console.WriteLine("\r\nChapter 3");

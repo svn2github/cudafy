@@ -132,6 +132,11 @@ namespace Cudafy
         //public static eGPUCodeGenerator CodeGen;
 
         /// <summary>
+        /// Language
+        /// </summary>
+        public static eLanguage Language;
+
+        /// <summary>
         /// Quick mode.
         /// </summary>
         public static eCudafyQuickMode Mode;

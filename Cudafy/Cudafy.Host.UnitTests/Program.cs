@@ -38,9 +38,9 @@ namespace Cudafy.Host.UnitTests
         {
             try
             {
-                
+               
                 CudafyModes.DeviceId = 0;
-                CudafyModes.Architecture = eArchitecture.sm_20;
+                CudafyModes.Architecture = eArchitecture.sm_13; // *** Change this to the architecture of your target board ***
                 CudafyModes.Target = CompilerHelper.GetGPUType(CudafyModes.Architecture);
 
                 if (CudafyModes.Target != eGPUType.OpenCL)
@@ -73,10 +73,10 @@ namespace Cudafy.Host.UnitTests
                 }
 
                 //if (CudafyModes.Architecture == eArchitecture.sm_35)
-                {
-                    Compute35Features c35f = new Compute35Features();
-                    CudafyUnitTest.PerformAllTests(c35f);
-                }
+                //{
+                //    Compute35Features c35f = new Compute35Features();
+                //    CudafyUnitTest.PerformAllTests(c35f);
+                //}
 
                 Console.WriteLine("Done");
                 Console.ReadLine();

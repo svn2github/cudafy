@@ -537,8 +537,10 @@ namespace Cudafy
         private const string csHASCUDASOURCECODE = "HasCudaSourceCode";
         private const string csPTX = "PTX";
         private const string csBINARY = "Binary";
+        private const string csPTXMODULES = "PTXMODULES";
         private const string csPTXMODULE = "PTXMODULE";
         private const string csBINARYMODULES = "BinaryModules";
+        private const string csBINARYMODULE = "BinaryModule";
         private const string csHASPTX = "HasPTX";
         private const string csHASBINARY = "HasBinary";
         private const string csFUNCTIONS = "Functions";
@@ -615,38 +617,39 @@ namespace Cudafy
             root.Add(cudaSrc);
             
             root.SetAttributeValue(csHASPTX, XmlConvert.ToString(_PTXModules.Count > 0));
+            XElement xe = new XElement(csPTXMODULES);
             foreach (var ptxMod in _PTXModules)
             {
                 byte[] ba = UnicodeEncoding.ASCII.GetBytes(ptxMod.PTX);
                 string b64 = Convert.ToBase64String(ba);
-                XElement ptxXe = new XElement(csPTXMODULE, 
-                    new XElement(csPTX, b64));
+                XElement ptxXe = new XElement(csPTXMODULE, b64);
                 ptxXe.SetAttributeValue(csPLATFORM, ptxMod.Platform);
                 ptxXe.SetAttributeValue(csARCH, ptxMod.Architecture);
                 ptxXe.SetAttributeValue(csSOURCECODEFILE, ptxMod.SourceCodeID);
-                root.Add(ptxXe);
+                xe.Add(ptxXe);
             }
+            root.Add(xe);
 
             root.SetAttributeValue(csHASBINARY, XmlConvert.ToString(_BinaryModules.Count > 0));
+            xe = new XElement(csBINARYMODULES);
             foreach (var binMod in _BinaryModules)
             {
                 byte[] ba = binMod.Binary;
                 string b64 = Convert.ToBase64String(ba);
-                XElement binXe = new XElement(csBINARYMODULES,
-                    new XElement(csBINARY, b64));
+                XElement binXe = new XElement(csBINARYMODULES, b64);
                 binXe.SetAttributeValue(csPLATFORM, binMod.Platform);
                 binXe.SetAttributeValue(csARCH, binMod.Architecture);
                 binXe.SetAttributeValue(csSOURCECODEFILE, binMod.SourceCodeID);
-                root.Add(binXe);
+                xe.Add(binXe);
             }
+            root.Add(xe);
 
-            XElement xe = new XElement(csSOURCECODES);
+            xe = new XElement(csSOURCECODES);
             foreach (var scf in _sourceCodes)
             {
                 byte[] ba = UnicodeEncoding.ASCII.GetBytes(scf.Source);
                 string b64 = Convert.ToBase64String(ba);
-                XElement scfxe = new XElement(csSOURCECODEFILE, 
-                    new XElement(csSOURCECODE, b64));
+                XElement scfxe = new XElement(csSOURCECODEFILE, b64);
                 scfxe.SetAttributeValue(csID, scf.ID);
                 scfxe.SetAttributeValue(csLANGUAGE, scf.Language);
                 scfxe.SetAttributeValue(csARCH, scf.Architecture);
@@ -910,6 +913,8 @@ namespace Cudafy
             string vStr = root.GetAttributeValue(csVERSION);
             Version version = new Version(vStr);
             Version curVers = typeof(CudafyModule).Assembly.GetName().Version;
+            if (version < new Version(1, 25))
+                throw new CudafyException(CudafyException.csVERSION_MISMATCH_EXPECTED_X_GOT_X, "1.25 or later", version);
             if (version.Major != curVers.Major || version.Minor > curVers.Minor)
                 throw new CudafyException(CudafyException.csVERSION_MISMATCH_EXPECTED_X_GOT_X, curVers, version);
 
@@ -954,9 +959,10 @@ namespace Cudafy
             }
             else if (hasPtx == true)
             {
-                foreach (XElement xe in root.Elements(csPTXMODULE))
+                XElement ptxsxe = root.Element(csPTXMODULES);
+                foreach (XElement xe in ptxsxe.Elements(csPTXMODULE))
                 {
-                    string ptx = xe.Element(csPTX).Value;
+                    string ptx = xe.Value;  //xe.Element(csPTX).Value;
                     string platformStr = xe.GetAttributeValue(csPLATFORM);
                     ePlatform platform = (ePlatform)Enum.Parse(typeof(ePlatform), platformStr);
                     string archStr = xe.TryGetAttributeValue(csARCH);
@@ -973,9 +979,10 @@ namespace Cudafy
             bool? hasBinary = root.TryGetAttributeBoolValue(csHASBINARY);
             if (hasBinary == true)
             {
-                foreach (XElement xe in root.Elements(csBINARYMODULES))
+                XElement binsxe = root.Element(csBINARYMODULES);
+                foreach (XElement xe in binsxe.Elements(csBINARYMODULE))
                 {
-                    string bin = xe.Element(csBINARY).Value;
+                    string bin = xe.Value; //xe.Element(csBINARY).Value;
                     string platformStr = xe.GetAttributeValue(csPLATFORM);
                     string archStr = xe.GetAttributeValue(csARCH);
                     ePlatform platform = (ePlatform)Enum.Parse(typeof(ePlatform), platformStr);

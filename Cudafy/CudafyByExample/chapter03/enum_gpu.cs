@@ -19,7 +19,7 @@ namespace CudafyByExample
         {          
             int i = 0;
 
-            foreach (GPGPUProperties prop in CudafyHost.GetDeviceProperties(CudafyModes.Target))
+            foreach (GPGPUProperties prop in CudafyHost.GetDeviceProperties(CudafyModes.Target, false))
             {
                 Console.WriteLine("   --- General Information for device {0} ---", i);
                 Console.WriteLine("Name:  {0}", prop.Name);

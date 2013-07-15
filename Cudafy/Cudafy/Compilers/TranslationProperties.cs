@@ -159,6 +159,8 @@ namespace Cudafy
         public static eLanguage GetLanguage(eArchitecture arch)
         {
             //return (((uint)arch & (uint)eArchitecture.OpenCL) == (uint)32768) ? eLanguage.OpenCL : eLanguage.Cuda;
+            if (arch == eArchitecture.Unknown)
+                return CudafyModes.Language;
             return arch.HasFlag((eArchitecture)32768) ? eLanguage.OpenCL : eLanguage.Cuda;
         }
 
