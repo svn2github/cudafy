@@ -133,11 +133,11 @@ namespace Cudafy
 
         private string ChangeOutputFilename(string newname)
         {          
-            if (Path.HasExtension(OutputFile))
-            {
-                string ext = Path.GetExtension(OutputFile);
-                newname = Path.GetFileNameWithoutExtension(newname) +  ext;
-            }
+            //if (Path.HasExtension(OutputFile))
+            //{
+            //    string ext = Path.GetExtension(OutputFile);
+            //    newname = Path.GetFileNameWithoutExtension(newname) +  ext;
+            //}
             _outputFile = newname;
             return newname;
         }
@@ -208,7 +208,10 @@ namespace Cudafy
                 tp.InputFile = cuFileName;
                 tp.OutputFile = outputFileName;
                 if ((mode & eCudafyCompileMode.DynamicParallelism) == eCudafyCompileMode.DynamicParallelism)
+                {
                     tp.AdditionalInputArgs = "cudadevrt.lib  cublas_device.lib  -dlink";
+                    
+                }
             }
             else
             {

@@ -71,8 +71,8 @@ namespace Cudafy.Host.UnitTests
         [Cudafy]//(eCudafyType.Device)]
         public static void childKernel(GThread thread, int[] a, int[] c, short coeff)
         {
-            int tid = thread.blockIdx.x + N - N;
-            if (tid < a.Length)
+            int tid = thread.blockIdx.x;// +N - N;
+            //if (tid < a.Length)
                 c[tid] = a[tid] * coeff;
         }
 
@@ -88,7 +88,7 @@ namespace Cudafy.Host.UnitTests
             //childKernel(thread, a, c, coeff);
             int rc;
             //BROKEN thread.Launch(N / 2, numberYouFirstThoughtOf() * coeff, "childKernel", a, c, numberYouFirstThoughtOf() * coeff + 23 * a[0]);
-            thread.Launch(N / 2, coeff, "childKernel", a, c, numberYouFirstThoughtOf() * coeff + 23 * a[0]);
+            thread.Launch(N, 1, "childKernel", a, c, coeff * numberYouFirstThoughtOf());//a[0]);//numberYouFirstThoughtOf() * coeff + 23 * 
             rc = thread.SynchronizeDevice();
             int count = 0;
             rc = thread.GetDeviceCount(ref count);
@@ -119,7 +119,7 @@ namespace Cudafy.Host.UnitTests
             _gpu.Launch(N, 1, "parentKernel", dev_a, dev_c, coeff);
             _gpu.CopyFromDevice(dev_c, c);
             for (int i = 0; i < N; i++)
-                Assert.AreEqual(i * coeff, c[i]);
+                Assert.AreEqual(coeff * numberYouFirstThoughtOf() * a[i], c[i]);
             _gpu.Free(dev_a);      
         }
     }
