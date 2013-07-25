@@ -1080,6 +1080,19 @@ namespace Cudafy
             return true;
         }
 
+        /// <summary>
+        /// Clones the module. Useful for loading the same module to multiple GPUs.
+        /// </summary>
+        /// <returns>Cloned module.</returns>
+        public CudafyModule Clone()
+        {
+            MemoryStream ms = new MemoryStream();
+            this.Serialize(ms);
+            ms.Position = 0;
+            var cm = CudafyModule.Deserialize(ms);
+            return cm;
+        }
+
         private int GetTotalMembers()
         {
             return Functions.Count + Constants.Count + Types.Count;

@@ -23,9 +23,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using System.Threading;
 using System.Diagnostics;
 using Cudafy.Types;
+using Cudafy.Translator;
 using Cudafy.Host;
 using Cudafy.UnitTests;
 using NUnit.Framework;
@@ -186,12 +188,19 @@ namespace Cudafy.Host.UnitTests
         [Test]
         public void Test_TwoThreadTwoGPUVer2()
         {
+            eArchitecture arch = CudafyModes.Target == eGPUType.OpenCL ? eArchitecture.OpenCL : eArchitecture.sm_11;
+                      
             _gpu0 = CudafyHost.GetDevice(CudafyModes.Target, 0);
+            var cm = CudafyTranslator.Cudafy(arch, typeof(MultiGPUTests));
             _gpu0.SetCurrentContext();
+            _gpu0.LoadModule(cm);
             _gpuuintBufferIn0 = _gpu0.Allocate(_uintBufferIn0);
-
-            _gpu1 = CudafyHost.GetDevice(CudafyModes.Target, 1);                        
+            
+            _gpu1 = CudafyHost.GetDevice(CudafyModes.Target, 1);
+            // Cannot load same module to two devices, therefore need to clone.
+            var cm1 = cm.Clone();      
             _gpu1.SetCurrentContext();
+            _gpu1.LoadModule(cm1);
             _gpuuintBufferIn1 = _gpu1.Allocate(_uintBufferIn1);
 
             _gpu0.EnableMultithreading();
@@ -218,25 +227,30 @@ namespace Cudafy.Host.UnitTests
             Assert.IsTrue(j2);
         }
 
+        [Cudafy]
+        public static void SomeKernel(GThread thread, uint[] a)
+        {
+            int id = thread.get_global_id(0);
+            a[id] = a[id] * 42;
+        }
+
         private void Test_TwoThreadTwoGPU_Thread0V2()
         {
             _gpu0.Lock();
-            //_gpu0.SetCurrentContext();
             _gpu0.CopyToDevice(_uintBufferIn0, _gpuuintBufferIn0);
+            _gpu0.Launch(1, 1024, "SomeKernel", _gpuuintBufferIn0);
             _gpu0.CopyFromDevice(_gpuuintBufferIn0, _uintBufferOut0);
             Assert.IsTrue(Compare(_uintBufferIn0, _uintBufferOut0));
-            //_gpu0.Free(_gpuuintBufferIn0);
             _gpu0.Unlock();
         }
 
         private void Test_TwoThreadTwoGPU_Thread1V2()
         {
             _gpu1.Lock();
-            //_gpu1.SetCurrentContext();
             _gpu1.CopyToDevice(_uintBufferIn1, _gpuuintBufferIn1);
+            _gpu1.Launch(1, 1024, "SomeKernel", _gpuuintBufferIn1);
             _gpu1.CopyFromDevice(_gpuuintBufferIn1, _uintBufferOut1);
             Assert.IsTrue(Compare(_uintBufferIn1, _uintBufferOut1));
-            //_gpu1.Free(_gpuuintBufferIn1);
             _gpu1.Unlock();
         }
 

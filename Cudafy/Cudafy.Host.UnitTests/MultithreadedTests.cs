@@ -103,7 +103,7 @@ namespace Cudafy.Host.UnitTests
             _gpu.FreeAll();
         }
 
-       // [Test]
+        [Test]
         public void Test_TwoThreadCopy()
         {
             _gpu = CudafyHost.GetDevice(eGPUType.Cuda);

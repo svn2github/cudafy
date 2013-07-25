@@ -1055,7 +1055,8 @@ namespace Cudafy.Host
         }
 
         /// <summary>
-        /// Loads module from module instance optionally unloading all already loaded modules.
+        /// Loads module from module instance optionally unloading all already loaded modules. To load the same module to different GPUs you need
+        /// to first Clone the module with cudafyModuleInstance.Clone().
         /// </summary>
         /// <param name="module">The module.</param>
         /// <param name="unload">If true then unload any currently loaded modules first.</param>
