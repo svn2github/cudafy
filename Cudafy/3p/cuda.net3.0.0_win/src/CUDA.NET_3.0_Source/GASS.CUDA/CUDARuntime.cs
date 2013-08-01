@@ -84,7 +84,7 @@ namespace GASS.CUDA
 #if LINUX
         internal const string CUDART_DLL_NAME = "libcudart";
 #else
-        internal const string CUDART_DLL_NAME = "cudart64_50_35";
+        internal const string CUDART_DLL_NAME = "cudart64_55";
 #endif
         [DllImport(CUDART_DLL_NAME)]
         public static extern cudaError cudaBindTexture(ref SizeT offset, ref textureReference texref, CUdeviceptr devPtr, ref cudaChannelFormatDesc desc, SizeT size);
