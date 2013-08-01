@@ -111,8 +111,13 @@ namespace Cudafy
             string enumValue = element.TryGetAttributeValue(attributeName);
             if (enumValue == null)
                 return default(TEnum);
-            TEnum result;
-            bool rc = Enum.TryParse<TEnum>(enumValue, out result);
+            TEnum result = default(TEnum);
+            bool rc = true;
+#if NET35
+            rc = Utility.TryEnumParse<TEnum>(enumValue, out result);
+#else
+            rc = Enum.TryParse<TEnum>(enumValue, out result);
+#endif  
             if (!rc)
                 return default(TEnum);
             return result;
@@ -124,7 +129,11 @@ namespace Cudafy
             if (enumValue == null)
                 throw new XmlException(string.Format(GES.csATTRIBUTE_X_NOT_FOUND_FOR_NODE_X, attributeName, element.Name));
             TEnum result;
+#if NET35
+            bool rc = Utility.TryEnumParse<TEnum>(enumValue, out result);
+#else
             bool rc = Enum.TryParse<TEnum>(enumValue, out result);
+#endif
             if (!rc)
                 throw new XmlException(string.Format(GES.csATTRIBUTE_X_NOT_FOUND_FOR_NODE_X, attributeName, element.Name));
             return result;

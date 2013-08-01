@@ -126,7 +126,7 @@ namespace Cudafy.Host.UnitTests
             GPGPU gpu = CudafyHost.GetDevice(eGPUType.Cuda, 0);
             Console.WriteLine(gpu.GetDeviceProperties().Name);
             CudafyTranslator.Language = eLanguage.Cuda;
-            var mod = CudafyTranslator.Cudafy(typeof(OpenCLTestClass));
+            var mod = CudafyTranslator.Cudafy(CudafyModes.Architecture, typeof(OpenCLTestClass));
             //mod.CudaSourceCode
             Console.WriteLine(mod.SourceCode);
             gpu.LoadModule(mod);
@@ -149,7 +149,7 @@ namespace Cudafy.Host.UnitTests
             var km = CudafyModule.TryDeserialize(typeof(OpenCLTestClass).Name);
             if (km == null || !km.TryVerifyChecksums())
             {
-                km = CudafyTranslator.Cudafy(typeof(OpenCLTestClass));
+                km = CudafyTranslator.Cudafy(CudafyModes.Architecture, typeof(OpenCLTestClass));
                 km.TrySerialize();
             }
             Console.WriteLine(km.SourceCode);

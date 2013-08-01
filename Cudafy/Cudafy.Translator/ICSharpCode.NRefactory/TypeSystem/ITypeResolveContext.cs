@@ -3,8 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+#if WITH_CONTRACTS
 using System.Diagnostics.Contracts;
-
+#endif
 using ICSharpCode.NRefactory.Utils;
 
 namespace ICSharpCode.NRefactory.TypeSystem

@@ -900,7 +900,13 @@ namespace Cudafy
         public static CudafyModule Deserialize(Stream stream)
         {
             CudafyModule km = new CudafyModule();
+#if NET35
+            XmlReader reader = XmlReader.Create(stream);
+            XDocument doc = XDocument.Load(reader);
+#else
+            XmlReader reader = XmlReader.Create(stream);
             XDocument doc = XDocument.Load(stream);
+#endif
             return Deserialize(km, doc, null);
         }
 
@@ -1387,7 +1393,7 @@ namespace Cudafy
 #if DEBUG
 
 #else
-                    if (deleteGeneratedCode)
+                    if (p.DeleteGeneratedFiles)
                         Delete(p.InputFile, p.OutputFile);
 #endif
                     }

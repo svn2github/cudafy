@@ -89,7 +89,7 @@ namespace Cudafy
             string assemblyName = xe.Element(csASSEMBLYNAME).Value;
             string assemblyPath = xe.TryGetElementValue(csASSEMBLYPATH);
             long checksum = XmlConvert.ToInt64(xe.Element(csCHECKSUM).Value);
-            eCudafyDummyBehaviour behaviour = string.IsNullOrWhiteSpace(behaviourStr) ? eCudafyDummyBehaviour.Default : (eCudafyDummyBehaviour)Enum.Parse(typeof(eCudafyDummyBehaviour), behaviourStr);
+            eCudafyDummyBehaviour behaviour = string.IsNullOrEmpty(behaviourStr) ? eCudafyDummyBehaviour.Default : (eCudafyDummyBehaviour)Enum.Parse(typeof(eCudafyDummyBehaviour), behaviourStr);
             Type type = null;
             KernelTypeInfo kti = new KernelTypeInfo(null);
 

@@ -133,8 +133,7 @@ namespace CudafyByExample
             dim3 grids = new dim3(ray_gui.DIM / 16, ray_gui.DIM / 16);
             dim3 threads = new dim3(16, 16);
             //gpu.Launch(grids, threads).kernel(dev_bitmap); // Dynamic
-            gpu.Launch(grids, threads, ((Action<GThread, byte[]>)kernel), dev_bitmap); // Strongly typed
-
+            gpu.Launch(grids, threads, kernel, dev_bitmap);  // Strongly typed- compiler infers types from arguments
             // copy our bitmap back from the GPU for display
             gpu.CopyFromDevice(dev_bitmap, bitmap);
 

@@ -2,8 +2,9 @@
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
 using System;
+	#if WITH_CONTRACTS
 using System.Diagnostics.Contracts;
-
+#endif
 namespace ICSharpCode.NRefactory.TypeSystem
 {
 	/// <summary>

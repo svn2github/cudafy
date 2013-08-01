@@ -31,7 +31,7 @@ namespace Cudafy.Host.UnitTests
     {
         public static void Basics()
         {
-            CudafyModule cm = CudafyTranslator.Cudafy();
+            CudafyModule cm = CudafyTranslator.Cudafy(CudafyModes.Architecture);
             Console.WriteLine(cm.CompilerOutput);
             GPGPU gpu = CudafyHost.GetDevice();
             gpu.LoadModule(cm);

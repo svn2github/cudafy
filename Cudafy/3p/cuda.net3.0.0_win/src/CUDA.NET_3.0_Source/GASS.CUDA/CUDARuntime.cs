@@ -17,13 +17,24 @@ namespace GASS.CUDA
         internal const string DLL_NAME = "libcudart";
 #else
         internal const string DLL_NAME = "cudart64_55";
+        internal const string DLL_NAME_PREV = "cudart64_50_35";
 #endif
         [DllImport(DLL_NAME)]
         public static extern cudaError cudaGetDeviceProperties(ref cudaDeviceProp prop, int device);
 
+        [DllImport(DLL_NAME_PREV, EntryPoint = "cudaGetDeviceProperties")]
+        public static extern cudaError cudaGetDevicePropertiesPrev(ref cudaDeviceProp prop, int device);
+
         public cudaError GetDeviceProperties(ref cudaDeviceProp prop, int device)
         {
-            return cudaGetDeviceProperties(ref prop, device);
+            try
+            {
+                return cudaGetDeviceProperties(ref prop, device);
+            }
+            catch (DllNotFoundException)
+            {
+                return cudaGetDevicePropertiesPrev(ref prop, device);
+            }
         }
     }
 
@@ -34,13 +45,24 @@ namespace GASS.CUDA
         internal const string DLL_NAME = "libcudart";
 #else
         internal const string DLL_NAME = "cudart32_55";
+        internal const string DLL_NAME_PREV = "cudart32_50_35";
 #endif
         [DllImport(DLL_NAME)]
         public static extern cudaError cudaGetDeviceProperties(ref cudaDeviceProp prop, int device);
 
+        [DllImport(DLL_NAME_PREV, EntryPoint = "cudaGetDeviceProperties")]
+        public static extern cudaError cudaGetDevicePropertiesPrev(ref cudaDeviceProp prop, int device);
+
         public cudaError GetDeviceProperties(ref cudaDeviceProp prop, int device)
         {
-            return cudaGetDeviceProperties(ref prop, device);
+            try
+            {
+                return cudaGetDeviceProperties(ref prop, device);
+            }
+            catch (DllNotFoundException)
+            {
+                return cudaGetDevicePropertiesPrev(ref prop, device);
+            }
         }
     }
 

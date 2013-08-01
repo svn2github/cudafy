@@ -81,7 +81,8 @@ namespace Cudafy
         {
             get
             {
-                return Architecture.HasFlag((eArchitecture)32768) ? eLanguage.OpenCL : eLanguage.Cuda;
+                return (((uint)Architecture & (uint)32768) == (uint)32768) ? eLanguage.OpenCL : eLanguage.Cuda;
+                //return Architecture.HasFlag((eArchitecture)32768) ? eLanguage.OpenCL : eLanguage.Cuda;
             }
         }
 
@@ -105,6 +106,8 @@ namespace Cudafy
         public string AdditionalOutputArgs { get; set; }
 
         public bool GenerateDebugInfo { get; set; }
+
+        public bool DeleteGeneratedFiles { get; set; }
 
         /// <summary>
         /// Gets or sets the time out for compilation.
@@ -161,12 +164,14 @@ namespace Cudafy
             //return (((uint)arch & (uint)eArchitecture.OpenCL) == (uint)32768) ? eLanguage.OpenCL : eLanguage.Cuda;
             if (arch == eArchitecture.Unknown)
                 return CudafyModes.Language;
-            return arch.HasFlag((eArchitecture)32768) ? eLanguage.OpenCL : eLanguage.Cuda;
+            //return arch.HasFlag((eArchitecture)32768) ? eLanguage.OpenCL : eLanguage.Cuda;
+            return (((uint)arch & (uint)32768) == (uint)32768) ? eLanguage.OpenCL : eLanguage.Cuda;
         }
 
         public static eGPUType GetGPUType(eArchitecture arch)
         {
-            return arch.HasFlag((eArchitecture)32768) ? eGPUType.OpenCL : eGPUType.Cuda;
+            //return arch.HasFlag((eArchitecture)32768) ? eGPUType.OpenCL : eGPUType.Cuda;
+            return (((uint)arch & (uint)32768) == (uint)32768) ? eGPUType.OpenCL : eGPUType.Cuda;
         }
         
         public static CompileProperties Create(ePlatform platform = ePlatform.Auto, eArchitecture arch = eArchitecture.sm_13, eCudafyCompileMode mode = eCudafyCompileMode.Default, string workingDir = null, bool debugInfo = false)

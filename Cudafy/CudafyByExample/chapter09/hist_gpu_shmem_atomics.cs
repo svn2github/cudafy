@@ -71,6 +71,17 @@ namespace CudafyByExample
             gpu.LoadModule(km);
 
             byte[] buffer = big_random_block(SIZE);
+
+            // cudart.dll must be accessible!
+            GPGPUProperties prop = null;
+            try
+            {
+                prop = gpu.GetDeviceProperties(true);
+            }
+            catch (DllNotFoundException)
+            {
+                prop = gpu.GetDeviceProperties(false);
+            }
             
             // capture the start time
             // starting the timer here so that we include the cost of
@@ -84,10 +95,7 @@ namespace CudafyByExample
             uint[] dev_histo = gpu.Allocate<uint>(256);
             gpu.Set(dev_histo);
 
-            // kernel launch - 2x the number of mps gave best timing
-            GPGPUProperties prop = gpu.GetDeviceProperties(false);
-
-            // cudart.dll must be accessible!
+            // kernel launch - 2x the number of mps gave best timing          
             int blocks = prop.MultiProcessorCount;
             if (blocks == 0)
                 blocks = 16;

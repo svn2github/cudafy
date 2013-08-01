@@ -17,7 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+#if !NET35
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Linq;
 
@@ -25,7 +27,7 @@ using ICSharpCode.Decompiler.Ast;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.ILAst;
 using Mono.Cecil;
-
+using Cudafy;
 namespace ICSharpCode.Decompiler
 {
 	public enum DecompiledLanguages

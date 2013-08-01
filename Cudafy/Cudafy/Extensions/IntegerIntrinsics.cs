@@ -23,7 +23,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+#if !NET35
 using System.Numerics;
+#endif
 namespace Cudafy.IntegerIntrinsics
 {
 
@@ -137,10 +139,14 @@ namespace Cudafy.IntegerIntrinsics
         /// <returns>Returns the most significant 64 bits of the product x * y.</returns>
         public static long mul64hi(this GThread thread, long x, long y)
         {
+#if !NET35
             BigInteger product = BigInteger.Multiply(x, y);
             product = product >> 64;
             long l = (long)product;
             return l;
+#else
+            throw new NotSupportedException();
+#endif
         }
 
         /// <summary>
@@ -167,10 +173,14 @@ namespace Cudafy.IntegerIntrinsics
         /// <returns>Returns the most significant 64 bits of the product x * y.</returns>
         public static ulong umul64hi(this GThread thread, ulong x, ulong y)
         {
+#if !NET35
             BigInteger product = BigInteger.Multiply(x, y);
             product = product >> 64;
             ulong l = (ulong)product;
             return l;
+#else
+            throw new NotSupportedException();
+#endif
         }
 
         /// <summary>

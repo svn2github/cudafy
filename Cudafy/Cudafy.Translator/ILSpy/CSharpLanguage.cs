@@ -19,13 +19,16 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+#if !NET35
 using System.ComponentModel.Composition;
+using System.Threading.Tasks;
+#endif
 using System.IO;
 using System.Linq;
 using System.Resources;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+
 //using System.Xaml;
 using System.Xml;
 using ICSharpCode.Decompiler;
@@ -41,7 +44,9 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Decompiler logic for C#.
 	/// </summary>
+#if !NET35
 	[Export(typeof(Language))]
+#endif
 	public class CSharpLanguage : Language
 	{
 		string name = "C#";

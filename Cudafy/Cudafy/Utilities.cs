@@ -116,11 +116,31 @@ namespace Cudafy
             }
         }
     }
+#if NET35
+    public class Tuple<T1, T2>
+    {
+        public T1 First { get; private set; }
+        public T2 Second { get; private set; }
+        internal Tuple(T1 first, T2 second)
+        {
+            First = first;
+            Second = second;
+        }
+    }
 
+    public static class Tuple
+    {
+        public static Tuple<T1, T2> New<T1, T2>(T1 first, T2 second)
+        {
+            var tuple = new Tuple<T1, T2>(first, second);
+            return tuple;
+        }
+    }
+#endif
     /// <summary>
     /// Utility methods.
     /// </summary>
-    public class Utility
+    public static class Utility
     {
         /// <summary>
         /// Dumps supplied text to file.
@@ -214,6 +234,33 @@ namespace Cudafy
                 fa[i * 2 + 1] = cplx[i].y;
             }
             return fa;
+        }
+#if NET35
+        /// <summary>
+        ///     Clears the contents of the string builder.
+        /// </summary>
+        /// <param name="value">
+        ///     The <see cref="StringBuilder"/> to clear.
+        /// </param>
+        public static void Clear(this StringBuilder value)
+        {
+            value.Length = 0;
+            value.Capacity = 0;
+        }
+#endif
+        public static bool TryEnumParse<TEnum>(string enumValue, out TEnum result)
+        {
+            result = default(TEnum);
+            bool rc = true;
+            try
+            {
+                result = (TEnum)Enum.Parse(typeof(TEnum), enumValue);
+            }
+            catch (Exception)
+            {
+                rc = false;
+            }
+            return rc;
         }
     }
 

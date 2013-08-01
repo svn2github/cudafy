@@ -45,7 +45,11 @@ namespace Cudafy.Host
             if (IntPtr.Size == 8)
                 hostArrOffset = new IntPtr(pt.ToInt64() + offset * (long)Marshal.SizeOf(typeof(T)));
             else
-                hostArrOffset = IntPtr.Add(pt, (int)offset * Marshal.SizeOf(typeof(T))); // eventual truncation is of the user's responsability
+#if NET35
+                hostArrOffset = new IntPtr(pt.ToInt32() + offset * (int)Marshal.SizeOf(typeof(T)));
+#else
+            hostArrOffset = IntPtr.Add(pt, (int)offset * Marshal.SizeOf(typeof(T)));// eventual truncation is of the user's responsability
+#endif
             return hostArrOffset;
         }
 
