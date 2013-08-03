@@ -319,6 +319,8 @@ namespace Cudafy.Translator
         public static CudafyModule Cudafy(ePlatform platform, eArchitecture arch, Version cudaVersion, bool compile, params Type[] types)
         {
             var cp = CompilerHelper.Create(ePlatform.Auto, arch, eCudafyCompileMode.Default, WorkingDirectory, GenerateDebug);
+            if (!compile)
+                cp.CompileMode = eCudafyCompileMode.TranslateOnly;
             return Cudafy(cp, types);
         }
 

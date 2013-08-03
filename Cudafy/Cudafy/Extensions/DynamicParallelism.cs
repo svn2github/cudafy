@@ -26,6 +26,9 @@ using System.Threading;
 
 namespace Cudafy.DynamicParallelism
 {
+    /// <summary>
+    /// Extension methods for dynamic parallelism.  Compute 3.5 or higher.
+    /// </summary>
     public static class DynamicParallelismFunctions
     {
         private const string csErrorMsg = "Emulation of dynamic parallelism.";
@@ -39,22 +42,31 @@ namespace Cudafy.DynamicParallelism
         ///  NOTE: Compute Capability 3.5 and later only. Dynamic parallelism. Call from a single thread.
         ///  Not supported by emulator.
         /// </summary>
-        /// <param name="gridSize"></param>
-        /// <param name="blockSize"></param>
-        /// <param name="functionName"></param>
-        /// <param name="args"></param>
+        /// <param name="gridSize">Size of grid.</param>
+        /// <param name="blockSize">Size of block.</param>
+        /// <param name="functionName">Name of function to launch.</param>
+        /// <param name="args">Arguments.</param>
         public static int Launch(this GThread thread, dim3 gridSize, dim3 blockSize, string functionName, params object[] args)
         {
             ThrowNotSupported();
             return 0;
         }
 
+        /// <summary>
+        /// Synchronizes threads.
+        /// </summary>
+        /// <returns></returns>
         public static int SynchronizeDevice(this GThread thread)
         {
             ThrowNotSupported();
             return 0;
         }
 
+        /// <summary>
+        /// Gets the last error.
+        /// </summary>
+        /// <param name="thread"></param>
+        /// <returns>Int32 representation of last error.</returns>
         public static int GetLastError(this GThread thread)
         {
             ThrowNotSupported();
@@ -67,12 +79,24 @@ namespace Cudafy.DynamicParallelism
         //    return string.Empty;
         //}
 
+        /// <summary>
+        /// Gets the number of devices.
+        /// </summary>
+        /// <param name="thread"></param>
+        /// <param name="count">Number of devices.</param>
+        /// <returns></returns>
         public static int GetDeviceCount(this GThread thread, ref int count)
         {
             ThrowNotSupported();
             return 0;
         }
 
+        /// <summary>
+        /// Gets the current device ID.
+        /// </summary>
+        /// <param name="thread"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public static int GetDeviceID(this GThread thread, ref int id)
         {
             ThrowNotSupported();
