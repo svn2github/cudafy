@@ -182,21 +182,21 @@ namespace Cudafy
             {
                 // Get ProgramFiles directory and CUDA directories
                 // Get architecture
-                string progFiles = null;
-                switch (platform)
-                {
-                    case ePlatform.x64:
-                        progFiles = Utility.ProgramFilesx64();
-                        break;
-                    case ePlatform.x86:
-                        progFiles = Utility.ProgramFilesx86();
-                        break;
-                    default:
-                        progFiles = Utility.ProgramFiles();
-                        if (platform == ePlatform.Auto)
-                            platform = IntPtr.Size == 4 ? ePlatform.x86 : ePlatform.x64;
-                        break;
-                }
+                string progFiles = Utility.ProgramFiles();
+                //switch (platform)
+                //{
+                //    case ePlatform.x64:
+                //        progFiles = Utility.ProgramFilesx64();
+                //        break;
+                //    case ePlatform.x86:
+                //        progFiles = Utility.ProgramFilesx86();
+                //        break;
+                //    default:
+                //        progFiles = Utility.ProgramFiles();
+                //        if (platform == ePlatform.Auto)
+                //            platform = IntPtr.Size == 4 ? ePlatform.x86 : ePlatform.x64;
+                //        break;
+                //}
                 string toolkitbasedir = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT;
                 Version selVer;
                 string cvStr = GetCudaVersion(toolkitbasedir, out selVer);

@@ -201,7 +201,9 @@ namespace Cudafy
 
         public static string ProgramFiles()
         {
-            return Environment.GetEnvironmentVariable("ProgramFiles");
+            //return Environment.GetEnvironmentVariable("ProgramFiles");
+            string s = Environment.Is64BitOperatingSystem ? Environment.GetEnvironmentVariable("ProgramW6432") : Environment.GetEnvironmentVariable("ProgramFiles"); 
+            return s;
         }
 
         /// <summary>
