@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using System.Text;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using Cudafy.Host;
@@ -51,9 +52,10 @@ namespace Cudafy.Host.UnitTests
             _gpu = CudafyHost.GetDevice(CudafyModes.Architecture, CudafyModes.DeviceId);
             if (_cm == null || !_cm.TryVerifyChecksums())
             {
-                _cm = CudafyTranslator.Cudafy(_gpu.GetArchitecture(), this.GetType(), (_gpu is OpenCLDevice) ? null  : typeof(StringConstClass));              
+                _cm = CudafyTranslator.Cudafy(_gpu.GetArchitecture(), this.GetType(), (_gpu is OpenCLDevice) ? null : typeof(StringConstClass));
                 _cm.TrySerialize();
             }
+
             _gpu.LoadModule(_cm);
         }
 

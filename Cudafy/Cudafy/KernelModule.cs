@@ -344,7 +344,8 @@ namespace Cudafy
         /// </returns>
         public bool HasPTXForPlatform(ePlatform platform, eArchitecture arch)
         {
-            return _PTXModules.Count(b => b.Platform == platform && b.Architecture <= arch) > 0;
+            ePlatform currPlatform = platform == ePlatform.Auto ? CurrentPlatform : platform;
+            return _PTXModules.Count(b => b.Platform == currPlatform && b.Architecture <= arch) > 0;
         }
 
         /// <summary>
@@ -367,7 +368,8 @@ namespace Cudafy
         /// </returns>
         public bool HasPTXForPlatform(ePlatform platform)
         {
-            return _PTXModules.Count(ptx => ptx.Platform == platform) > 0;
+            ePlatform currPlatform = platform == ePlatform.Auto ? CurrentPlatform : platform;
+            return _PTXModules.Count(ptx => ptx.Platform == currPlatform) > 0;
         }
 
         /// <summary>
@@ -417,7 +419,8 @@ namespace Cudafy
         /// </returns>
         public bool HasBinaryForPlatform(ePlatform platform, eArchitecture arch)
         {
-            return _BinaryModules.Count(b => b.Platform == platform && b.Architecture == arch) > 0;
+            ePlatform currPlatform = platform == ePlatform.Auto ? CurrentPlatform : platform;
+            return _BinaryModules.Count(b => b.Platform == currPlatform && b.Architecture == arch) > 0;
         }
 
         /// <summary>
@@ -429,7 +432,8 @@ namespace Cudafy
         /// </returns>
         public bool HasBinaryForPlatform(ePlatform platform)
         {
-            return _BinaryModules.Count(b => b.Platform == platform) > 0;
+            ePlatform currPlatform = platform == ePlatform.Auto ? CurrentPlatform : platform;
+            return _BinaryModules.Count(b => b.Platform == currPlatform) > 0;
         }
 
         internal void StorePTXFile(string sourceCodeFileId, ePlatform platform, eArchitecture arch, string path)
@@ -904,7 +908,6 @@ namespace Cudafy
             XmlReader reader = XmlReader.Create(stream);
             XDocument doc = XDocument.Load(reader);
 #else
-            XmlReader reader = XmlReader.Create(stream);
             XDocument doc = XDocument.Load(stream);
 #endif
             return Deserialize(km, doc, null);
