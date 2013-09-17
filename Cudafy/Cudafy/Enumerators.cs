@@ -348,4 +348,23 @@ namespace Cudafy
         /// </summary>
         TranslateOnly = 8
     }
+    
+    /// <summary>
+    /// Controls the inline type.
+    /// </summary>
+    public enum eCudafyInlineMode 
+    { 
+        /// <summary>
+        /// Default - let the compiler choose.
+        /// </summary>
+        Auto,
+        /// <summary>
+        /// __noinline__
+        /// </summary>
+        No, 
+        /// <summary>
+        /// __forceinline__
+        /// </summary>
+        Force
+    };
 }

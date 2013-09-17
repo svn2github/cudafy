@@ -45,7 +45,18 @@ namespace Cudafy.Host
             : base(deviceId)
         {            
             _lock = new object();
-            _availableBytesPerfctr = new PerformanceCounter("Memory", "Available Bytes");
+            try
+            {
+                _availableBytesPerfctr = new PerformanceCounter("Memory", "Available Bytes");
+            }
+            catch (Exception ex)
+            {
+                _availableBytesPerfctr = null;
+                Debug.WriteLine(ex.Message);
+#if DEBUG
+                throw;
+#endif 
+            }
         }
 
         ///// <summary>
@@ -137,7 +148,18 @@ namespace Cudafy.Host
         /// <value>The free memory.</value>
         public override ulong FreeMemory
         {
-            get { return (ulong)_availableBytesPerfctr.NextValue(); }
+            get 
+            { 
+                if(_availableBytesPerfctr == null)
+                    _availableBytesPerfctr = new PerformanceCounter("Memory", "Available Bytes");
+                return (ulong)_availableBytesPerfctr.NextValue(); 
+            }
+        }
+
+        // http://stackoverflow.com/questions/105031/how-do-you-get-total-amount-of-ram-the-computer-has
+        static ulong GetTotalMemoryInBytes()
+        {
+            return new Microsoft.VisualBasic.Devices.ComputerInfo().TotalPhysicalMemory;
         }
 
         /// <summary>
@@ -148,7 +170,7 @@ namespace Cudafy.Host
         /// </value>
         public override ulong TotalMemory
         {
-            get { return (ulong)_availableBytesPerfctr.NextValue(); }
+            get { return GetTotalMemoryInBytes(); }
         }
 
         public override bool CanAccessPeer(GPGPU peer)

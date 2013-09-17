@@ -34,9 +34,9 @@ namespace Cudafy
     public static class CV
     {
         /// <summary>
-        /// Version 1.25.*
+        /// Version 1.26.*
         /// </summary>
-        public const string csVERSION = "1.25.*";
+        public const string csVERSION = "1.26.*";
     }
 
     /// <summary>

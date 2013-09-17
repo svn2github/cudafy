@@ -47,8 +47,19 @@ namespace Cudafy.Host
                 Capability = new Version(0, 0);
                 Name = "Simulator";
                 DeviceId = 0;
-                PerformanceCounter pc = new PerformanceCounter("Memory", "Available Bytes");
-                ulong freeMem = Convert.ToUInt64(pc.NextValue());
+                ulong freeMem = Int32.MaxValue;
+                try
+                {
+                    PerformanceCounter pc = new PerformanceCounter("Memory", "Available Bytes");
+                    freeMem = Convert.ToUInt64(pc.NextValue());
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+#if DEBUG
+                    throw;
+#endif 
+                }
                 TotalMemory = freeMem;
                 MaxGridSize = new dim3(65536, 65536);
                 MaxThreadsSize = new dim3(1024, 1024);

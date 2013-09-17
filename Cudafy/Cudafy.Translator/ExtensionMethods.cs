@@ -41,20 +41,32 @@ namespace Cudafy.Translator
 
         private static string csCUDAFYIGNOREATTRIBUTE = typeof(CudafyIgnoreAttribute).Name;
 
+        private static string csCUDAFYINLINEATTRIBUTE = typeof(CudafyInlineAttribute).Name;
+
 #pragma warning disable 1591
         public static eCudafyType? GetCudafyType(this ICustomAttributeProvider med, out bool isDummy, out eCudafyDummyBehaviour behaviour)
         {
             bool ignore;
-            return GetCudafyType(med, out isDummy, out ignore, out behaviour);
+            eCudafyInlineMode inlineMode;
+            return GetCudafyType(med, out isDummy, out ignore, out behaviour, out inlineMode);
         }
 
-        public static eCudafyType? GetCudafyType(this ICustomAttributeProvider med, out bool isDummy, out bool ignore, out eCudafyDummyBehaviour behaviour)
+        public static eCudafyType? GetCudafyType(this ICustomAttributeProvider med, out bool isDummy, out bool ignore, out eCudafyDummyBehaviour behaviour, out eCudafyInlineMode inlineMode)
         {
             isDummy = false;
             behaviour = eCudafyDummyBehaviour.Default;
+            inlineMode = eCudafyInlineMode.Auto;
             ignore = false;
             if (med is TypeDefinition)
                 med = med as TypeDefinition;
+
+            var customInline = med.CustomAttributes.Where(ca => ca.AttributeType.Name == csCUDAFYINLINEATTRIBUTE).FirstOrDefault();
+            if (customInline != null)
+            {
+                if (customInline.ConstructorArguments.Count() > 0)
+                    inlineMode = (eCudafyInlineMode)customInline.ConstructorArguments.First().Value;
+            }
+
             var customAttr = med.CustomAttributes.Where(ca => ca.AttributeType.Name == csCUDAFYATTRIBUTE).FirstOrDefault();
             if (customAttr == null)
             {

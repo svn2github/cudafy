@@ -955,9 +955,26 @@ namespace Cudafy.Host.UnitTests
             c[0] = total;
         }
 
+        [Cudafy]
+        [CudafyInline(eCudafyInlineMode.Force)]
+        public static int inlineForce(int a, int b)
+        {
+            return 42;
+        }
 
+        [Cudafy]
+        [CudafyInline(eCudafyInlineMode.No)]
+        public static int inlineNot(int a, int b)
+        {
+            return 42;
+        }
 
-
+        [Cudafy]
+        [CudafyInline(eCudafyInlineMode.Auto)]
+        public static int inlineAuto(int a, int b)
+        {
+            return 42;
+        }
 
         //[Cudafy]
         //public static void barrierAnyTest(GThread thread, int[] a, int[] res)

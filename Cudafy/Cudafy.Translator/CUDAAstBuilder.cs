@@ -61,6 +61,7 @@ namespace Cudafy.Translator
     {
         public eCudafyType? CudafyType { get; set; }
         public bool IsDummy { get; set; }
+        public eCudafyInlineMode InlineMode { get; set; }
     }
 
     public class FieldDeclarationEx : FieldDeclaration
@@ -799,8 +800,9 @@ namespace Cudafy.Translator
         {
             bool isDummy = false;
             bool ignore = false;
+            eCudafyInlineMode inlineMode;
             eCudafyDummyBehaviour behaviour;
-            var cudafyAttr = methodDef.GetCudafyType(out isDummy, out ignore, out behaviour);
+            var cudafyAttr = methodDef.GetCudafyType(out isDummy, out ignore, out behaviour, out inlineMode);
             if (cudafyAttr == null)
                 cudafyAttr = eCudafyType.Auto;
             
@@ -843,6 +845,7 @@ namespace Cudafy.Translator
 
             astMethod.CudafyType = cudafyAttr.Value;
             astMethod.IsDummy = isDummy;
+            astMethod.InlineMode = inlineMode;
 
             // Convert MethodDeclaration to OperatorDeclaration if possible
             if (methodDef.IsSpecialName && !methodDef.HasGenericParameters)

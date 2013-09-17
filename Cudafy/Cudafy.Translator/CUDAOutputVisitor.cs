@@ -2490,7 +2490,7 @@ namespace Cudafy.Translator
 			//WriteModifiers(constructorDeclaration.ModifierTokens);
             if (CudafyTranslator.Language == eLanguage.OpenCL)
                 throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED_IN_X, "Constructor", "OpenCL");
-            WriteKeyword("__device__");
+            WriteKeyword(CudafyTranslator.LanguageSpecifics.DeviceFunctionModifiers);
             TypeDeclaration type = constructorDeclaration.Parent as TypeDeclaration;
 			TypeDeclarationEx typeEx = constructorDeclaration.Parent as TypeDeclarationEx;
             if (typeEx != null)
@@ -2784,12 +2784,14 @@ namespace Cudafy.Translator
 		public object VisitMethodDeclaration(MethodDeclaration methodDeclaration, object data)
 		{
             eCudafyType? ct = eCudafyType.Auto;
+            eCudafyInlineMode inlineMode = eCudafyInlineMode.Auto;
             bool isDummy = false;
             var methodDeclarationEx = methodDeclaration as MethodDeclarationEx;
             if (methodDeclarationEx != null)
             {
                 ct = methodDeclarationEx.CudafyType;
                 isDummy = methodDeclarationEx.IsDummy;
+                inlineMode = methodDeclarationEx.InlineMode;
             }
 
             StartNode(methodDeclaration);
@@ -2802,6 +2804,7 @@ namespace Cudafy.Translator
             {
                 WriteAttributes(methodDeclaration.Attributes);
                 WriteCUDAModifiers(methodDeclaration.ModifierTokens, methodDeclaration.ReturnType, ct.Value);
+                WriteInlineModifiers(inlineMode);
                 methodDeclaration.ReturnType.AcceptVisitor(this, data);
                 Space();
                 WritePrivateImplementationType(methodDeclaration.PrivateImplementationType);
@@ -2825,6 +2828,11 @@ namespace Cudafy.Translator
                 formatter.WriteKeyword(CudafyTranslator.LanguageSpecifics.KernelFunctionModifiers);//@"extern ""C"" __global__ ");
             else
                 formatter.WriteKeyword(CudafyTranslator.LanguageSpecifics.DeviceFunctionModifiers);//@"__device__ ");
+        }
+
+        void WriteInlineModifiers(eCudafyInlineMode mode)
+        {
+            formatter.WriteKeyword(CudafyTranslator.LanguageSpecifics.GetInlineModifier(mode));
         }
 		
 		public object VisitOperatorDeclaration(OperatorDeclaration operatorDeclaration, object data)

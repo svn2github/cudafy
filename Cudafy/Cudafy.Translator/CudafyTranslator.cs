@@ -652,6 +652,18 @@ namespace Cudafy.Translator
             }
         }
 
+        public string GetInlineModifier(eCudafyInlineMode mode)
+        {
+            if (Language != eLanguage.Cuda)
+                return " ";
+            if(mode == eCudafyInlineMode.Force)
+                return "__forceinline__ ";
+            else if(mode == eCudafyInlineMode.No)
+                return "__noinline__ ";
+            return " ";
+        }
+
+
         public string GetAddressSpaceQualifier(eCudafyAddressSpace qualifier)
         {
             string addressSpaceQualifier = string.Empty;

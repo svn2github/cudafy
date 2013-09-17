@@ -139,4 +139,30 @@ namespace Cudafy
         
         public eCudafyAddressSpace Qualifier { get; private set; }
     }
+
+    /// <summary>
+    /// Optionally placed on methods to indicate whether the method should be inlined or not.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method)]
+    public class CudafyInlineAttribute : Attribute
+    {
+        public CudafyInlineAttribute()
+        {
+            Mode = eCudafyInlineMode.Force;
+        }
+        
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="mode"></param>
+        public CudafyInlineAttribute(eCudafyInlineMode mode)
+        {
+            Mode = mode;
+        }
+
+        /// <summary>
+        /// Gets the inline mode.
+        /// </summary>
+        public eCudafyInlineMode Mode { get; private set; }
+    }
 }
