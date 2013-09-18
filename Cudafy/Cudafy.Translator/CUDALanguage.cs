@@ -289,6 +289,7 @@ namespace Cudafy.Translator
             SpecialProperties.Add(new SpecialMember("System.String", "Length", new Func<MemberReferenceExpression, object, string>(TranslateStringLength)));
 
             SpecialTypes.Clear();
+            SpecialTypes.Add("IntPtr", new SpecialTypeProps() { Name = "void", OptionalHeader = null });
 
             OptionalHeaders = new List<OptionalHeader>();
 

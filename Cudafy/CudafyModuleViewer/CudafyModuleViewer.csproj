@@ -101,10 +101,6 @@
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Cudafy.NET, Version=1.6.4361.40769, Culture=neutral, PublicKeyToken=63a4c9931616906b, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Cudafy.NET\bin\Release\Cudafy.NET_Secure\Cudafy.NET.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -168,6 +164,16 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="CUDAfy2.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Cudafy.Translator\Cudafy.Translator.csproj">
+      <Project>{c971e684-9147-49ca-88da-fd8c2d94b944}</Project>
+      <Name>Cudafy.Translator</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Cudafy\Cudafy.csproj">
+      <Project>{16a11768-583a-47db-a9a3-c7e4173073a5}</Project>
+      <Name>Cudafy</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

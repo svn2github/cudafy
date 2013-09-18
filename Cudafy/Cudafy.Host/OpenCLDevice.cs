@@ -508,9 +508,10 @@ kernel void VectorAdd(
             {
                 program.Build(null, null, null, IntPtr.Zero);
             }
-            catch (Exception)
-            {
-                throw;
+            catch (Exception ex)
+            {                
+                module.CompilerOutput = program.GetBuildLog(_computeDevice);
+                throw new CudafyCompileException(ex, CudafyCompileException.csCOMPILATION_ERROR_X, module.CompilerOutput); ;
             }
             finally
             {

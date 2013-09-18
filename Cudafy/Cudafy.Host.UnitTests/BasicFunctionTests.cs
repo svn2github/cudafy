@@ -976,6 +976,15 @@ namespace Cudafy.Host.UnitTests
             return 42;
         }
 
+        [Cudafy]
+        public static void fixedVoidPointer(int[] a)
+        {
+            fixed (int* ptr = a)
+            {
+
+            }
+        }
+
         //[Cudafy]
         //public static void barrierAnyTest(GThread thread, int[] a, int[] res)
         //{
