@@ -251,6 +251,7 @@ namespace Cudafy.Host.UnitTests
             for (int i = 0; i < data.Length; i++)
                 data[i] = rand.Next();
             stagingPost.Write(data);
+            //_gpu.CopyToConstantMemory(data, 0, constant_data, 0, n);
             _gpu.CopyToConstantMemoryAsync(stagingPost, 0, constant_data, 0, n, 1);
             _gpu.SynchronizeStream(1);
             _gpu.Launch(1, 1, "ReadConstantMemory", res_dev, res.Length);

@@ -43,7 +43,7 @@ namespace Cudafy.Host.UnitTests
                 CudafyModes.Architecture = CudafyHost.GetDevice(eGPUType.Cuda, CudafyModes.DeviceId).GetArchitecture(); //eArchitecture.sm_35; // *** Change this to the architecture of your target board ***
                 CudafyModes.Target = CompilerHelper.GetGPUType(CudafyModes.Architecture);
 
-                if (CudafyModes.Target != eGPUType.OpenCL)
+                if (CudafyModes.Target == eGPUType.Cuda)
                 {
                     CURANDTests.Basics();
                 }

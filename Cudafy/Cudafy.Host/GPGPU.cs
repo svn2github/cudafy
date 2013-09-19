@@ -299,6 +299,13 @@ namespace Cudafy.Host
 
             switch (capability.Major)
             {
+                case 0:
+                    switch (capability.Minor)
+                    {
+                        case 1: return eArchitecture.Emulator;
+                        default:
+                            throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, capability.ToString());
+                    }
 
                 case 1:
 

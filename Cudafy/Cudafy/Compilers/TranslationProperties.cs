@@ -171,6 +171,8 @@ namespace Cudafy
         public static eGPUType GetGPUType(eArchitecture arch)
         {
             //return arch.HasFlag((eArchitecture)32768) ? eGPUType.OpenCL : eGPUType.Cuda;
+            if (arch == eArchitecture.Emulator)
+                return eGPUType.Emulator;
             return (((uint)arch & (uint)32768) == (uint)32768) ? eGPUType.OpenCL : eGPUType.Cuda;
         }
         
@@ -180,23 +182,8 @@ namespace Cudafy
             eLanguage language = GetLanguage(arch);
             if (language == eLanguage.Cuda)
             {
-                // Get ProgramFiles directory and CUDA directories
-                // Get architecture
                 string progFiles = Utility.ProgramFiles();
-                //switch (platform)
-                //{
-                //    case ePlatform.x64:
-                //        progFiles = Utility.ProgramFilesx64();
-                //        break;
-                //    case ePlatform.x86:
-                //        progFiles = Utility.ProgramFilesx86();
-                //        break;
-                //    default:
-                //        progFiles = Utility.ProgramFiles();
-                //        if (platform == ePlatform.Auto)
-                //            platform = IntPtr.Size == 4 ? ePlatform.x86 : ePlatform.x64;
-                //        break;
-                //}
+
                 string toolkitbasedir = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT;
                 Version selVer;
                 string cvStr = GetCudaVersion(toolkitbasedir, out selVer);
@@ -214,9 +201,10 @@ namespace Cudafy
                 tp.OutputFile = outputFileName;
                 if ((mode & eCudafyCompileMode.DynamicParallelism) == eCudafyCompileMode.DynamicParallelism)
                 {
-                    tp.AdditionalInputArgs = "cudadevrt.lib  cublas_device.lib  -dlink";
-                    
+                    tp.AdditionalInputArgs = "cudadevrt.lib  cublas_device.lib  -dlink";                    
                 }
+                if (arch == eArchitecture.Emulator)
+                    mode = eCudafyCompileMode.TranslateOnly;
             }
             else
             {
@@ -228,7 +216,6 @@ namespace Cudafy
             tp.Platform = platform;
             tp.CompileMode = mode;         
             tp.GenerateDebugInfo = debugInfo;
-
             
             return tp;
         }

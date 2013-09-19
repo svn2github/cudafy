@@ -52,7 +52,7 @@ namespace Cudafy.Host.UnitTests
         {
             if (CudafyModes.Target != eGPUType.Cuda)
             {
-                Console.WriteLine("Only testing CUDA devices, so skip.");
+                Console.WriteLine("Only tests CUDA devices, so skip.");
                 return;
             }
             int cnt = CudafyHost.GetDeviceCount(eGPUType.Cuda);
@@ -69,7 +69,7 @@ namespace Cudafy.Host.UnitTests
         {
             if (CudafyModes.Target != eGPUType.OpenCL)
             {
-                Console.WriteLine("Only testing OpenCL devices, so skip.");
+                Console.WriteLine("Only tests OpenCL devices, so skip.");
                 return;
             }
             int cnt = CudafyHost.GetDeviceCount(eGPUType.OpenCL);
@@ -86,7 +86,7 @@ namespace Cudafy.Host.UnitTests
         {
             if (CudafyModes.Target != eGPUType.Emulator)
             {
-                Console.WriteLine("Only testing Emulator devices, so skip.");
+                Console.WriteLine("Only tests Emulator devices, so skip.");
                 return;
             }
             GPGPU gpu = CudafyHost.GetDevice(eGPUType.Emulator);
@@ -108,7 +108,7 @@ namespace Cudafy.Host.UnitTests
         {
             if (CudafyModes.Target != eGPUType.Cuda)
             {
-                Console.WriteLine("Only testing CUDA devices, so skip.");
+                Console.WriteLine("Only tests CUDA devices, so skip.");
                 return;
             }
             int cnt = CudafyHost.GetDeviceCount(eGPUType.Cuda);
@@ -121,7 +121,7 @@ namespace Cudafy.Host.UnitTests
         {
             if (CudafyModes.Target != eGPUType.Emulator)
             {
-                Console.WriteLine("Only testing Emulator devices, so skip.");
+                Console.WriteLine("Only tests Emulator devices, so skip.");
                 return;
             }
             int cnt = CudafyHost.GetDeviceCount(eGPUType.Emulator);
@@ -134,7 +134,7 @@ namespace Cudafy.Host.UnitTests
         {
             if (CudafyModes.Target != eGPUType.Cuda)
             {
-                Console.WriteLine("Only testing CUDA devices, so skip.");
+                Console.WriteLine("Only tests CUDA devices, so skip.");
                 return;
             }
             List<GPGPUProperties> props = CudafyHost.GetDeviceProperties(eGPUType.Cuda, false).ToList();
@@ -153,7 +153,7 @@ namespace Cudafy.Host.UnitTests
         {
             if (CudafyModes.Target != eGPUType.Emulator)
             {
-                Console.WriteLine("Only testing Emulator devices, so skip.");
+                Console.WriteLine("Only tests Emulator devices, so skip.");
                 return;
             }
             List<GPGPUProperties> props = CudafyHost.GetDeviceProperties(eGPUType.Emulator, false).ToList();

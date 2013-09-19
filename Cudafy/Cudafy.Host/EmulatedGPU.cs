@@ -88,7 +88,7 @@ namespace Cudafy.Host
             //Computer comp = new Computer();
             GPGPUProperties props = new GPGPUProperties();
             props.UseAdvanced = useAdvanced;
-            props.Capability = new Version(2, 1, 0, 0);
+            props.Capability = new Version(0, 1, 0, 0);
             props.Name = "Emulated GPGPU Kernel";
             props.DeviceId = DeviceId;
 
@@ -539,12 +539,18 @@ namespace Cudafy.Host
         /// <param name="ci">The ci.</param>
         protected override void DoCopyToConstantMemory<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci)
         {
-            Array.Copy(hostArray, hostOffset, devArray, devOffset, hostArray.Length);
+            Array.Copy(hostArray, hostOffset, devArray, devOffset, count);
         }
 
         protected override void DoCopyToConstantMemoryAsync<T>(IntPtr hostArray, int hostOffset, Array devArray, int devOffset, int count, KernelConstantInfo ci, int streamId)
         {
-            DoCopyToDeviceAsync<T>(hostArray, hostOffset, devArray, devOffset, count, streamId);
+            if (streamId >= 0 && !_streams.ContainsKey(streamId))
+                _streams.Add(streamId, streamId);
+            int size = MSizeOf(typeof(T));
+            GCHandle handle = GCHandle.Alloc(devArray, GCHandleType.Pinned);
+            IntPtr devArrayPtr = new IntPtr(handle.AddrOfPinnedObject().ToInt64() + (devOffset * size));
+            IntPtr hostArrayPtr = new IntPtr(hostArray.ToInt64() + (hostOffset * size));
+            CopyMemory(devArrayPtr, hostArrayPtr, (uint)(count * size));
         }
 
 
@@ -641,7 +647,10 @@ namespace Cudafy.Host
         protected override void DoCopyToDeviceAsync<T>(Array hostArray, int hostOffset, Array devArray, int devOffset, int count, int streamId, IntPtr stagingPost, bool isConstantMemory = false)
         {
             DoCopyOnHost<T>(hostArray, hostOffset, stagingPost, 0, count);
-            DoCopyToDeviceAsync<T>(stagingPost, 0, devArray, devOffset, count, streamId);
+            if(!isConstantMemory)
+                DoCopyToDeviceAsync<T>(stagingPost, 0, devArray, devOffset, count, streamId);
+            else
+                DoCopyToConstantMemoryAsync<T>(stagingPost, 0, devArray, devOffset, count, null, streamId);  
         }
 
         protected override void DoCopyFromDeviceAsync<T>(Array devArray, int devOffset, IntPtr hostArray, int hostOffset, int count, int streamId)

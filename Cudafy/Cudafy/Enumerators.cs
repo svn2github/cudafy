@@ -225,6 +225,13 @@ namespace Cudafy
         /// Unspecified architecture.
         /// </summary>
         Unknown = 0,//0xFFFFFFFF,
+
+        // Emulator has bit 4 set (8)
+
+        /// <summary>
+        /// CUDA Emulator
+        /// </summary>
+        Emulator = 8,
         
         // CUDA has bit 7 set (256)
         // OpenCL start has bit 15 set (32768), CUDA no flag

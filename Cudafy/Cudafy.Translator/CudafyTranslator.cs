@@ -367,7 +367,9 @@ namespace Cudafy.Translator
 
         private static Version GetComputeCapability(eArchitecture arch, params Type[] types)
         {
-            if (arch == eArchitecture.sm_10)
+            if (arch == eArchitecture.Emulator)
+                return new Version(0, 1);
+            else if (arch == eArchitecture.sm_10)
                 return new Version(1, 0);
             else if (arch == eArchitecture.sm_11)
                 return new Version(1, 1);
