@@ -38,9 +38,9 @@ namespace CudafyExamples
         {
             try
             {
-                CudafyModes.Target = eGPUType.OpenCL;
+                CudafyModes.Target = eGPUType.Cuda;
                 CudafyModes.DeviceId = 0;
-                CudafyTranslator.Language = eLanguage.OpenCL;
+                CudafyTranslator.Language = eLanguage.Cuda;
 
                 Console.WriteLine("\r\nArrayBasicIndexing");
                 ArrayBasicIndexing.Execute();
