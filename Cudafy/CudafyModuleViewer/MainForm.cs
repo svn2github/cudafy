@@ -27,6 +27,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
 using Cudafy;
 using Cudafy.Compilers;
 using Cudafy.Types;
@@ -37,6 +38,8 @@ namespace CudafyModuleViewer
         public MainForm(string[] args)
         {
             InitializeComponent();
+            Text = Text + string.Format(" ({0}-bit)", IntPtr.Size == 4 ? "32" : "64");
+
             cbArch.Items.AddRange(Enum.GetNames(typeof(eArchitecture)));
             cbArch.SelectedIndex = 2;
             try
@@ -285,5 +288,110 @@ namespace CudafyModuleViewer
         {
             miSaveAs.Enabled = _module != null && miEnableEditing.Checked;
         }
+
+        private void btnInstallGAC_Click(object sender, EventArgs e)
+        {
+            OpenFile("http://support.microsoft.com/kb/815808");
+        }
+
+        private bool OpenFile(string filename, string args = null)
+        {
+            try
+            {
+                Process process = new Process();
+                process.StartInfo.FileName = filename;
+                if (args != null)
+                    process.StartInfo.Arguments = args;
+                process.Start();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex.Message);
+                return false;
+            }
+            return true;
+        }
+
+        private void btnCUDACheck_Click(object sender, EventArgs e)
+        {
+            tbCUDA.Clear();
+            foreach (string s in CUDACheck.EnumerateDevices())
+                tbCUDA.AppendText(s + "\r\n");
+        }
+
+        private void btnResolveCUDADeviceIssue_Click(object sender, EventArgs e)
+        {
+            OpenFile("http://developer.nvidia.com/cuda");
+        }
+
+        private void btnTestCUDA_Click(object sender, EventArgs e)
+        {
+            tbCUDA.Clear();
+            try
+            {
+                foreach (string s in CUDACheck.TestCUDASDK())
+                    tbCUDA.AppendText(s + "\r\n");
+            }
+            catch (Exception ex)
+            {
+                tbCUDA.AppendText(ex.Message + "\r\n");
+            }
+        }
+
+        private void btnResolveCUDAIssue_Click(object sender, EventArgs e)
+        {
+            OpenFile("http://docs.nvidia.com/cuda/cuda-getting-started-guide-for-microsoft-windows/index.html");
+        }
+
+        private void btnCheckOpenCL_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnCheckOpenCL_Click_1(object sender, EventArgs e)
+        {
+            tbOpenCL.Clear();
+            foreach (string s in CUDACheck.EnumerateDevices(true))
+                tbOpenCL.AppendText(s + "\r\n");
+        }
+
+        private void btnTestOpenCL_Click(object sender, EventArgs e)
+        {
+            tbOpenCL.Clear();
+            try
+            {
+                foreach (string s in CUDACheck.TestOpenCL())
+                    tbOpenCL.AppendText(s + "\r\n");
+            }
+            catch (Exception ex)
+            {
+                tbOpenCL.AppendText(ex.Message + "\r\n");
+            }
+        }
+
+        private void btnVisitAMDOpenCL_Click(object sender, EventArgs e)
+        {
+            OpenFile("http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/");
+        }
+
+        private void btnVisitIntelOpenCL_Click(object sender, EventArgs e)
+        {
+            OpenFile("http://software.intel.com/en-us/vcsource/tools/opencl-sdk");
+        }
+
+        private void tsmiVisitForum_Click(object sender, EventArgs e)
+        {
+            OpenFile("https://cudafy.codeplex.com/discussions");
+        }
+
+        private void tsmiVisitDoc_Click(object sender, EventArgs e)
+        {
+            OpenFile("http://www.hybriddsp.com/Products/CUDAfyNET.aspx");
+        }
+
+        private void tsmiDoc_Click(object sender, EventArgs e)
+        {
+            OpenFile("https://cudafy.codeplex.com/documentation");
+        }
     }
-}
+}   

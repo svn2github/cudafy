@@ -264,11 +264,11 @@ namespace Cudafy.Translator
                 {
                     Comma(node);
                 }
-                //if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
-                //{
-                //    if (pd.Type is SimpleType)
-                //        WriteKeyword("struct");
-                //}
+                if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
+                {
+                    if (pd.Type is SimpleType)
+                        WriteKeyword("struct");
+                }
                 node.AcceptVisitor(this, null);
             }
             if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
@@ -818,7 +818,8 @@ namespace Cudafy.Translator
 		{
 			
             StartNode(castExpression);
-            if (!castExpression.Type.ToString().Contains("IntPtr"))
+            string castExpressionStr = castExpression.Type.ToString(); 
+            if (!castExpressionStr.Contains("IntPtr") && !castExpressionStr.Contains("object"))
             {
                 LPar();
                 Space(policy.SpacesWithinCastParentheses);
@@ -907,15 +908,18 @@ namespace Cudafy.Translator
 		public object VisitIdentifierExpression(IdentifierExpression identifierExpression, object data)
 		{
 			StartNode(identifierExpression);
-            bool writeIndex = false;
+            bool dereference = false;
             if ((((ICSharpCode.NRefactory.CSharp.AstNode)(identifierExpression)).Annotations.Count() > 0))
             {
                 //if(identifierExpression.Annotations.First() is ByReferenceType)
-                if (((ICSharpCode.Decompiler.ILAst.ILVariable)(((object[])(identifierExpression.Annotations))[0])).Type is Mono.Cecil.ByReferenceType)
-                    writeIndex = true;
-                    //formatter.WriteKeyword("*");
+                var type = ((ICSharpCode.Decompiler.ILAst.ILVariable)(((object[])(identifierExpression.Annotations))[0])).Type;
+                if (type.IsByReference)// || (!type.IsValueType && !type.IsArray))
+                    dereference = true;
             }
-			WriteIdentifier(identifierExpression.Identifier);
+			if (dereference)
+                WriteIdentifier("(*" + identifierExpression.Identifier + ")");
+            else
+                WriteIdentifier(identifierExpression.Identifier);
             if (identifierExpression.Parent is InvocationExpression)
             {
                 foreach (var x in identifierExpression.Annotations)
@@ -940,14 +944,10 @@ namespace Cudafy.Translator
                     }
                 }
             }
-            else if (writeIndex)
-            {
-                formatter.WriteKeyword("[0]");
-            }
 			WriteTypeArguments(identifierExpression.TypeArguments);
 			return EndNode(identifierExpression);
 		}
-		
+
 		public object VisitIndexerExpression(IndexerExpression indexerExpression, object data)
 		{
 			StartNode(indexerExpression);
@@ -1025,8 +1025,9 @@ namespace Cudafy.Translator
             bool isGThread = mre.IsThreadIdVar();
             bool isFixedElementField = mre.MemberName == "FixedElementField";
             bool isSpecialProp = !isGThread && mre.IsSpecialProperty();
-            bool isSpecialMethod = !isGThread && mre.IsSpecialMethod();
-            Debug.WriteLine(mre.MemberName);
+            bool isSpecialMethod = !isGThread && !isSpecialProp && mre.IsSpecialMethod(); // JLM
+            //Console.WriteLine(mre.ToString());
+            //Console.WriteLine(mre.MemberName + string.Format(" is {0}special method", isSpecialMethod ? "" : "not "));
             Debug.Assert(!mre.IsAllocateShared());
             bool callFunc = !isSpecialProp;
             string builtinTranslation = null;
@@ -1059,7 +1060,21 @@ namespace Cudafy.Translator
                     {
                         mre.Target.AcceptVisitor(this, data);
                         if (!isFixedElementField)
-                            WriteToken(".", MemberReferenceExpression.Roles.Dot);
+						{
+                        	bool indexed = (mre.Target is IndexerExpression);
+                        	var target = indexed ? (mre.Target as IndexerExpression).Target : mre.Target;
+                        	var variable = target.Annotations.FirstOrDefault() as ICSharpCode.Decompiler.ILAst.ILVariable;
+                            var field = target.Annotations.FirstOrDefault() as Mono.Cecil.FieldDefinition;
+                            Mono.Cecil.TypeReference type = null;
+                            if (variable != null)
+                                type = indexed ? variable.Type.GetElementType() : variable.Type;
+                        	else if (field != null)
+                                type = indexed ? field.FieldType.GetElementType() : field.FieldType;
+                        	if (type != null && !type.IsArray && !type.IsValueType)
+                            	WriteToken("->", MemberReferenceExpression.Roles.Dot);
+                        	else
+                            	WriteToken(".", MemberReferenceExpression.Roles.Dot);
+						}
                     }
                     else
                     {
@@ -1074,6 +1089,33 @@ namespace Cudafy.Translator
                 WriteIdentifier(mre.MemberName);
                 WriteTypeArguments(mre.TypeArguments);
             }
+
+            // Feed in array lengths
+            if (mre.Parent is InvocationExpression)
+            {
+                foreach (var x in mre.Annotations)
+                {
+                    var xVar = x as Mono.Cecil.FieldReference;
+                    if (xVar != null)
+                    {
+                        var array = xVar.FieldType as Mono.Cecil.ArrayType;
+                        if (array != null && !DisableSmartArray)
+                        {
+                            for (int r = 0; r < array.Rank; r++)
+                                formatter.WriteKeyword(string.Format(", {0}Len{1}", mre.MemberName, r));
+                        }
+                        else
+                        {
+                            var typeRef = xVar.FieldType as Mono.Cecil.TypeReference;
+                            if (typeRef.FullName == "System.String")
+                            {
+                                formatter.WriteKeyword(string.Format(", {0}Len", mre.MemberName));
+                            }
+                        }
+                    }
+                }
+            }
+
 			return EndNode(mre);
 		}
 
@@ -1119,7 +1161,7 @@ namespace Cudafy.Translator
 		public object VisitNullReferenceExpression(NullReferenceExpression nullReferenceExpression, object data)
 		{
 			StartNode(nullReferenceExpression);
-			WriteKeyword("null");
+			WriteKeyword("NULL");
 			return EndNode(nullReferenceExpression);
 		}
 		
@@ -1657,7 +1699,9 @@ namespace Cudafy.Translator
 			//WriteModifiers(typeDeclaration.ModifierTokens);
 			BraceStyle braceStyle = policy.StructBraceStyle;
             if (typeDeclaration.ClassType != ClassType.Struct && typeDeclaration.ClassType != ClassType.Enum)
-                throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED, typeDeclaration.ClassType.ToString());
+            {
+                if (typeDeclaration.ClassType != ClassType.Class || !CudafyTranslator.AllowClasses) throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED, typeDeclaration.ClassType.ToString());
+            }
 
             var typeDeclarationEx = typeDeclaration as TypeDeclarationEx;
             if ((typeDeclarationEx != null && typeDeclarationEx.IsDummy))
@@ -1677,6 +1721,10 @@ namespace Cudafy.Translator
                     //    WriteKeyword("interface");
                     //    braceStyle = policy.InterfaceBraceStyle;
                     //    break;
+                    case ClassType.Class:
+                        WriteKeyword("struct");
+                        braceStyle = policy.StructBraceStyle;
+                        break;
                     case ClassType.Struct:
                         WriteKeyword("struct");
                         braceStyle = policy.StructBraceStyle;
@@ -1693,21 +1741,28 @@ namespace Cudafy.Translator
                 if (typeDeclarationEx == null)
                     typeName = typeDeclaration.Name;
                 else
+                    //typeName = typeDeclarationEx.Name;
                     typeName = typeDeclarationEx.FullName;
                 typeName = typeName.Replace('<', '_');
                 typeName = typeName.Replace('>', '_');
                 WriteIdentifier(typeName);
-			    WriteTypeParameters(typeDeclaration.TypeParameters);
+                //WriteTypeParameters(typeDeclaration.TypeParameters);
 			    if (typeDeclaration.BaseTypes.Any()) {
-                    throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED, "Inheritance");
-                    //Space();
-                    //WriteToken(":", TypeDeclaration.ColonRole);
-                    //Space();
-                    //WriteCommaSeparatedList(typeDeclaration.BaseTypes);
+                    var type = typeDeclaration.BaseTypes.First().Annotations.FirstOrDefault() as Mono.Cecil.ICustomAttributeProvider;
+                    var attr = type.GetCudafyType();
+                    if (attr != null)
+                    {
+                        Space();
+                        WriteToken(":", TypeDeclaration.ColonRole);
+                        Space();
+                        WriteCommaSeparatedList(typeDeclaration.BaseTypes);
+                    }
 			    }
-			    foreach (Constraint constraint in typeDeclaration.Constraints) {
-				    constraint.AcceptVisitor(this, data);
-			    }
+                // Ignore constraints
+			    //foreach (Constraint constraint in typeDeclaration.Constraints) 
+                //{
+                //constraint.AcceptVisitor(this, data);
+			    //}
 			    OpenBrace(braceStyle);
 			    if (typeDeclaration.ClassType == ClassType.Enum) {
 				    bool first = true;
@@ -1898,6 +1953,7 @@ namespace Cudafy.Translator
 			}
 			OpenBrace(style);
 			foreach (var node in blockStatement.Statements) {
+                //Console.WriteLine("{0} is {1}", node.ToString(), node.GetType());
 				node.AcceptVisitor(this, data);
 			}
 			CloseBrace(style);
@@ -2201,15 +2257,23 @@ namespace Cudafy.Translator
 		
 		public object VisitThrowStatement(ThrowStatement throwStatement, object data)
 		{
-            throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Throw statements");
-            //StartNode(throwStatement);
+            if (CudafyTranslator.Language != eLanguage.Cuda)
+                throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Throw statements");
+
+
+           StartNode(throwStatement);
             //WriteKeyword("throw");
             //if (!throwStatement.Expression.IsNull) {
             //    Space();
             //    throwStatement.Expression.AcceptVisitor(this, data);
             //}
             //Semicolon();
-            //return EndNode(throwStatement);
+           //if (CUDALanguage.ComputeCapability.Major < 2)
+               WriteKeyword(@"asm(""trap;"");");
+           //else
+           //    WriteKeyword(@"assert(0);");
+           
+            return EndNode(throwStatement);
 		}
 		
 		public object VisitTryCatchStatement(TryCatchStatement tryCatchStatement, object data)
@@ -2295,10 +2359,16 @@ namespace Cudafy.Translator
             {
                 data = (object)true;
                 variableDeclarationStatement.Type.AcceptVisitor(this, data);
+
+                // if Type is a reference type, we need an extra '*'
+                var typeReference = variableDeclarationStatement.Type.Annotations.FirstOrDefault();
+                if (typeReference != null && typeReference is Mono.Cecil.TypeReference)
+                    if (!(typeReference as Mono.Cecil.TypeReference).IsValueType) WriteIdentifier("*");
+
                 Space();
                 WriteCommaSeparatedList(variableDeclarationStatement.Variables);
                 Semicolon();
-        // here we set textLen
+                // here we set textLen
                 var pt = variableDeclarationStatement.FirstChild as PrimitiveType;
                 if (pt != null && pt.Keyword == "string")
                 {
@@ -2324,12 +2394,15 @@ namespace Cudafy.Translator
                     }
                 }
             }
+      
+                
 			
 			return EndNode(variableDeclarationStatement);
 		}
 
         bool CheckForAllocateShared(VariableDeclarationStatement variableDeclarationStatement)
         {
+            //Console.WriteLine("variableDeclarationStatement=" + variableDeclarationStatement.ToString());
             bool isAlloc = variableDeclarationStatement.ToString().Contains(CL.csAllocateShared);
             if (isAlloc)
             {
@@ -2688,8 +2761,21 @@ namespace Cudafy.Translator
                 else
                 {
                     fieldDeclaration.ReturnType.AcceptVisitor(this, false);//data
+                    var type = (fieldDeclaration.ReturnType is ComposedType) ? (fieldDeclaration.ReturnType as ComposedType).BaseType.Annotations.FirstOrDefault() as Mono.Cecil.TypeReference
+                        : fieldDeclaration.ReturnType.Annotations.FirstOrDefault() as Mono.Cecil.TypeReference;
+                    if (type != null && !type.IsValueType) formatter.WriteKeyword("*");
                     Space();
                     WriteCommaSeparatedList(fieldDeclaration.Variables);
+                }
+                var fieldDefinition = fieldDeclaration.Annotations.FirstOrDefault() as Mono.Cecil.FieldDefinition;
+                if (fieldDefinition != null)
+                {
+                    var arrayType = fieldDefinition.FieldType as Mono.Cecil.ArrayType;
+                    if (arrayType != null && !DisableSmartArray)
+                    {
+                        for (int r = 0; r < arrayType.Rank; r++)
+                            formatter.WriteKeyword(string.Format("; int {0}Len{1}", fieldDefinition.Name, r));
+                    }
                 }
                 Semicolon();
             }			
@@ -2902,12 +2988,14 @@ namespace Cudafy.Translator
             {
                 if (parameterDeclaration.Type.ToString().Contains("["))
                     throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED, "Passing array by reference");
-                //if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
-                //    formatter.WriteKeyword("__local");
                 formatter.WriteKeyword("*");
             }
             else if (parameterDeclaration.ParameterModifier != ParameterModifier.None)
                 throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED, parameterDeclaration.ParameterModifier);
+            var type = (parameterDeclaration.Type is ComposedType) ? (parameterDeclaration.Type as ComposedType).BaseType.Annotations.FirstOrDefault() as Mono.Cecil.TypeReference
+                : parameterDeclaration.Type.Annotations.FirstOrDefault() as Mono.Cecil.TypeReference;
+            if (type != null && !type.IsValueType) 
+                formatter.WriteKeyword("*");
 
 			if (!string.IsNullOrEmpty(parameterDeclaration.Name))
 				WriteIdentifier(parameterDeclaration.Name);
@@ -2991,14 +3079,14 @@ namespace Cudafy.Translator
 		{
 			StartNode(simpleType);
             var sti = CUDALanguage.TranslateSpecialType(simpleType.Identifier);
-#warning Why the hell did I comment out these next two lines? 030112
-            if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL)
-            {
-                WriteKeyword("struct");
-            }
 
-            WriteIdentifier(sti);
-			WriteTypeArguments(simpleType.TypeArguments);
+            var typeReference = simpleType.Annotations.FirstOrDefault() as Mono.Cecil.TypeReference;
+            if (typeReference != null && typeReference.IsValueType)
+                WriteIdentifier(sti);
+            else
+                WriteIdentifier(sti);
+			// no type arguments
+            //WriteTypeArguments(simpleType.TypeArguments);
 			return EndNode(simpleType);
 		}
 		
@@ -3021,7 +3109,7 @@ namespace Cudafy.Translator
 		
 		public object VisitComposedType(ComposedType composedType, object data)
 		{
-			StartNode(composedType);//
+			StartNode(composedType);
             if (composedType.ArraySpecifiers.Count > 0 && _lastAddressSpace == null)
             {
                 ParameterDeclaration pd = composedType.Parent as ParameterDeclaration;
@@ -3051,8 +3139,8 @@ namespace Cudafy.Translator
                     WriteKeyword(CudafyTranslator.LanguageSpecifics.MemorySpaceSpecifier);
             }
             _lastAddressSpace = null;
-            //if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL && !(composedType.BaseType is PrimitiveType))
-            //    WriteKeyword("struct");
+            if (CudafyTranslator.LanguageSpecifics.Language == eLanguage.OpenCL && !(composedType.BaseType is PrimitiveType))
+                WriteKeyword("struct");
 			composedType.BaseType.AcceptVisitor(this, data);
 			if (composedType.HasNullableSpecifier)
 				WriteToken("?", ComposedType.NullableRole);

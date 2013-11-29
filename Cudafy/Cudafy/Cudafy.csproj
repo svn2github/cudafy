@@ -138,6 +138,8 @@
     <Compile Include="Extensions\DynamicParallelism.cs" />
     <Compile Include="Extensions\IntegerIntrinsics.cs" />
     <Compile Include="Extensions\Rand.cs" />
+    <Compile Include="Extensions\SIMDFunctions.cs" />
+    <Compile Include="Extensions\WarpShuffleFunctions.cs" />
     <Compile Include="GBlock.cs" />
     <Compile Include="GGrid.cs" />
     <Compile Include="GMath.cs" />
@@ -165,7 +167,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties Reactor_Enabled="1" Reactor_Commands="" Reactor_Project="" Reactor_Configuration="" Reactor_Output="" />
+      <UserProperties Reactor_Output="" Reactor_Configuration="" Reactor_Project="" Reactor_Commands="" Reactor_Enabled="1" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

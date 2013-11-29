@@ -40,14 +40,19 @@ namespace CudafyExamples
             {
                 CudafyModes.Target = eGPUType.Cuda;
                 CudafyModes.DeviceId = 0;
-                CudafyTranslator.Language = eLanguage.Cuda;
+                CudafyTranslator.Language = CudafyModes.Target == eGPUType.OpenCL ? eLanguage.OpenCL : eLanguage.Cuda;
 
                 Console.WriteLine("\r\nArrayBasicIndexing");
                 ArrayBasicIndexing.Execute();
                 Console.WriteLine("\r\nArrayMultidimensions");
                 ArrayMultidimensions.Execute();
+
                 if (CudafyModes.Target != eGPUType.OpenCL)
                 {
+                    Console.WriteLine("\r\nClass examples");
+                    CudafyClassExamples.Execute();
+                    Console.WriteLine("\r\nSIMDFunctions");
+                    SIMDFunctions.Execute();
                     Console.WriteLine("\r\nGlobalArrays");
                     GlobalArrays.Execute();
                     Console.WriteLine("\r\nComplexNumbersD");

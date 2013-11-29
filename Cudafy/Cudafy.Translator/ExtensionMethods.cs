@@ -174,7 +174,7 @@ namespace Cudafy.Translator
                             if (CUDALanguage.IsSpecialProperty(mre.MemberName, fd.FieldType.GetType().Name))
                                 return true;
                         }
-                        else if (mre.NodeType == NodeType.Expression)
+                        else if (mre.NodeType == NodeType.Expression && !(mre.Target is ThisReferenceExpression))
                         {
                             if (mre.MemberName == "Length")
                                 return true;
@@ -193,8 +193,19 @@ namespace Cudafy.Translator
                 {
                     var pd = ann as ICSharpCode.Decompiler.ILAst.ILVariable;
                     if (pd != null)
+                    {
                         if (CUDALanguage.IsSpecialMethod(mre.MemberName, pd.Type.FullName))//.GetType().Name))
                             return true;
+                    }
+                    else 
+                    {
+                        var fd = ann as FieldDefinition;
+                        if (fd != null)
+                        {
+                            if (CUDALanguage.IsSpecialMethod(mre.MemberName, fd.FieldType.GetType().Name))
+                                return true;
+                        }
+                    }
                 }
             }
             else
@@ -213,8 +224,18 @@ namespace Cudafy.Translator
                     if (pd != null)
                     {
                         sm = CUDALanguage.GetSpecialMethod(mre.MemberName, pd.Type.FullName);//.GetType().Name))
-                        if(sm != null)
+                        if (sm != null)
                             return sm;
+                    }
+                    else
+                    {
+                        var fd = ann as FieldDefinition;
+                        if (fd != null)
+                        {
+                            sm = CUDALanguage.GetSpecialMethod(mre.MemberName, fd.FieldType.GetType().Name);
+                            if (sm != null)
+                                return sm;
+                        }
                     }
                 }
             }
@@ -250,7 +271,7 @@ namespace Cudafy.Translator
                         else if(mre.NodeType == NodeType.Expression)
                         {
                             if (mre.MemberName == "Length")
-                                return (mre.Target.ToString().Length - 2).ToString();
+                                return mre.Target.ToString().Replace(".", "->") + "Len0"; // This should be made nicer
                         }
                     }
                 }
@@ -269,10 +290,19 @@ namespace Cudafy.Translator
                     var pd = ann as ICSharpCode.Decompiler.ILAst.ILVariable;
                     if (pd != null)
                     {
-                        SpecialMember sm = CUDALanguage.GetSpecialMethod(mre.MemberName, pd.Type.FullName);// .GetType().Name);
+                        SpecialMember sm = CUDALanguage.GetSpecialMethod(mre.MemberName, pd.Type.FullName);
                         //callFunc = sm.CallFunction;
                         noSemicolon = sm.NoSemicolon;
                         return sm.GetTranslation(mre, data);
+                    }
+                    else 
+                    {
+                        var fd = ann as FieldDefinition;
+                        if (fd != null)
+                        {
+                            SpecialMember sm = CUDALanguage.GetSpecialMethod(mre.MemberName, fd.FieldType.GetType().Name);
+                            return sm.GetTranslation(mre, data);
+                        }
                     }
                 }
             }
@@ -352,6 +382,18 @@ namespace Cudafy.Translator
                     {
                         return string.Format("{0}Len{1}", mre.Target, pe.Value);
                     }
+                }
+                else 
+                {
+                    var fd = ann as FieldDefinition;
+                    if (fd != null)
+                    {
+                        var at = fd.FieldType as Mono.Cecil.ArrayType;
+                        if (at != null)
+                        {
+                            return string.Format("{0}Len{1}", mre.Target.ToString().Replace(".", "->"), pe.Value);
+                        }
+                    }   
                 }
             }
             return string.Empty;

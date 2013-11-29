@@ -123,6 +123,10 @@
   <metadata name="openFileDialog.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>132, 17</value>
   </metadata>
+  <data name="tbGAC.Text" xml:space="preserve">
+    <value>If you plan to use CUDAfy from a service you will need to install CUDAfy.NET.dll in the Global Assembly Cache. If you do not you will get a "Failed to resolve assembly" exception when translating code with CudafyTranslator.Cudafy(...)
+Please also be aware of restrictions on GPU use in certain scenarios (e.g. from within SQL or from Remote Desktop).</value>
+  </data>
   <metadata name="saveFileDialog.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>256, 17</value>
   </metadata>

@@ -128,6 +128,7 @@
   <ItemGroup>
     <Compile Include="CudafyHost.cs" />
     <Compile Include="CudaGPU.cs" />
+    <Compile Include="DeviceClassHelper.cs" />
     <Compile Include="DynamicLauncher.cs" />
     <Compile Include="EmulatedGPU.cs" />
     <Compile Include="Exceptions.cs" />

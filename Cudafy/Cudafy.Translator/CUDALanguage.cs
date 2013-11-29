@@ -27,6 +27,8 @@ using System.Linq;
 using System.Text;
 using System.Globalization;
 using System.Diagnostics;
+using System.Reflection;
+using System.IO;
 using ICSharpCode.ILSpy;
 using Mono.Cecil;
 using ICSharpCode.NRefactory.CSharp;
@@ -76,23 +78,29 @@ namespace Cudafy.Translator
 
         public Func<MemberReferenceExpression, object, string> Function { get; private set; }
 
+        public string OptionalHeader { get; set; }
+
         public virtual string GetTranslation(MemberReferenceExpression mre, object data = null)
         {
+            if (OptionalHeader != null)
+                CUDALanguage.UseOptionalHeader(OptionalHeader);
             return Function(mre, data);
         }
     }
 
     public class OptionalHeader
     {
-        public OptionalHeader(string name, string includeLine)
+        public OptionalHeader(string name, string includeLine, bool asResource = false)
         {
             Name = name;
             IncludeLine = includeLine;
+            AsResource = asResource;
         }
         
         public string Name { get; private set; }
         public string IncludeLine { get; private set; }
         public bool Used { get; set; }
+        public bool AsResource { get; private set; }
     }
 
     public class OptionalFunction
@@ -279,6 +287,90 @@ namespace Cudafy.Translator
             SpecialMethods.Add(new SpecialMember("double", "IsInfinity", new Func<MemberReferenceExpression, object, string>(TranslateFloatingPointMemberName)));
             SpecialMethods.Add(new SpecialMember("float", "IsInfinity", new Func<MemberReferenceExpression, object, string>(TranslateFloatingPointMemberName)));
 
+            //SIMD-in-a-word functions
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vabs2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vabsdiffs2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vabsdiffu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vabsss2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vadd2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vaddss2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vaddus2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vavgs2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vavgu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpeq2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpges2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpgeu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpgts2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpgtu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmples2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpleu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmplts2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpltu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpne2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vhaddu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vmaxs2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vmaxu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vmins2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vminu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vneg2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vnegss2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsads2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsadu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vseteq2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetges2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetgeu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetgts2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetgtu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetles2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetleu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetlts2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetltu2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetne2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsub2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsubss2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsubus2", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vabs4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vabsdiffs4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vabsdiffu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vabsss4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vadd4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vaddss4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vaddus4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vavgs4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vavgu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpeq4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpges4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpgeu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpgts4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpgtu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmples4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpleu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmplts4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpltu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vcmpne4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vhaddu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vmaxs4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vmaxu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vmins4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vminu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vneg4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vnegss4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsads4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsadu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vseteq4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetges4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetgeu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetgts4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetgtu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetles4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetleu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetlts4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetltu4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsetne4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsub4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsubss4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "vsubus4", new Func<MemberReferenceExpression, object, string>(GetMemberName)) { OptionalHeader = csSIMDFUNCS });
+
             SpecialProperties.Clear();       
             SpecialProperties.Add(new SpecialMember("ArrayType", "Length", new Func<MemberReferenceExpression, object, string>(TranslateArrayLength)));
             SpecialProperties.Add(new SpecialMember("ArrayType", "LongLength", new Func<MemberReferenceExpression, object, string>(TranslateArrayLength)));
@@ -314,6 +406,10 @@ namespace Cudafy.Translator
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "All", new Func<MemberReferenceExpression, object, string>(TranslateAll)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "Any", new Func<MemberReferenceExpression, object, string>(TranslateAny)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "Ballot", new Func<MemberReferenceExpression, object, string>(TranslateBallot)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "Shuffle", new Func<MemberReferenceExpression, object, string>(TranslateShuffle)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "ShuffleUp", new Func<MemberReferenceExpression, object, string>(TranslateShuffleUp)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "ShuffleDown", new Func<MemberReferenceExpression, object, string>(TranslateShuffleDown)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "ShuffleXor", new Func<MemberReferenceExpression, object, string>(TranslateShuffleXor)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicAdd", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicSub", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicExch", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
@@ -327,6 +423,8 @@ namespace Cudafy.Translator
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicAnd", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicOr", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicXor", new Func<MemberReferenceExpression, object, string>(GetMemberName)));
+
+
 
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "curand_init", new Func<MemberReferenceExpression, object, string>(GetCURANDMemberName)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "curand", new Func<MemberReferenceExpression, object, string>(GetCURANDMemberName)));
@@ -386,6 +484,7 @@ namespace Cudafy.Translator
             OptionalHeaders.Add(new OptionalHeader(csCURAND_KERNEL, @"#include <curand_kernel.h>"));
             OptionalHeaders.Add(new OptionalHeader(csSTDIO, @"#include <stdio.h>"));
             OptionalHeaders.Add(new OptionalHeader(csASSERT, @"#include <assert.h>"));
+            OptionalHeaders.Add(new OptionalHeader(csSIMDFUNCS, @"simd_functions.h", true));
             
             OptionalFunctions.Add(new OptionalFunction(csGET_GLOBAL_ID, OptionalStrings.get_global_id));
             OptionalFunctions.Add(new OptionalFunction(csGET_GLOBAL_SIZE, OptionalStrings.get_global_size));
@@ -414,6 +513,10 @@ namespace Cudafy.Translator
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "All", new Func<MemberReferenceExpression, object, string>(NotSupported)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "Any", new Func<MemberReferenceExpression, object, string>(NotSupported)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "Ballot", new Func<MemberReferenceExpression, object, string>(NotSupported)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "Shuffle", new Func<MemberReferenceExpression, object, string>(NotSupported)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "ShuffleUp", new Func<MemberReferenceExpression, object, string>(NotSupported)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "ShuffleDown", new Func<MemberReferenceExpression, object, string>(NotSupported)));
+            SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "ShuffleXor", new Func<MemberReferenceExpression, object, string>(NotSupported)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicAdd", new Func<MemberReferenceExpression, object, string>(TranslateOpenCLAtomic)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicSub", new Func<MemberReferenceExpression, object, string>(TranslateOpenCLAtomic)));
             SpecialMethods.Add(new SpecialMember("Cudafy.GThread", "atomicExch", new Func<MemberReferenceExpression, object, string>(TranslateOpenCLAtomic)));
@@ -500,6 +603,7 @@ namespace Cudafy.Translator
             //OptionalHeaders.Add(new OptionalHeader(csCURAND_KERNEL, @"#include <curand_kernel.h>"));
             //OptionalHeaders.Add(new OptionalHeader(csSTDIO, @"#include <stdio.h>"));
             //OptionalHeaders.Add(new OptionalHeader(csASSERT, @"#include <assert.h>"));
+            OptionalHeaders.Add(new OptionalHeader(csSIMDFUNCS, @"simd_functions_opencl.h", true));
 
             OptionalFunctions.Add(new OptionalFunction(csPOPCOUNT, OptionalStrings.popCount));
             OptionalFunctions.Add(new OptionalFunction(csPOPCOUNTLL, OptionalStrings.popCountll));
@@ -510,6 +614,8 @@ namespace Cudafy.Translator
         private const string csSTDIO = "stdio";
 
         private const string csASSERT = "assert";
+
+        private const string csSIMDFUNCS = "simd_functions";
 
         private const string csGET_GLOBAL_ID = "get_global_id";
         private const string csGET_LOCAL_ID = "get_local_id";
@@ -555,15 +661,24 @@ namespace Cudafy.Translator
         {
             declaringType = NormalizeDeclaringType(declaringType);
             foreach (var item in SpecialMethods)
+            {
+                //if (memberName == "AllocateShared")
+                //    Console.WriteLine("AllocateShared? "+item.OriginalName);
                 if (item.DeclaringTypes.Contains(declaringType) && memberName == item.OriginalName)
                     return item;
+            }
+            string key = string.Format("{0}.{1}", declaringType, memberName);
+            if (CachedFormatters.ContainsKey(key))
+                return CachedFormatters[key];
             // We don't want to take a default method when there is a special property
             var prop = GetSpecialProperty(memberName, declaringType);
             if (prop == null)
             {
                 foreach (var item in SpecialMethods)
                     if (item.DeclaringTypes.Contains(declaringType) && item.OriginalName == null)
+                    {
                         return item;
+                    }
             }
             return prop;
         }
@@ -604,7 +719,7 @@ namespace Cudafy.Translator
             _constants.Add(kci);
         }
 
-        private static void UseOptionalHeader(string name)
+        internal static void UseOptionalHeader(string name)
         {
             var oh = OptionalHeaders.Where(o => o.Name == name).FirstOrDefault();
             Debug.Assert(oh != null);
@@ -753,6 +868,34 @@ namespace Cudafy.Translator
             if (ComputeCapability < new Version(2, 0))
                 throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED_FOR_COMPUTE_X, mre.MemberName, ComputeCapability);
             return "__ballot";
+        }
+
+        static string TranslateShuffle(MemberReferenceExpression mre, object data)
+        {
+            if (ComputeCapability < new Version(3, 0))
+                throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED_FOR_COMPUTE_X, mre.MemberName, ComputeCapability);
+            return "__shfl";
+        }
+
+        static string TranslateShuffleUp(MemberReferenceExpression mre, object data)
+        {
+            if (ComputeCapability < new Version(3, 0))
+                throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED_FOR_COMPUTE_X, mre.MemberName, ComputeCapability);
+            return "__shfl_up";
+        }
+
+        static string TranslateShuffleDown(MemberReferenceExpression mre, object data)
+        {
+            if (ComputeCapability < new Version(3, 0))
+                throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED_FOR_COMPUTE_X, mre.MemberName, ComputeCapability);
+            return "__shfl_down";
+        }
+
+        static string TranslateShuffleXor(MemberReferenceExpression mre, object data)
+        {
+            if (ComputeCapability < new Version(3, 0))
+                throw new CudafyLanguageException(CudafyLanguageException.csX_IS_NOT_SUPPORTED_FOR_COMPUTE_X, mre.MemberName, ComputeCapability);
+            return "__shfl_xor";
         }
 
         static string TranslateAtomicAddFloat(MemberReferenceExpression mre, object data)

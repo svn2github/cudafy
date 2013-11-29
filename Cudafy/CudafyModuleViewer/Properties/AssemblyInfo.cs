@@ -26,12 +26,12 @@ using Cudafy;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Cudafy Module Viewer")]
-[assembly: AssemblyDescription("Use this viewer to examine Cudafy modules (*.cdfy files).")]
+[assembly: AssemblyTitle("Cudafy Viewer")]
+[assembly: AssemblyDescription("Use this viewer to examine Cudafy modules (*.cdfy files) and test your environment.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Hybrid DSP Systems")]
-[assembly: AssemblyProduct("Cudafy")]
-[assembly: AssemblyCopyright("Copyright © Hybrid DSP Systems 2011-2012")]
+[assembly: AssemblyProduct("CUDAfy.NET")]
+[assembly: AssemblyCopyright("Copyright © Hybrid DSP Systems 2011-2013")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

@@ -605,6 +605,8 @@
     <Content Include="ICSharpCode.NRefactory\CSharp\Parser\mcs\gmcs.sln" />
     <Content Include="ICSharpCode.NRefactory\CSharp\Parser\mcs\gmcs2.csproj" />
     <Content Include="ICSharpCode.NRefactory\CSharp\Parser\mcs\repl.txt" />
+    <EmbeddedResource Include="Resources\simd_functions_opencl.h" />
+    <EmbeddedResource Include="Resources\simd_functions.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ICSharpCode.NRefactory\CSharp\Parser\mcs\ChangeLog" />

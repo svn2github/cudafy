@@ -59,11 +59,6 @@ namespace CudafyByExample
         [Cudafy]
         public static void thekernel(GThread thread, SphereOpenCL[] s, byte[] ptr)
         {
-            //SphereOpenCL localSphere = s[0];
-            SphereOpenCL[] sharedSphere = thread.AllocateShared<SphereOpenCL>("sharedSphere", 16);
-            int[] sharedInt = thread.AllocateShared<int>("sharedInt", 16);
-            //float somefloat = GMath.Pow(localSphere.b, 2.0F);
-            // map from threadIdx/BlockIdx to pixel position
             int x = thread.threadIdx.x + thread.blockIdx.x * thread.blockDim.x;
             int y = thread.threadIdx.y + thread.blockIdx.y * thread.blockDim.y;
             int offset = x + y * thread.blockDim.x * thread.gridDim.x;

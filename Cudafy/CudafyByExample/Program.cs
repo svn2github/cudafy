@@ -20,9 +20,9 @@ namespace CudafyByExample
         [STAThread]
         static void Main(string[] args)
         {
-            CudafyModes.Target = eGPUType.Cuda;
+            CudafyModes.Target = eGPUType.Cuda; // To use OpenCL, change this enum
             CudafyModes.DeviceId = 0;
-            CudafyTranslator.Language = eLanguage.Cuda;
+            CudafyTranslator.Language = CudafyModes.Target == eGPUType.OpenCL ? eLanguage.OpenCL : eLanguage.Cuda;
             try
             {
                 int deviceCount = CudafyHost.GetDeviceCount(CudafyModes.Target);

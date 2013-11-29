@@ -43,6 +43,7 @@ namespace Cudafy.Translator
         static CudafyTranslator()
         {
             TimeOut = 60000;
+            AllowClasses = false;
         }
         
         private static CUDALanguage _cl = new CUDALanguage(eLanguage.Cuda);
@@ -118,6 +119,15 @@ namespace Cudafy.Translator
         ///   <c>true</c> if compile for debug; otherwise, <c>false</c>.
         /// </value>
         public static bool GenerateDebug { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to allow classes to be Cudafyed. 
+        /// Note that DeviceClassHelper utility can be used to move class objects from Host to Device.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if classes are permitted; otherwise, <c>false</c>.
+        /// </value>
+        public static bool AllowClasses { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether to delete any temporary files.
@@ -443,70 +453,76 @@ namespace Cudafy.Translator
                     modules.Add(type.Assembly.Location, ModuleDefinition.ReadModule(type.Assembly.Location));                
             }
             
-            foreach (var kvp in modules)
+            // Additional loop to compile in order
+            foreach (var requestedType in typeList)
             {
-                foreach (var td in kvp.Value.Types)
+                foreach (var kvp in modules)
                 {
-                    List<TypeDefinition> tdList = new List<TypeDefinition>();
-                    tdList.Add(td);
-                    tdList.AddRange(td.NestedTypes);
-                    
-                    Type type = null;
-                    foreach (var t in tdList)
-                    {                        
-                        type = typeList.Where(tt => tt.FullName.Replace("+", "") == t.FullName.Replace("/", "")).FirstOrDefault();
+                    foreach (var td in kvp.Value.Types)
+                    {
+                        List<TypeDefinition> tdList = new List<TypeDefinition>();
+                        tdList.Add(td);
+                        tdList.AddRange(td.NestedTypes);
 
-                        if (type == null)
-                            continue;
-                        Debug.WriteLine(t.FullName);
-                        // Types                      
-                        var attr = t.GetCudafyType(out isDummy, out behaviour);
-                        if (attr != null)
+                        Type type = null;
+                        foreach (var t in tdList)
                         {
-                            _cl.DecompileType(t, structsPto, compOpts);
-                            if(firstPass)
-                                cm.Types.Add(type.FullName.Replace("+", ""), new KernelTypeInfo(type, isDummy, behaviour));// #######!!!
-                        }
-                        else if (t.Name == td.Name)
-                        {
-                            // Fields
-                            foreach (var fi in td.Fields)
+                            //type = typeList.Where(tt => tt.FullName.Replace("+", "") == t.FullName.Replace("/", "")).FirstOrDefault();
+                            // Only select type if this matches the requested type (to ensure order is maintained).
+                            type = requestedType.FullName.Replace("+", "") == t.FullName.Replace("/", "") ? requestedType : null;
+
+                            if (type == null)
+                                continue;
+                            Debug.WriteLine(t.FullName);
+                            // Types                      
+                            var attr = t.GetCudafyType(out isDummy, out behaviour);
+                            if (attr != null)
                             {
-                                attr = fi.GetCudafyType(out isDummy, out behaviour);
-                                if (attr != null)
-                                {
-                                    VerifyMemberName(fi.Name);
-                                    System.Reflection.FieldInfo fieldInfo = type.GetField(fi.Name, BindingFlags.Static|BindingFlags.Public | BindingFlags.NonPublic);
-                                    if(fieldInfo == null)
-                                        throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Non-static fields");
-                                    int[] dims = _cl.GetFieldInfoDimensions(fieldInfo);
-                                    _cl.DecompileCUDAConstantField(fi, dims, codePto, compOpts);
-                                    var kci = new KernelConstantInfo(fi.Name, fieldInfo, isDummy);
-                                    if (firstPass)
-                                        cm.Constants.Add(fi.Name, kci);// #######!!!
-                                    CUDALanguage.AddConstant(kci);
-                                }
+                                _cl.DecompileType(t, structsPto, compOpts);
+                                if (firstPass)
+                                    cm.Types.Add(type.FullName.Replace("+", ""), new KernelTypeInfo(type, isDummy, behaviour));// #######!!!
                             }
+                            else if (t.Name == td.Name)
+                            {
+                                // Fields
+                                foreach (var fi in td.Fields)
+                                {
+                                    attr = fi.GetCudafyType(out isDummy, out behaviour);
+                                    if (attr != null)
+                                    {
+                                        VerifyMemberName(fi.Name);
+                                        System.Reflection.FieldInfo fieldInfo = type.GetField(fi.Name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                                        if (fieldInfo == null)
+                                            throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Non-static fields");
+                                        int[] dims = _cl.GetFieldInfoDimensions(fieldInfo);
+                                        _cl.DecompileCUDAConstantField(fi, dims, codePto, compOpts);
+                                        var kci = new KernelConstantInfo(fi.Name, fieldInfo, isDummy);
+                                        if (firstPass)
+                                            cm.Constants.Add(fi.Name, kci);// #######!!!
+                                        CUDALanguage.AddConstant(kci);
+                                    }
+                                }
 #warning TODO Only Global Methods can be called from host
 #warning TODO For OpenCL may need to do Methods once all Constants have been handled
-                            // Methods
-                            foreach (var med in td.Methods)
-                            {
-                                attr = med.GetCudafyType(out isDummy, out behaviour);
-                                if (attr != null)
+                                // Methods
+                                foreach (var med in td.Methods)
                                 {
-                                    if (!med.IsStatic)
-                                        throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Non-static methods");
-                                    _cl.DecompileMethodDeclaration(med, declarationsPto, new DecompilationOptions { FullDecompilation = false });
-                                    _cl.DecompileMethod(med, codePto, compOpts);
-                                    MethodInfo mi = type.GetMethod(med.Name, BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic);
-                                    if (mi == null)
-                                        continue;
-                                    VerifyMemberName(med.Name);
-                                    eKernelMethodType kmt = eKernelMethodType.Device;
-                                    kmt = GetKernelMethodType(attr, mi);
-                                    if (firstPass)
-                                        cm.Functions.Add(med.Name, new KernelMethodInfo(type, mi, kmt, isDummy, behaviour, cm));// #######!!!
+                                    attr = med.GetCudafyType(out isDummy, out behaviour);
+                                    if (attr != null)
+                                    {
+                                        if (!med.IsStatic)
+                                            throw new CudafyLanguageException(CudafyLanguageException.csX_ARE_NOT_SUPPORTED, "Non-static methods");
+                                        _cl.DecompileMethodDeclaration(med, declarationsPto, new DecompilationOptions { FullDecompilation = false });
+                                        _cl.DecompileMethod(med, codePto, compOpts);
+                                        MethodInfo mi = type.GetMethod(med.Name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                                        if (mi == null)
+                                            continue;
+                                        VerifyMemberName(med.Name);
+                                        eKernelMethodType kmt = eKernelMethodType.Device;
+                                        kmt = GetKernelMethodType(attr, mi);
+                                        if (firstPass)
+                                            cm.Functions.Add(med.Name, new KernelMethodInfo(type, mi, kmt, isDummy, behaviour, cm));// #######!!!
+                                    }
                                 }
                             }
                         }
@@ -526,13 +542,17 @@ namespace Cudafy.Translator
             }
 
             foreach (var oh in CUDALanguage.OptionalHeaders)
-                if (oh.Used)
+            {
+                if (oh.Used && !oh.AsResource)
                     outputSw.WriteLine(oh.IncludeLine);
+                else if (oh.Used)
+                    outputSw.WriteLine(GetResourceString(oh.IncludeLine));
+            }
             foreach (var oh in CUDALanguage.OptionalFunctions)
+            {
                 if (oh.Used)
                     outputSw.WriteLine(oh.Code);
-            //outputSw.WriteLine(@"#include <curand_kernel.h>");
-
+            }
 
             declarationsSw.WriteLine();
             declarationsSw.Flush();
@@ -563,6 +583,23 @@ namespace Cudafy.Translator
             var scf = new SourceCodeFile(s, Language, _architecture);
             cm.AddSourceCodeFile(scf);
             return cm;
+        }
+
+        private static string GetResourceString(string name)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+#if DEBUG
+            foreach (var s in assembly.GetManifestResourceNames())
+                Debug.WriteLine(s);
+#endif
+            using (var stream = assembly.GetManifestResourceStream("Cudafy.Translator.Resources." + name))
+            {
+                using (var sr = new StreamReader(stream))
+                {
+                    string s = sr.ReadToEnd();
+                    return s;
+                }
+            }
         }
 
         private static string[] OpenCLReservedNames = new string[] { "kernel", "global" };

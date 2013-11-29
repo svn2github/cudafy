@@ -765,6 +765,9 @@ namespace Cudafy.Translator
             foreach (FieldDefinition fieldDef in typeDef.Fields)
             {
                 if (MemberIsHidden(fieldDef, context.Settings)) continue;
+                
+                if (fieldDef.HasCudafyIgnoreAttribute())
+                    continue;
                 astType.AddChild(CreateField(fieldDef), TypeDeclaration.MemberRole);
             }
 

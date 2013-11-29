@@ -142,7 +142,7 @@ namespace Cudafy.UnitTests
         [Test]
         public void TestStructDependencies()
         {
-            var mod = CudafyTranslator.Cudafy(typeof(StructA), typeof(StructB));
+            var mod = CudafyTranslator.Cudafy(typeof(StructB), typeof(StructA));
             mod.Serialize("TestStructDependencies");
         }
 

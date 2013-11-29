@@ -69,7 +69,7 @@ namespace Cudafy.Maths.UnitTests
         [Test]
         public void Test_CURAND_Host_Reference_Example()
         {
-            int n = 100;
+            int n = 100;    
             float[] hostData = new float[n];
 
             GPGPURAND gen = GPGPURAND.Create(_gpu, curandRngType.CURAND_RNG_PSEUDO_DEFAULT, true);

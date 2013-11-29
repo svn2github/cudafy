@@ -137,7 +137,9 @@
     <Compile Include="MultithreadedTests.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SIMDFunctionTests.cs" />
     <Compile Include="StringTests.cs" />
+    <Compile Include="WarpShuffleTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\3p\cuda.net3.0.0_win\src\CUDA.NET_3.0_Source\CUDA.NET.csproj">

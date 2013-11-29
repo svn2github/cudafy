@@ -30,6 +30,7 @@ using Cudafy.UnitTests;
 using NUnit.Framework;
 using Cudafy.Translator;
 using Cudafy.Compilers;
+using Cudafy.SIMDFunctions;
 namespace Cudafy.Host.UnitTests
 {
     [Cudafy]
@@ -985,6 +986,8 @@ namespace Cudafy.Host.UnitTests
 
             }
         }
+
+
 
         //[Cudafy]
         //public static void barrierAnyTest(GThread thread, int[] a, int[] res)
