@@ -227,6 +227,11 @@ namespace CudafyModuleViewer
         {
             try
             {
+                if (_module == null)
+                {
+                    _module = new CudafyModule();
+                }
+                
                 if (_module != null)
                 {
                     eArchitecture arch = (eArchitecture)Enum.Parse(typeof(eArchitecture), cbArch.SelectedItem as string);

@@ -186,7 +186,7 @@ namespace CudafyModuleViewer
                 yield return ("Successfully transferred data to device.");
 
                 yield return ("Attempting to launch function on device.");
-                gpu.Launch(1, 1024).TestKernelFunction(dev_a, dev_b, dev_c);
+                gpu.Launch(4, 256).TestKernelFunction(dev_a, dev_b, dev_c);
                 yield return ("Successfully launched function on device.");
 
                 yield return ("Attempting to transfer results back from device.");
@@ -210,7 +210,7 @@ namespace CudafyModuleViewer
         [Cudafy]
         public static void TestKernelFunction(GThread thread, int[] a, int[] b, int[] c)
         {
-            int i = thread.threadIdx.x;
+            int i = thread.threadIdx.x + thread.blockIdx.x * thread.blockDim.x;
             c[i] = a[i] + b[i];
         }
     }
