@@ -193,7 +193,7 @@ namespace Cudafy.Maths.FFT
         /// </summary>
         public void Execute()
         {
-            fftwf.execute(_handle);
+            fftw.execute(_handle);
         }
 
         /// <summary>
@@ -202,7 +202,7 @@ namespace Cudafy.Maths.FFT
         /// </summary>
         ~fftw_plan()
         {
-            //fftwf.destroy_plan(_handle);
+            //fftw.destroy_plan(_handle);
         }
 
         public static fftw_plan dft_many(eFFTType fftType, int rank, int[] n, int batch,
