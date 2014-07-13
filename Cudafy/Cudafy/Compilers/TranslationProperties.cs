@@ -225,7 +225,7 @@ namespace Cudafy
             string s = "v{0}.{1}";
             Version cudaVersion = null;
             selectedVersion = cudaVersion;
-            for (int j = 5; j >= 4; j--)
+            for (int j = 6; j >= 4; j--)
             {
                 for (int i = 9; i >= 0; i--)
                 {
