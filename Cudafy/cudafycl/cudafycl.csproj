@@ -122,6 +122,10 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\3p\cuda.net3.0.0_win\src\CUDA.NET_3.0_Source\CUDA.NET.csproj">
+      <Project>{1abec3f4-5ce8-469e-bb6e-9fefea6f75ff}</Project>
+      <Name>CUDA.NET</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Cudafy.Host\Cudafy.Host.csproj">
       <Project>{a9317dfd-b3e4-43a3-885e-cba5930acd65}</Project>
       <Name>Cudafy.Host</Name>
