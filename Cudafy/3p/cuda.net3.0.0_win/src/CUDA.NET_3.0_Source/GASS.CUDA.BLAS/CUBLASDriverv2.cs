@@ -10,7 +10,7 @@
 #if LINUX
         public const string CUBLAS_DLL_NAME = "libcublas";
 #else
-        public const string CUBLAS_DLL_NAME = "cublas32_60";
+        public const string CUBLAS_DLL_NAME = "cublas32_65";
 #endif
 
         [DllImport(CUBLAS_DLL_NAME)]
@@ -583,7 +583,7 @@
 #if LINUX
         public const string CUBLAS_DLL_NAME = "libcublas";
 #else
-        public const string CUBLAS_DLL_NAME = "cublas64_60";
+        public const string CUBLAS_DLL_NAME = "cublas64_65";
 #endif
 
         [DllImport(CUBLAS_DLL_NAME)]
