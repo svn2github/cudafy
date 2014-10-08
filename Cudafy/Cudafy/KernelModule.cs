@@ -1373,7 +1373,7 @@ namespace Cudafy
 
                         if (process.ExitCode != 0)
                         {
-                            string s = standardError.ToString(); //process.StandardError.ReadToEnd();
+                            string s = standardOutput.ToString() + "\r\n" + standardError.ToString();
 
                             CompilerOutput += "\r\n" + s;
                             if (s.Contains("Cannot find compiler 'cl.exe' in PATH"))
