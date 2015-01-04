@@ -1378,7 +1378,7 @@ namespace Cudafy
                             CompilerOutput += "\r\n" + s;
                             if (s.Contains("Cannot find compiler 'cl.exe' in PATH"))
                                 CompilerOutput += "\r\nPlease add the Visual Studio VC bin directory to PATH in Environment Variables.";
-                            Debug.WriteLine(s);
+                            Debug.WriteLine(CompilerOutput);
                             throw new CudafyCompileException(CudafyCompileException.csCOMPILATION_ERROR_X, CompilerOutput);
                         }
                         else

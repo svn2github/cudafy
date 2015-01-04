@@ -395,6 +395,12 @@ namespace Cudafy.Translator
                 return new Version(3, 0);
             else if (arch == eArchitecture.sm_35)
                 return new Version(3, 5);
+            else if (arch == eArchitecture.sm_37)
+                return new Version(3, 7);
+            else if (arch == eArchitecture.sm_50)
+                return new Version(5, 0);
+            else if (arch == eArchitecture.sm_52)
+                return new Version(5, 2);
             else if (arch == eArchitecture.OpenCL)
                 return new Version(1, 0);
             else if (arch == eArchitecture.OpenCL11)

@@ -270,9 +270,17 @@ namespace Cudafy
         /// </summary>
         sm_35 = 291,
         /// <summary>
+        /// CUDA sm_37
+        /// </summary>
+        sm_37 = 293,
+        /// <summary>
         /// CUDA sm_50
         /// </summary>
         sm_50 = 306,
+        /// <summary>
+        /// CUDA sm_52
+        /// </summary>
+        sm_52 = 308,
         /// <summary>
         /// OpenCL 1.0
         /// </summary>

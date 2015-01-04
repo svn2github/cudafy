@@ -348,10 +348,22 @@ namespace Cudafy.Host
 
                         case 5: return eArchitecture.sm_35;
 
+                        case 7: return eArchitecture.sm_37;
                         default:
                             throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, capability.ToString());
                     }
+                case 5:
 
+                    switch (capability.Minor)
+                    {
+
+                        case 0: return eArchitecture.sm_50;
+
+                        case 2: return eArchitecture.sm_52;
+
+                        default:
+                            throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, capability.ToString());
+                    }
                 default:
                     throw new CudafyHostException(CudafyHostException.csX_NOT_SUPPORTED, capability.ToString());
             }
