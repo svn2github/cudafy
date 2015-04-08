@@ -714,5 +714,10 @@ namespace Cudafy.Maths.BLAS
         {
             throw new NotImplementedException();
         }
+
+        public override int GetVersion()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

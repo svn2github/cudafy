@@ -60,6 +60,7 @@ namespace Cudafy.Maths.UnitTests
         {
             _gpu = CudafyHost.CreateDevice(CudafyModes.Target);
             _blas = GPGPUBLAS.Create(_gpu);
+            Console.Write("BLAS Version={0}", _blas.GetVersion());
             _hostInput1 = new float[ciN];
             _hostInput2 = new float[ciN];
             _hostOutput1 = new float[ciN];

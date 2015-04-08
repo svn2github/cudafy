@@ -40,7 +40,7 @@ namespace Cudafy.Maths.SPARSE
             }
             else
             {
-                throw new NotImplementedException("64bit is only supported now.");
+                throw new NotSupportedException();
             }
 
             LastStatus = _driver.CusparseCreate(ref _sparse);

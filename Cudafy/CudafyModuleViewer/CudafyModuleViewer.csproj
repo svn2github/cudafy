@@ -129,9 +129,6 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Cudafy.NET">
-      <HintPath>..\output\Cudafy.NET.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -197,6 +194,28 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="CUDAfy2.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\3p\cuda.net3.0.0_win\src\CUDA.NET_3.0_Source\CUDA.NET.csproj">
+      <Project>{1abec3f4-5ce8-469e-bb6e-9fefea6f75ff}</Project>
+      <Name>CUDA.NET</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Cudafy.Host\Cudafy.Host.csproj">
+      <Project>{a9317dfd-b3e4-43a3-885e-cba5930acd65}</Project>
+      <Name>Cudafy.Host</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Cudafy.Math\Cudafy.Math.csproj">
+      <Project>{dd4d4125-cb55-4dbd-b9ea-7e0709921dbf}</Project>
+      <Name>Cudafy.Math</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Cudafy.Translator\Cudafy.Translator.csproj">
+      <Project>{c971e684-9147-49ca-88da-fd8c2d94b944}</Project>
+      <Name>Cudafy.Translator</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Cudafy\Cudafy.csproj">
+      <Project>{16a11768-583a-47db-a9a3-c7e4173073a5}</Project>
+      <Name>Cudafy</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

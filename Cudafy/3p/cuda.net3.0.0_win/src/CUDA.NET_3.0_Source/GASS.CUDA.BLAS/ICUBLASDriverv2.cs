@@ -9,7 +9,7 @@
         string GetDllName();
 
         CUBLASStatusv2 cublasCreate(ref cublasHandle handle);
-        
+
         CUBLASStatusv2 cublasDestroy(cublasHandle handle);
         
         CUBLASStatusv2 cublasGetVersion(cublasHandle handle, ref int version);

@@ -77,7 +77,7 @@ namespace Cudafy.Maths.UnitTests
         public void SetUp()
         {
             _gpu = CudafyHost.CreateDevice(CudafyModes.Target);
-             Console.WriteLine(_gpu.GetDriverVersion());
+             Console.WriteLine("CUDA driver version={0}", _gpu.GetDriverVersion());
             _fft = GPGPUFFT.Create(_gpu);
             _hostInput = new float[N * BATCH];
             _hostInputCplx = new ComplexF[N * BATCH];
@@ -89,7 +89,7 @@ namespace Cudafy.Maths.UnitTests
             _devInterCplx = _gpu.Allocate<ComplexF>(N * BATCH);
             _devOutput = _gpu.Allocate(_hostOutput);
             _devOutputCplx = _gpu.Allocate(_hostOutputCplx);
-            Console.WriteLine(_fft.GetVersion());
+            Console.WriteLine("CUFFT version={0}", _fft.GetVersion());
             for (int b = 0; b < BATCH; b++)
             {
                 for (int i = 0; i < N; i++)

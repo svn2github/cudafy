@@ -52,8 +52,9 @@ namespace Cudafy.Maths.BLAS
             }
             else
             {
-                _driver = new CUBLASDriver32();
-                _driverEx = new CUBLASDriver32Ex();
+                throw new NotSupportedException();
+                //_driver = new CUBLASDriver32();
+                //_driverEx = new CUBLASDriver32Ex();
             }
             LastStatus = _driver.cublasCreate(ref _blas);
             _gpu = gpu;
@@ -1611,6 +1612,13 @@ namespace Cudafy.Maths.BLAS
         }
         #endregion
         #endregion
+
+        public override int GetVersion()
+        {
+            int version = 0;
+            _driver.cublasGetVersion(_blas, ref version);
+            return version;
+        }
     }
 }
 

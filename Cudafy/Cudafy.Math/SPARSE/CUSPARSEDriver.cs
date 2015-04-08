@@ -11,7 +11,7 @@ namespace Cudafy.Maths.SPARSE
 #if LINUX
         internal const string CUSPARSE_DLL_NAME = "libcusparse";
 #else
-        internal const string CUSPARSE_DLL_NAME = "cusparse64_65";
+        internal const string CUSPARSE_DLL_NAME = "cusparse64_70";
 #endif
 
         //[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]

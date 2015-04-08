@@ -139,7 +139,7 @@ namespace Cudafy.Translator
 
         /// <summary>
         /// Tries to use a previous serialized CudafyModule else cudafies and compiles the type in which the calling method is located. 
-        /// CUDA architecture is 1.3; platform is set to the current application's (x86 or x64); and the CUDA version is the 
+        /// CUDA architecture is 2.0; platform is set to the current application's (x86 or x64); and the CUDA version is the 
         /// latest official release found on the current machine. 
         /// </summary>
         /// <returns>A CudafyModule.</returns>
@@ -180,7 +180,7 @@ namespace Cudafy.Translator
 
         /// <summary>
         /// Tries to use a previous serialized CudafyModule else cudafies and compiles the type in which the calling method is located. 
-        /// CUDA architecture is 1.3; platform is as specified; and the CUDA version is the 
+        /// CUDA architecture is 2.0; platform is as specified; and the CUDA version is the 
         /// latest official release found on the current machine. 
         /// </summary>
         /// <param name="platform">The platform.</param>
@@ -221,7 +221,7 @@ namespace Cudafy.Translator
 
         /// <summary>
         /// Cudafies and compiles the type of the specified object with default settings. 
-        /// CUDA architecture is 1.3; platform is set to the current application's (x86 or x64); and the CUDA version is the 
+        /// CUDA architecture is 2.0; platform is set to the current application's (x86 or x64); and the CUDA version is the 
         /// latest official release found on the current machine. 
         /// </summary>
         /// <param name="o">An instance of the type to cudafy. Typically pass 'this'.</param>
@@ -234,7 +234,7 @@ namespace Cudafy.Translator
 
         /// <summary>
         /// Cudafies and compiles the specified types with default settings. 
-        /// CUDA architecture is 1.3; platform is set to the current application's (x86 or x64); and the CUDA version is the 
+        /// CUDA architecture is 2.0; platform is set to the current application's (x86 or x64); and the CUDA version is the 
         /// latest official release found on the current machine. 
         /// </summary>
         /// <param name="types">The types.</param>

@@ -34,12 +34,12 @@ namespace Cudafy
         }
 
         /// <summary>
-        /// Cudafies the assembly producing a *.cdfy file with same name as assembly.
+        /// Cudafies the assembly producing a *.cdfy file with same name as assembly. Architecture is 2.0.
         /// </summary>
         /// <param name="assembly">The assembly.</param>
         /// <param name="arch">The architecture.</param>
         /// <returns>Output messages of the cudafycl.exe process.</returns>
-        public static string Cudafy(this Assembly assembly, eArchitecture arch = eArchitecture.sm_12)
+        public static string Cudafy(this Assembly assembly, eArchitecture arch = eArchitecture.sm_20)
         {
             string messages;
             if(!TryCudafy(assembly, out messages, arch))
@@ -48,21 +48,21 @@ namespace Cudafy
         }
 
         /// <summary>
-        /// Tries cudafying the assembly producing a *.cdfy file with same name as assembly.
+        /// Tries cudafying the assembly producing a *.cdfy file with same name as assembly. Architecture is 2.0.
         /// </summary>
         /// <param name="assembly">The assembly.</param>
         /// <param name="arch">The architecture.</param>
         /// <returns>
         ///   <c>true</c> if successful; otherwise, <c>false</c>.
         /// </returns>
-        public static bool TryCudafy(this Assembly assembly, eArchitecture arch = eArchitecture.sm_12)
+        public static bool TryCudafy(this Assembly assembly, eArchitecture arch = eArchitecture.sm_20)
         {
             string messages;
             return TryCudafy(assembly, out messages, arch);
 
         }
         /// <summary>
-        /// Tries cudafying the assembly producing a *.cdfy file with same name as assembly.
+        /// Tries cudafying the assembly producing a *.cdfy file with same name as assembly. Architecture is 2.0.
         /// </summary>
         /// <param name="assembly">The assembly.</param>
         /// <param name="messages">Output messages of the cudafycl.exe process.</param>
@@ -70,7 +70,7 @@ namespace Cudafy
         /// <returns>
         ///   <c>true</c> if successful; otherwise, <c>false</c>.
         /// </returns>
-        public static bool TryCudafy(this Assembly assembly, out string messages, eArchitecture arch = eArchitecture.sm_12)
+        public static bool TryCudafy(this Assembly assembly, out string messages, eArchitecture arch = eArchitecture.sm_20)
         {
             var assemblyName = assembly.Location;
             Process process = new Process();

@@ -58,7 +58,7 @@ namespace Cudafy.Maths.UnitTests
         {
             _gpu = CudafyHost.GetDevice(CudafyModes.Target);
             _blas = GPGPUBLAS.Create(_gpu);
-
+            Console.Write("BLAS Version={0}", _blas.GetVersion());
             // Initialize CPU Buffer
             hiMatrixA = new double[M * N];
             hiMatrixANN = new double[N * N];

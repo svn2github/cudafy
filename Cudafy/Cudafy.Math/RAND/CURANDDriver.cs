@@ -149,7 +149,7 @@ namespace Cudafy.Maths.RAND
 #if LINUX
         internal const string DLL_NAME = "libcurand";
 #else
-        internal const string DLL_NAME = "curand64_65";
+        internal const string DLL_NAME = "curand64_70";
 #endif
         //curandStatus_t curandCreateGenerator (curandGenerator_t generator, curandRngType_t rng_type)
         [DllImport(DLL_NAME)]
@@ -356,7 +356,7 @@ namespace Cudafy.Maths.RAND
 #if LINUX
         internal const string DLL_NAME = "libcurand";
 #else
-        internal const string DLL_NAME = "curand32_65";
+        internal const string DLL_NAME = "curand32_70";
 #endif
 
         //curandStatus_t curandCreateGenerator (curandGenerator_t generator, curandRngType_t rng_type)

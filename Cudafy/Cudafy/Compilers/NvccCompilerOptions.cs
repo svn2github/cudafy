@@ -97,23 +97,23 @@ namespace Cudafy.Compilers
         private const string csGPUTOOLKIT = @"NVIDIA GPU Computing Toolkit\CUDA\";
 
         /// <summary>
-        /// Creates a default x86 instance. Architecture is 1.2.
+        /// Creates a default x86 instance. Architecture is 2.0.
         /// </summary>
         /// <returns></returns>
         public static NvccCompilerOptions Create()
         {
-            NvccCompilerOptions opt = Createx86(null, eArchitecture.sm_12);
+            NvccCompilerOptions opt = Createx86(null, eArchitecture.sm_20);
             opt.CanEdit = true;
             return opt;
         }
 
         /// <summary>
-        /// Creates a default x86 instance. Architecture is 1.2.
+        /// Creates a default x86 instance. Architecture is 2.0.
         /// </summary>
         /// <returns></returns>
         public static NvccCompilerOptions Createx86()
         {
-            return Createx86(null, eArchitecture.sm_12);
+            return Createx86(null, eArchitecture.sm_20);
         }
 
         private static void AddArchOptions(CompilerOptions co, eArchitecture arch)
@@ -188,12 +188,12 @@ namespace Cudafy.Compilers
         }
 
         /// <summary>
-        /// Creates a default x64 instance. Architecture is 1.2.
+        /// Creates a default x64 instance. Architecture is 2.0.
         /// </summary>
         /// <returns></returns>
         public static NvccCompilerOptions Createx64()
         {
-            return Createx64(null, eArchitecture.sm_12);
+            return Createx64(null, eArchitecture.sm_20);
         }
 
         /// <summary>
@@ -261,7 +261,7 @@ namespace Cudafy.Compilers
                 else
                     return string.Empty;
             }
-            for (int j = 6; j >= 4; j--)
+            for (int j = 9; j >= 4; j--)
                 for (int i = 9; i >= 0; i--)
                 {
                     string version = string.Format(s, j, i);

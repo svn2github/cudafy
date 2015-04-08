@@ -6,7 +6,7 @@
     [StructLayout(LayoutKind.Sequential)]
     public struct cublasHandle
     {
-        public uint handle;
+        public ulong handle;
     }
 }
 

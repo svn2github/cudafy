@@ -211,7 +211,7 @@ namespace Cudafy.Maths.UnitTests
             }
         }
 
-        [Test]
+       // [Test]
         public void Test_SPARSE1_ROT()
         {
             _gpu.CopyToDevice(_hiValsX, _diValsX);

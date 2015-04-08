@@ -72,6 +72,8 @@ namespace Cudafy.Maths.BLAS
             Dispose(false);
         }
 
+        public abstract int GetVersion();
+
         private object _lock;
 
         // Track whether Dispose has been called.

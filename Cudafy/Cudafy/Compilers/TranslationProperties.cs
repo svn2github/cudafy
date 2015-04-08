@@ -46,7 +46,7 @@ namespace Cudafy
             AdditionalOutputArgs = "";
             TimeOut = 20000;
             Platform = ePlatform.Auto;
-            Architecture = eArchitecture.sm_13;
+            Architecture = eArchitecture.sm_20;
             CompileMode = eCudafyCompileMode.Default;
             InputFile = "CUDAFYSOURCETEMP.cu";
 
@@ -175,8 +175,8 @@ namespace Cudafy
                 return eGPUType.Emulator;
             return (((uint)arch & (uint)32768) == (uint)32768) ? eGPUType.OpenCL : eGPUType.Cuda;
         }
-        
-        public static CompileProperties Create(ePlatform platform = ePlatform.Auto, eArchitecture arch = eArchitecture.sm_13, eCudafyCompileMode mode = eCudafyCompileMode.Default, string workingDir = null, bool debugInfo = false)
+
+        public static CompileProperties Create(ePlatform platform = ePlatform.Auto, eArchitecture arch = eArchitecture.sm_20, eCudafyCompileMode mode = eCudafyCompileMode.Default, string workingDir = null, bool debugInfo = false)
         {
             CompileProperties tp = new CompileProperties();
             eLanguage language = GetLanguage(arch);
@@ -192,7 +192,7 @@ namespace Cudafy
                 string gpuToolKit = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT + cvStr;
                 tp.CompilerPath = gpuToolKit + Path.DirectorySeparatorChar + @"bin" + Path.DirectorySeparatorChar + csNVCC;
                 tp.IncludeDirectoryPath = gpuToolKit + Path.DirectorySeparatorChar + @"include";
-                tp.Architecture = (arch == eArchitecture.Unknown) ? eArchitecture.sm_13 : arch;
+                tp.Architecture = (arch == eArchitecture.Unknown) ? eArchitecture.sm_20 : arch;
                 bool binary = ((mode & eCudafyCompileMode.Binary) == eCudafyCompileMode.Binary);
                 string tempFileName = "CUDAFYSOURCETEMP.tmp";
                 string cuFileName = tempFileName.Replace(".tmp", ".cu");
@@ -225,7 +225,7 @@ namespace Cudafy
             string s = "v{0}.{1}";
             Version cudaVersion = null;
             selectedVersion = cudaVersion;
-            for (int j = 6; j >= 4; j--)
+            for (int j = 9; j >= 4; j--)
             {
                 for (int i = 9; i >= 0; i--)
                 {
@@ -268,7 +268,7 @@ namespace Cudafy
 
             TimeOut = 20000;
             Platform = ePlatform.Auto;
-            Architecture = eArchitecture.sm_13;
+            Architecture = eArchitecture.sm_20;
 
             InputFile = "";
         }

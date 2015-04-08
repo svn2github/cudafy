@@ -11,6 +11,6 @@ namespace Cudafy.Maths.SPARSE
     [StructLayout(LayoutKind.Sequential)]
     public struct cusparseHandle
     {
-        public uint handle;
+        public ulong handle;
     }
 }

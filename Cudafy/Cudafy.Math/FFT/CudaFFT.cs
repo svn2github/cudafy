@@ -44,7 +44,8 @@ namespace Cudafy.Maths.FFT
             if (IntPtr.Size == 8)
                 _driver = new CUFFTDriver64();
             else
-                _driver = new CUFFTDriver32();
+                throw new NotSupportedException();
+                //_driver = new CUFFTDriver32();
         }
 
         private ICUFFTDriver _driver;
