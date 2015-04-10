@@ -59,7 +59,7 @@ namespace Cudafy.Maths.RAND
     [StructLayout(LayoutKind.Sequential)]
     internal struct RandGenerator
     {
-        public uint handle;
+        public ulong handle;
     }
 
     //public class RandGeneratorDevice : RandGenerator

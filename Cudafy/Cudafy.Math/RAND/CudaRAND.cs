@@ -40,7 +40,8 @@ namespace Cudafy.Maths.RAND
             }
             else
             {
-                _driver = new CURANDDriver32();
+                throw new NotSupportedException();
+                //_driver = new CURANDDriver32();
             }
         }
 
