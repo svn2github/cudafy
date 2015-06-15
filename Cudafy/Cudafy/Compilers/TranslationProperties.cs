@@ -1,6 +1,6 @@
 ﻿/*
 CUDAfy.NET - LGPL 2.1 License
-Please consider purchasing a commerical license - it helps development, frees you from LGPL restrictions
+Please consider purchasing a commercial license - it helps development, frees you from LGPL restrictions
 and provides you with support.  Thank you!
 Copyright (C) 2013 Hybrid DSP Systems
 http://www.hybriddsp.com
@@ -27,10 +27,10 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Text;
 using System.Reflection;
+using Microsoft.Win32;
+
 namespace Cudafy
 {
-
-    
     public class CompileProperties
     {
         //-I"C:\Program Files (x86)\NVIDIA GPU Computing Toolkit\CUDA\v4.0\include" -m64  -arch=sm_20  -cubin  cudadevrt.lib  cublas_device.lib  -dlink  "C:\Sandbox\HybridDSPSystems\Codeplex\Cudafy\Cudafy.Host.UnitTests\bin\Debug\CUDAFYSOURCETEMP.cu"  -o "C:\Sandbox\HybridDSPSystems\Codeplex\Cudafy\Cudafy.Host.UnitTests\bin\Debug\CUDAFYSOURCETEMP.ptx"  -ptx
@@ -149,16 +149,13 @@ namespace Cudafy
         {
             get { return Path.DirectorySeparatorChar; }
         }
+
+        /// <summary>Extra entries to prepend to the PATH environment variable when launching the compiler.</summary>
+        public string[] PathEnvVarExtraEntries { get; set; }
     }
-
-
 
     public class CompilerHelper
     {
-        private static readonly string csGPUTOOLKIT = @"NVIDIA GPU Computing Toolkit"+Path.DirectorySeparatorChar+"CUDA"+Path.DirectorySeparatorChar;
-
-        private static readonly string csNVCC = "nvcc";
-
         public static eLanguage GetLanguage(eArchitecture arch)
         {
             //return (((uint)arch & (uint)eArchitecture.OpenCL) == (uint)32768) ? eLanguage.OpenCL : eLanguage.Cuda;
@@ -184,14 +181,10 @@ namespace Cudafy
             {
                 string progFiles = Utility.ProgramFiles();
 
-                string toolkitbasedir = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT;
-                Version selVer;
-                string cvStr = GetCudaVersion(toolkitbasedir, out selVer);
-                if (string.IsNullOrEmpty(cvStr))
-                    throw new CudafyCompileException(CudafyCompileException.csCUDA_DIR_NOT_FOUND);
-                string gpuToolKit = progFiles + Path.DirectorySeparatorChar + csGPUTOOLKIT + cvStr;
-                tp.CompilerPath = gpuToolKit + Path.DirectorySeparatorChar + @"bin" + Path.DirectorySeparatorChar + csNVCC;
-                tp.IncludeDirectoryPath = gpuToolKit + Path.DirectorySeparatorChar + @"include";
+                tp.CompilerPath = NvccExe.getCompilerPath();
+                tp.IncludeDirectoryPath = NvccExe.getIncludePath();
+                tp.PathEnvVarExtraEntries = new string[ 1 ] { NvccExe.getClExeDirectory() };
+
                 tp.Architecture = (arch == eArchitecture.Unknown) ? eArchitecture.sm_20 : arch;
                 bool binary = ((mode & eCudafyCompileMode.Binary) == eCudafyCompileMode.Binary);
                 string tempFileName = "CUDAFYSOURCETEMP.tmp";
@@ -219,36 +212,7 @@ namespace Cudafy
             
             return tp;
         }
-
-        private static string GetCudaVersion(string gpuToolKitDir, out Version selectedVersion)
-        {
-            string s = "v{0}.{1}";
-            Version cudaVersion = null;
-            selectedVersion = cudaVersion;
-            for (int j = 9; j >= 4; j--)
-            {
-                for (int i = 9; i >= 0; i--)
-                {
-                    string version = string.Format(s, j, i);
-                    string dir = gpuToolKitDir + version;
-                    if (System.IO.Directory.Exists(dir))
-                    {
-                        selectedVersion = new Version(string.Format("{0}.{1}", j, i));
-                        return version;
-                    }
-                }
-            }
-            return string.Empty;
-        }
     }
-
-
-
-
-
-
-
-
 
 
     #region Proposed

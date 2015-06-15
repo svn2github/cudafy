@@ -1247,9 +1247,11 @@ namespace Cudafy
                     Debug.WriteLine(process.StartInfo.FileName);
                     Debug.WriteLine(CompilerArguments);
                     standardError.Clear(); standardOutput.Clear();
-                    process.Start();
+
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
+                    process.Start();
+                    
 
                     //while (!process.HasExited)
                     //    Thread.Sleep(10);
@@ -1257,7 +1259,8 @@ namespace Cudafy
                     bool procTimedOut = false;
                     int timeout = co.TimeOut;
                     while (!process.HasExited && !(procTimedOut = ++waitCounter >= timeout)) // 1m timeout
-                        Thread.Sleep(10);
+                        //Thread.Sleep(10);
+                        process.WaitForExit(10);
                     if (procTimedOut)
                         throw new CudafyCompileException(CudafyCompileException.csCOMPILATION_ERROR_X, "Process timed out");
 
